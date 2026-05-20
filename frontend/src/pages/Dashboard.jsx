@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import client from "../api/client";
 import {
@@ -41,8 +41,15 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchGoals();
-    fetchBehaviors();
+    const loadData = async () => {
+      const [goalsRes, behaviorsRes] = await Promise.all([
+        client.get("/api/goals"),
+        client.get("/api/behaviors/today"),
+      ]);
+      setGoals(goalsRes.data);
+      setBehaviors(behaviorsRes.data);
+    };
+    loadData();
   }, []);
 
   const createGoal = async (e) => {
@@ -78,6 +85,9 @@ export default function Dashboard() {
       <div style={styles.header}>
         <h1 style={styles.logo}>Mordi</h1>
         <div style={styles.headerRight}>
+          <Link to="/locations" style={styles.navLink}>
+            📍 Locations
+          </Link>
           <span style={styles.welcome}>Hey, {user?.name} 👋</span>
           <button style={styles.logoutBtn} onClick={handleLogout}>
             Logout
@@ -256,6 +266,7 @@ const styles = {
   logo: { color: "#6c63ff", margin: 0, fontSize: "1.5rem" },
   headerRight: { display: "flex", alignItems: "center", gap: "1rem" },
   welcome: { color: "#888", fontSize: "0.95rem" },
+  navLink: { color: "#6c63ff", textDecoration: "none", fontSize: "0.95rem" },
   logoutBtn: {
     background: "transparent",
     border: "1px solid #3a3a3a",
