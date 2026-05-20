@@ -8,6 +8,7 @@ frontend/dist/
 frontend/.env
 frontend/.env.local
 
+
 # Secrets
 k8s/secrets/
 *.env
