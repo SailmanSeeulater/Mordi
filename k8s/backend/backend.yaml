@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mordi-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mordi-backend
+  template:
+    metadata:
+      labels:
+        app: mordi-backend
+    spec:
+      containers:
+        - name: mordi-backend
+          image: mordi-backend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/mordi
+            - name: SPRING_DATASOURCE_USERNAME
+              value: mordi_user
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: mordi_password
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: MORDI_JWT_SECRET
+              value: mordi_super_secret_key_that_is_long_enough_for_hs256
+            - name: MORDI_JWT_EXPIRATION
+              value: "86400000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mordi-backend
+spec:
+  selector:
+    app: mordi-backend
+  ports:
+    - port: 8080
+      targetPort: 8080

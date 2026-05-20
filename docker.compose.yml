@@ -1,0 +1,17 @@
+version: "3.8"
+
+service:
+  postgres:
+    image: postgres:16
+    container_name: mordi-postgres
+    environment:
+      POSTGRES_DB: mordi
+      POSTGRES_USER: mordi_user
+      POSTGRES_PASSWORD: mordi_password
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    container_name: mordi-redis
+    ports:
+      - "6379:6379"
