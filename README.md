@@ -10,6 +10,7 @@ A full-stack personal accountability web app that tracks user behavior, goals, a
 | Backend | Java Spring Boot |
 | Database | PostgreSQL |
 | Cache | Redis |
+| Maps | Google Maps API |
 | Infrastructure | Kubernetes (minikube) |
 | Container | Docker |
 
@@ -18,8 +19,10 @@ A full-stack personal accountability web app that tracks user behavior, goals, a
 - JWT authentication (register, login, secure sessions)
 - Goal setting with categories and frequency tracking
 - Daily behavior logging with mood tracking
-- GPS location recording
-- Automated weekly report generation
+- GPS location tracking with Google Maps visualization
+- Reverse geocoding — coordinates converted to readable addresses
+- Location history with interactive map pins and info windows
+- Automated weekly report generation with completion rate analytics
 - Autoscaling via Kubernetes HorizontalPodAutoscaler
 
 ## Architecture
@@ -34,12 +37,20 @@ The app is split into 4 services deployed on Kubernetes:
 ## Running Locally
 
 ### Prerequisites
+
 - Docker Desktop
 - minikube
 - kubectl
-- helm
+- Node.js
+- Java 22 + Maven
+
+### Environment Setup
+
+Create `frontend/.env`:
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
 ### Start the cluster
+
 ```bash
 minikube start --driver=docker
 minikube docker-env | Invoke-Expression
@@ -57,6 +68,7 @@ kubectl apply -f k8s/ingress.yaml
 ```
 
 ### Access the app
+
 ```bash
 minikube tunnel
 kubectl port-forward service/mordi-frontend 3000:80
@@ -73,5 +85,27 @@ Open `http://localhost:3000`
 | POST | /api/auth/login | Login and get JWT token |
 | GET/POST | /api/goals | Get or create goals |
 | GET/POST | /api/behaviors | Log or retrieve behaviors |
-| GET/POST | /api/locations | Record or retrieve locations |
+| GET/POST | /api/locations | Record or retrieve GPS locations |
 | POST | /api/reports/generate | Generate weekly report |
+
+## Project Structure
+mordi/
+├── backend/          # Spring Boot API
+│   └── src/main/java/com/mordi/backend/
+│       ├── config/   # JWT, Security, CORS
+│       ├── controller/
+│       ├── model/
+│       ├── repository/
+│       └── service/
+├── frontend/         # React app
+│   └── src/
+│       ├── api/      # Axios client
+│       ├── context/  # Auth context
+│       └── pages/    # Login, Register, Dashboard, Locations
+├── k8s/              # Kubernetes manifests
+│   ├── backend/
+│   ├── frontend/
+│   ├── database/
+│   ├── redis/
+│   └── ingress.yaml
+└── docker-compose.yml
