@@ -5,13 +5,19 @@ backend/.mvn/wrapper/maven-wrapper.jar
 # Frontend
 frontend/node_modules/
 frontend/dist/
-frontend/.env
-frontend/.env.local
 
-
-# Secrets
+# Secrets & environment
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
 k8s/secrets/
-*.env
+*.key
+*.pem
+*.p12
+*.jks
 
 # Test files
 test.json
@@ -23,3 +29,8 @@ location.json
 .idea/
 *.iml
 .vscode/
+.zed/
+
+# OS
+.DS_Store
+Thumbs.db
