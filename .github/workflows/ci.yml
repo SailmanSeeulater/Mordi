@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-          cache-dependency-path: backend/pom/xml
+          cache-dependency-path: backend/pom.xml
       
       - name: Run tests
         run: ./mvnw --batch-mode --no-transfer-progress test
@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: frontend/package-Lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
