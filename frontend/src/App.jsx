@@ -34,6 +34,7 @@ function App() {
           }
         />
         <Route path="/" element={<Landing />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </AuthProvider>
   );
