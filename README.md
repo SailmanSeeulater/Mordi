@@ -109,3 +109,6 @@ mordi/
 │   ├── redis/
 │   └── ingress.yaml
 └── docker-compose.yml
+
+
+![CI](https://github.com/SailmanSeeulater/Mordi/actions/workflows/ci.yml/badge.svg)
