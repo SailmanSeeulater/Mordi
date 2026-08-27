@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: mordi
       POSTGRES_USER: mordi_user
-      POSTGRES_PASSWORD: mordi_password
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
@@ -25,10 +25,10 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mordi
       SPRING_DATASOURCE_USERNAME: mordi_user
-      SPRING_DATASOURCE_PASSWORD: mordi_password
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      MORDI_JWT_SECRET: mordi_super_secret_key_that_is_long_enough_for_hs256
+      MORDI_JWT_SECRET: ${JWT_SECRET}
       MORDI_JWT_EXPIRATION: 86400000
     depends_on:
       - postgres
