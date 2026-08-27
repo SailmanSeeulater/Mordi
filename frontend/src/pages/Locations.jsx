@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -6,7 +6,6 @@ import {
   InfoWindow,
 } from "@react-google-maps/api";
 import client from "../api/client";
-import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const mapContainerStyle = {
   width: "100%",
@@ -19,20 +18,23 @@ export default function Locations() {
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("");
-  const [map, setMap] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
   const fetchLocations = async () => {
     const res = await client.get("/api/locations");
     setLocations(res.data);
   };
+
+  useEffect(() => {
+    // Intentional mount-only fetch. This is the standard "sync with an
+    // external system (the API) on mount" case the effect rule exists for;
+    // it isn't the cascading-render pattern the lint rule is guarding against.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLocations();
+  }, []);
 
   const captureLocation = () => {
     if (!navigator.geolocation) {
@@ -68,8 +70,6 @@ export default function Locations() {
     }
   };
 
-  const onLoad = useCallback((mapInstance) => setMap(mapInstance), []);
-
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -96,7 +96,6 @@ export default function Locations() {
                   : defaultCenter
               }
               zoom={12}
-              onLoad={onLoad}
               options={{ styles: darkMapStyle }}
             >
               {locations.map((loc) => (

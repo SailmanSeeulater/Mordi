@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import client from "../api/client";
 
 export default function Login() {
@@ -18,6 +18,7 @@ export default function Login() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate("/dashboard");
     } catch (err) {
+      console.error("Login failed:", err);
       setError("Invalid email or password");
     }
   };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import client from "../api/client";
 
 export default function Register() {
@@ -23,6 +23,7 @@ export default function Register() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate("/dashboard");
     } catch (err) {
+      console.error("Registration failed:", err);
       setError("Registration failed. Email may already be in use.");
     }
   };
