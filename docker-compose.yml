@@ -30,6 +30,8 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       MORDI_JWT_SECRET: ${JWT_SECRET}
       MORDI_JWT_EXPIRATION: 86400000
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_BASELINE_VERSION: "1"
     depends_on:
       - postgres
       - redis
