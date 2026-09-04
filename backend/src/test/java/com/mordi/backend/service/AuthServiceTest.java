@@ -3,6 +3,8 @@ package com.mordi.backend.service;
 import com.mordi.backend.config.JwtUtil;
 import com.mordi.backend.dto.AuthRequest;
 import com.mordi.backend.dto.AuthResponse;
+import com.mordi.backend.exception.EmailAlreadyExistsException;
+import com.mordi.backend.exception.InvalidCredentialsException;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,12 +27,12 @@ import static org.mockito.Mockito.*;
  * Unit tests for AuthService. Mocks the repository, password encoder, and
  * JWT util so these run in milliseconds with no database or Spring context.
  *
- * Note: AuthService currently throws bare RuntimeException for all failure
- * cases (duplicate email, missing user, bad password). These tests assert
- * that *current* behavior. If/when AuthService is refactored to throw
- * specific exceptions (EmailAlreadyExistsException, InvalidCredentialsException,
- * etc. -- see mordi-context.md Tier 1: Security hardening), update the
- * assertThatThrownBy(...) calls below to match the new exception types.
+ * AuthService throws EmailAlreadyExistsException on duplicate registration
+ * and InvalidCredentialsException on any login failure. Login deliberately
+ * uses the same exception and message whether the email doesn't exist or
+ * the password is wrong -- see InvalidCredentialsException's javadoc for
+ * why (account enumeration prevention). Don't split these assertions back
+ * into distinct messages per failure mode.
  */
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -87,7 +89,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("taken@mordi.com")).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))
-            .isInstanceOf(RuntimeException.class)
+            .isInstanceOf(EmailAlreadyExistsException.class)
             .hasMessageContaining("already registered");
 
         // The important behavioral guarantee, regardless of exception type:
@@ -158,8 +160,8 @@ class AuthServiceTest {
             .thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("Invalid password");
+            .isInstanceOf(InvalidCredentialsException.class)
+            .hasMessageContaining("Invalid email or password");
 
         verify(jwtUtil, never()).generateToken(anyString());
     }
@@ -173,8 +175,8 @@ class AuthServiceTest {
         when(userRepository.findByEmail("ghost@mordi.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessageContaining("User not found");
+            .isInstanceOf(InvalidCredentialsException.class)
+            .hasMessageContaining("Invalid email or password");
 
         // Should short-circuit before ever touching the password encoder
         verify(passwordEncoder, never()).matches(anyString(), anyString());
