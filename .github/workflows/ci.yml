@@ -31,7 +31,7 @@ jobs:
         run: ./mvnw --batch-mode --no-transfer-progress package -DskipTests
 
   frontend:
-    name: Frontend - lint & build
+    name: Frontend - lint, test & build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -52,12 +52,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Test
+        run: npm run test
+
       - name: Build
         run: npm run build
         env:
           # Placeholder value so the Vite build doesn't fail on missing env var in CI
           # The real env is gonna be in the VPS
           VITE_GOOGLE_MAPS_API_KEY: "ci-placeholder-key"
-
-
-          
