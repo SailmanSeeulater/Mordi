@@ -31,6 +31,11 @@ location.json
 .vscode/
 .zed/
 
+# Impeccable (uncommitted for now — see design-audit session notes)
+.agents/
+.claude/
+skills-lock.json
+
 # OS
 .DS_Store
 Thumbs.db

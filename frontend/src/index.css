@@ -1,5 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* Gambarino — self-hosted display face. File lives at
+   frontend/public/fonts/gambarino/Gambarino-Regular.woff2 */
+@font-face {
+  font-family: 'Gambarino';
+  src: url('/fonts/gambarino/Gambarino-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
+
+  /* Mordi — cream + red modernist palette.
+     Single source of truth: every page (landing.css included) consumes
+     these, none of them redefine their own copies. */
+  --color-bg: #ece7dd;        /* warm cream page background */
+  --color-surface: #e4ddd0;   /* slightly deeper cream for raised surfaces */
+  --color-text: #1a1714;      /* near-black, warm cast */
+  --color-accent: #d2452a;    /* the accent — brick red */
+  --color-accent-700: #a8341f; /* darker red for hover states */
+  --color-on-accent: #ffffff; /* text/icon color for use on top of --color-accent */
+  --color-signal: #b3241c;    /* errors / missed — a deeper red, distinct from accent */
+  --color-divider: rgba(26, 23, 20, 0.18);
+
+  --font-heading: 'Gambarino', 'Archivo', Georgia, serif;
+  --font-body: 'Archivo', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Paper-grain noise texture (from the mock), applied as a fixed overlay */
+  --mordi-noise: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC43IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiByZXN1bHQ9Im5vaXNlIi8+PGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY1IgdHlwZT0ibGluZWFyIiBzbG9wZT0iMy4yIiBpbnRlcmNlcHQ9Ii0xLjEiLz48ZmVGdW5jRyB0eXBlPSJsaW5lYXIiIHNsb3BlPSIzLjIiIGludGVyY2VwdD0iLTEuMSIvPjxmZUZ1bmNCIHR5cGU9ImxpbmVhciIgc2xvcGU9IjMuMiIgaW50ZXJjZXB0PSItMS4xIi8+PC9mZUNvbXBvbmVudFRyYW5zZmVyPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==');
 }
 
 * { box-sizing: border-box; }
@@ -10,6 +41,18 @@ html, body {
   min-height: 100%;
 }
 
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
 #root {
   min-height: 100svh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
