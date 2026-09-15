@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import {
   GoogleMap,
   useJsApiLoader,
@@ -15,6 +16,8 @@ const mapContainerStyle = {
 const defaultCenter = { lat: 32.7157, lng: -117.1611 };
 
 export default function Locations() {
+  useDocumentTitle('Locations');
+
   const [locations, setLocations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [status, setStatus] = useState("");

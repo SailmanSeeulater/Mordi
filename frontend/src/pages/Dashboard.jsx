@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from "../api/client";
 import {
   LineChart,
@@ -13,6 +14,8 @@ import {
 } from "recharts";
 
 export default function Dashboard() {
+  useDocumentTitle('Dashboard');
+  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [goals, setGoals] = useState([]);

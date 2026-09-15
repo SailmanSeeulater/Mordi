@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Locations from "./pages/Locations";
+import Placeholder from './pages/Placeholder';
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/useAuth";
 
@@ -18,6 +19,9 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<Placeholder title="About" />} />
+        <Route path="/privacy" element={<Placeholder title="Privacy" />} />
+        <Route path="/terms" element={<Placeholder title="Terms" />} />
         <Route
           path="/dashboard"
           element={

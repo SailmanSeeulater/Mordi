@@ -1,18 +1,50 @@
-/* Mordi landing — consumes the app-wide tokens defined once in src/index.css
-   (--color-*, --font-*, --mordi-noise). Nothing here redefines those; only
-   --unit (this page's spacing rhythm) is local, since it isn't shared. */
+/* Mordi landing — self-contained.
+   Reconstructs the design-system layer the Claude Design mock referenced
+   (_ds/modernist/styles.css) as plain CSS. No external token file needed. */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=gambarino@400&display=swap');
 
 :root {
+  color-scheme: light;
+
+  --color-bg: #ece7dd;
+  --color-surface: #e4ddd0;
+  --color-text: #1a1714;
+  --color-accent: #d2452a;
+  --color-accent-700: #a8341f;
+  --color-signal: #b3241c;
+  --color-divider: rgba(26, 23, 20, 0.18);
+
+  --font-heading: 'Gambarino', Georgia, serif;
+  --font-body: 'Archivo', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
   --unit: 28px;
+
+  --mordi-noise: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC43IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiByZXN1bHQ9Im5vaXNlIi8+PGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY1IgdHlwZT0ibGluZWFyIiBzbG9wZT0iMy4yIiBpbnRlcmNlcHQ9Ii0xLjEiLz48ZmVGdW5jRyB0eXBlPSJsaW5lYXIiIHNsb3BlPSIzLjIiIGludGVyY2VwdD0iLTEuMSIvPjxmZUZ1bmNCIHR5cGU9ImxpbmVhciIgc2xvcGU9IjMuMiIgaW50ZXJjZXB0PSItMS4xIi8+PC9mZUNvbXBvbmVudFRyYW5zZmVyPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==');
 }
 
+* { box-sizing: border-box; }
+
 html { scroll-behavior: smooth; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
 
 body.mordi-landing {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 /* ── Shell ─────────────────────────────────────────────── */
@@ -82,12 +114,12 @@ body.mordi-landing {
 .btn-primary {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: var(--color-on-accent);
+  color: var(--color-bg);
 }
 .btn-primary:hover {
   background: var(--color-accent-700);
   border-color: var(--color-accent-700);
-  color: var(--color-on-accent);
+  color: var(--color-bg);
 }
 
 .btn-ghost {
@@ -107,7 +139,7 @@ body.mordi-landing {
 }
 .btn-ghost--invert:hover {
   background: var(--color-bg);
-  color: var(--color-accent-700);
+  color: var(--color-accent);
 }
 
 .btn-text {
@@ -304,7 +336,7 @@ body.mordi-landing {
   font-size: 15.5px;
   line-height: 28px;
   margin: 0;
-  max-width: 56ch;
+  max-width: 72ch;
   color: color-mix(in srgb, var(--color-text) 78%, transparent);
 }
 
@@ -326,14 +358,16 @@ body.mordi-landing {
   max-width: 24ch;
 }
 .mordi-features__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2px;
-  background: var(--color-divider);
-  border: 2px solid var(--color-divider);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
 }
 .mordi-feature {
+  flex: 1 1 260px;
+  max-width: 380px;
   background: var(--color-bg);
+  border: 2px solid var(--color-divider);
   padding: var(--unit);
 }
 .mordi-feature__icon {
@@ -551,7 +585,7 @@ body.mordi-landing {
   font-size: 13px;
   color: var(--color-signal);
   background: color-mix(in srgb, var(--color-signal) 8%, transparent);
-  border-radius: 2px;
+  border-left: 3px solid var(--color-signal);
   padding: 9px 11px;
   margin-bottom: 16px;
 }

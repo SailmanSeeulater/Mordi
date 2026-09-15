@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from '../api/client';
 import './landing.css';
 
@@ -107,6 +108,8 @@ function useScrollReveal() {
 }
 
 export default function Landing() {
+  useDocumentTitle(); 
+
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState('signin'); // 'signin' | 'register'
   const [error, setError] = useState('');
