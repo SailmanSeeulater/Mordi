@@ -1,183 +1,10 @@
-/* Dashboard — consumes the global --color-* / --font-* tokens from src/index.css.
-   Classes are dash- prefixed because landing.css stays loaded after navigating
-   here and defines generic names like .btn. */
+/* Dashboard-only pieces. Shell, panels, buttons and forms live in components/app.css. */
 
-.dash {
-  /* The prototype's 58-60% muted text measured 4.1:1 on cream; 70% clears AA. */
-  --dash-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
+.dash-week__scroll {
   --dash-label-w: 220px;
-
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-}
-
-.dash-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-/* ── Icon rail ─────────────────────────────── */
-
-.dash-rail {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 18px 0;
-  border-right: 2px solid var(--color-divider);
-}
-
-.dash-rail__mark {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  line-height: 1;
-  color: var(--color-accent);
-  text-decoration: none;
-  margin-bottom: 20px;
-}
-
-.dash-rail__link {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 2px solid transparent;
-  color: var(--color-text);
-}
-.dash-rail__link:hover { border-color: var(--color-divider); }
-.dash-rail__link[aria-current="page"] {
-  background: var(--color-text);
-  color: var(--color-bg);
-}
-
-.dash-rail__spacer { flex: 1; }
-
-/* ── Top bar ───────────────────────────────── */
-
-.dash-topbar {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 14px 24px;
-  border-bottom: 2px solid var(--color-divider);
-}
-
-.dash-tabs { display: flex; gap: 2px; }
-
-.dash-tab {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border: 2px solid transparent;
-  color: var(--color-text);
-  text-decoration: none;
-}
-.dash-tab:hover { border-color: var(--color-divider); }
-.dash-tab[aria-current="page"] {
-  background: var(--color-text);
-  color: var(--color-bg);
-}
-
-.dash-topbar__spacer { flex: 1; }
-
-.dash-whoami {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-.dash-avatar {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.dash-main {
-  display: grid;
-  gap: 20px;
-  padding: 24px;
-  min-width: 0;
-}
-
-/* ── Panels ────────────────────────────────── */
-
-.dash-panel {
-  border: 2px solid var(--color-divider);
-  background: var(--color-bg);
-  min-width: 0;
-}
-
-.dash-panel__head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  padding: 16px 20px;
-  border-bottom: 2px solid var(--color-divider);
-}
-
-.dash-panel__title {
-  font-family: var(--font-heading);
-  font-weight: 400;
-  font-size: 22px;
-  margin: 0;
-}
-
-.dash-panel__meta {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--dash-muted);
-}
-
-.dash-panel__spacer { flex: 1; }
-
-.dash-linkbtn {
-  background: none;
-  border: none;
-  padding: 4px 0;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent-700);
-  cursor: pointer;
-}
-.dash-linkbtn:hover { text-decoration: underline; }
-
-.dash-empty {
-  margin: 0;
-  padding: 28px 20px;
-  font-size: 14px;
-  color: var(--dash-muted);
-}
-.dash-empty p { margin: 0; }
-.dash-empty .dash-btn { margin-top: 14px; }
-
-.dash-status {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 20px;
-  border: 2px solid var(--color-divider);
-  font-size: 14px;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-text) 35%, var(--color-bg)) transparent;
 }
 
 /* ── Week grid ─────────────────────────────── */
@@ -195,7 +22,7 @@
   text-align: center;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--dash-muted);
+  color: var(--color-text-muted);
   border-left: 1px solid var(--color-divider);
 }
 .dash-week__day span {
@@ -203,6 +30,7 @@
   margin-top: 2px;
   font-size: 15px;
   color: var(--color-text);
+  font-variant-numeric: tabular-nums;
 }
 .dash-week__day--today { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg)); }
 .dash-week__day--today span {
@@ -227,13 +55,19 @@
 .dash-goal__name {
   font-size: 14.5px;
   font-weight: 600;
+  line-height: 1.3;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 .dash-goal__cat {
   margin-top: 2px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--dash-muted);
+  color: var(--color-text-muted);
 }
 
 .dash-slot { border-left: 1px solid var(--color-divider); }
@@ -278,12 +112,6 @@
   gap: 20px;
 }
 
-.dash-list {
-  list-style: none;
-  margin: 0;
-  padding: 8px 0;
-}
-
 .dash-entry {
   padding: 13px 20px;
   border-bottom: 1px solid var(--color-divider);
@@ -298,7 +126,7 @@
 .dash-entry__date {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--dash-muted);
+  color: var(--color-text-muted);
 }
 .dash-entry__spacer { flex: 1; }
 .dash-entry__mood {
@@ -309,6 +137,7 @@
 .dash-entry__note {
   margin: 3px 0 0;
   font-size: 14px;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
@@ -325,10 +154,15 @@
   gap: 12px;
   font-size: 14px;
 }
+.dash-prog__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .dash-prog__count {
   font-family: var(--font-mono);
   font-size: 12px;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .dash-prog__bar {
   height: 8px;
@@ -347,13 +181,14 @@
   font-size: 64px;
   line-height: 1;
   margin: 0 0 4px -0.04em;
+  font-variant-numeric: tabular-nums;
 }
 .dash-bignum small { font-size: 22px; }
 
 .dash-report__label {
   margin: 0;
   font-size: 14px;
-  color: var(--dash-muted);
+  color: var(--color-text-muted);
 }
 
 .dash-report__grid {
@@ -372,134 +207,26 @@
 .dash-stat__k {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--dash-muted);
+  color: var(--color-text-muted);
 }
 .dash-stat__v {
   margin: 2px 0 0;
   font-size: 19px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Buttons ───────────────────────────────── */
-
-.dash-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 11px 20px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  border: 2px solid var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  cursor: pointer;
-}
-.dash-btn:hover:not(:disabled) {
-  background: var(--color-accent-700);
-  border-color: var(--color-accent-700);
-}
-.dash-btn:disabled { opacity: 0.6; cursor: default; }
-
-.dash-btn--block {
-  width: 100%;
-  margin-top: 18px;
-}
-
-.dash-btn--ghost {
-  background: transparent;
-  border-color: var(--color-divider);
-  color: var(--color-text);
-}
-.dash-btn--ghost:hover:not(:disabled) {
-  background: transparent;
-  border-color: var(--color-text);
-}
-
-/* ── Modals ────────────────────────────────── */
-
-.dash-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: color-mix(in srgb, var(--color-text) 55%, transparent);
-}
-
-.dash-dialog {
-  width: 100%;
-  max-width: 440px;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  background: var(--color-bg);
-  border: 2px solid var(--color-divider);
-}
-
-.dash-dialog .dash-panel__head { align-items: center; }
-
-.dash-form { padding: 20px; }
-
-.dash-field { margin-bottom: 16px; }
-.dash-field label {
-  display: block;
-  margin-bottom: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dash-muted);
-}
-.dash-field input,
-.dash-field select {
-  width: 100%;
-  padding: 10px 12px;
-  font-family: var(--font-body);
-  font-size: 15px;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 2px solid var(--color-divider);
-  border-radius: 0;
-}
-.dash-field input:focus,
-.dash-field select:focus { border-color: var(--color-text); }
-
-.dash-check {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-.dash-check input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-accent);
-}
-
-.dash-form__error {
-  margin: 0 0 16px;
-  padding: 9px 11px;
-  font-size: 13px;
-  color: var(--color-signal);
-  background: color-mix(in srgb, var(--color-signal) 8%, var(--color-bg));
-}
-
-.dash-form__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+.dash-report__cta { margin-top: 18px; }
 
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 900px) {
-  .dash-week__scroll { overflow-x: auto; }
+  .dash-week__scroll {
+    --dash-label-w: 170px;
+    overflow-x: auto;
+  }
   .dash-week__days,
   .dash-week__row { min-width: 720px; }
-  .dash { --dash-label-w: 170px; }
 
   /* Keep goal names in view while the days scroll sideways. */
   .dash-goal,
@@ -510,7 +237,6 @@
     background: var(--color-bg);
     border-right: 1px solid var(--color-divider);
   }
-  /* Fill the full row height so segments can't peek above or below the label. */
   .dash-goal {
     align-self: stretch;
     display: flex;
@@ -520,12 +246,8 @@
 }
 
 @media (max-width: 640px) {
-  .dash { --dash-label-w: 128px; }
+  .dash-week__scroll { --dash-label-w: 128px; }
   .dash-goal { padding: 10px 12px; }
-  .dash-tabs { display: none; }
-  .dash-topbar { padding: 12px 16px; }
-  .dash-main { padding: 16px; gap: 16px; }
-  .dash-cards { grid-template-columns: minmax(0, 1fr); }
-  .dash-rail__link { width: 44px; height: 44px; }
-  .dash-whoami__name { display: none; }
+  .dash-goal__name { font-size: 13.5px; }
+  .dash-cards { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 }

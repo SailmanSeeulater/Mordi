@@ -1,0 +1,65 @@
+/* Standalone sign-in / sign-up pages. Panel, field and button styles come from app.css. */
+
+.auth {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.auth__top {
+  padding: 18px clamp(20px, 5vw, 48px);
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.auth__brand {
+  display: inline-block;
+  padding: 6px 0;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.auth__main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px 72px;
+}
+
+.auth__panel {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth__title { font-size: 30px; }
+
+.auth__panel .app-form { padding: 24px 24px 8px; }
+
+.auth__foot {
+  margin: 0;
+  padding: 16px 24px 22px;
+  border-top: 1px solid var(--color-divider);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.auth__foot a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .auth__main {
+    align-items: flex-start;
+    padding: 28px 16px 48px;
+  }
+  .auth__panel .app-form { padding: 20px 20px 4px; }
+  .auth__foot { padding: 14px 20px 20px; }
+}

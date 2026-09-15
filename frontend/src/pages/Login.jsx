@@ -1,122 +1,76 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
+import AuthPage from "../components/AuthPage";
 
 export default function Login() {
+  useDocumentTitle("Sign in");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSubmitting(true);
     try {
       const res = await client.post("/api/auth/login", { email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Login failed:", err);
+    } catch {
       setError("Invalid email or password");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Mordi</h1>
-        <p style={styles.subtitle}>Help you Progress</p>
-        <form onSubmit={handleSubmit}>
+    <AuthPage
+      title="Sign in"
+      footer={
+        <>
+          New to Mordi? <Link to="/register">Create an account</Link>
+        </>
+      }
+    >
+      <form className="app-form" onSubmit={handleSubmit}>
+        <div className="app-field">
+          <label htmlFor="login-email">Email</label>
           <input
-            style={styles.input}
+            id="login-email"
             type="email"
-            placeholder="Email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+        </div>
+        <div className="app-field">
+          <label htmlFor="login-password">Password</label>
           <input
-            style={styles.input}
+            id="login-password"
             type="password"
-            placeholder="Password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <p style={styles.error}>{error}</p>}
-          <button style={styles.button} type="submit">
-            Login
-          </button>
-        </form>
-        <p style={styles.link}>
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
-      </div>
-    </div>
+        </div>
+        {error && (
+          <p className="app-form__error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="app-btn app-btn--block" type="submit" disabled={submitting}>
+          {submitting ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </AuthPage>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "#0f0f0f",
-  },
-  card: {
-    background: "#1a1a1a",
-    padding: "2.5rem",
-    borderRadius: "12px",
-    width: "100%",
-    maxWidth: "400px",
-    border: "1px solid #2a2a2a",
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: "2rem",
-    fontWeight: "700",
-    textAlign: "center",
-    margin: "0 0 0.5rem",
-  },
-  subtitle: {
-    color: "#888",
-    textAlign: "center",
-    marginBottom: "2rem",
-  },
-  input: {
-    width: "100%",
-    padding: "0.75rem 1rem",
-    marginBottom: "1rem",
-    background: "#2a2a2a",
-    border: "1px solid #3a3a3a",
-    borderRadius: "8px",
-    color: "#fff",
-    fontSize: "1rem",
-    boxSizing: "border-box",
-  },
-  button: {
-    width: "100%",
-    padding: "0.75rem",
-    background: "#6c63ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  error: {
-    color: "#ff6b6b",
-    marginBottom: "1rem",
-    fontSize: "0.9rem",
-  },
-  link: {
-    color: "#888",
-    textAlign: "center",
-    marginTop: "1.5rem",
-    fontSize: "0.9rem",
-  },
-};

@@ -1,0 +1,339 @@
+/* Signed-in app UI: shell, panels, buttons, forms, dialogs.
+   Consumes the global tokens in src/index.css. Classes are app- prefixed
+   because landing.css stays loaded after navigation and owns names like .btn. */
+
+.app-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Shell ─────────────────────────────────── */
+
+.app {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.app-body { min-width: 0; }
+
+.app-rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 0 18px;
+  border-right: 2px solid var(--color-divider);
+}
+
+.app-rail__mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.app-rail__link {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 2px solid transparent;
+  color: var(--color-text);
+}
+.app-rail__link:hover { border-color: var(--color-divider); }
+.app-rail__link[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.app-rail__spacer { flex: 1; }
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 24px;
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.app-tabs { display: flex; gap: 2px; }
+
+.app-tab {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  color: var(--color-text);
+  text-decoration: none;
+}
+.app-tab:hover { border-color: var(--color-divider); }
+.app-tab[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.app-topbar__spacer { flex: 1; }
+
+.app-whoami {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.app-avatar {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-main {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  min-width: 0;
+}
+
+/* ── Panels ────────────────────────────────── */
+
+.app-panel {
+  border: 2px solid var(--color-divider);
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.app-panel__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.app-panel__title {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.app-panel__meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-panel__spacer { flex: 1; }
+
+.app-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.app-empty {
+  margin: 0;
+  padding: 28px 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.app-empty p { margin: 0; }
+.app-empty .app-btn { margin-top: 14px; }
+
+.app-status {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border: 2px solid var(--color-divider);
+  font-size: 14px;
+}
+
+/* ── Buttons ───────────────────────────────── */
+
+.app-linkbtn {
+  /* 44px tap target; the negative margin keeps it from growing the row it sits in. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  margin: -13px 0;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent-700);
+  cursor: pointer;
+  text-underline-offset: 3px;
+}
+.app-linkbtn:hover { text-decoration: underline; }
+
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 20px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 2px solid var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  cursor: pointer;
+}
+.app-btn:hover:not(:disabled) {
+  background: var(--color-accent-700);
+  border-color: var(--color-accent-700);
+}
+.app-btn:disabled { opacity: 0.6; cursor: default; }
+
+.app-btn--block { width: 100%; }
+
+.app-btn--ghost {
+  background: transparent;
+  border-color: var(--color-divider);
+  color: var(--color-text);
+}
+.app-btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  border-color: var(--color-text);
+}
+
+/* ── Forms ─────────────────────────────────── */
+
+.app-form { padding: 20px; }
+
+.app-field { margin-bottom: 16px; }
+.app-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.app-field input,
+.app-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 2px solid var(--color-divider);
+  border-radius: 0;
+}
+.app-field input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+.app-field input:focus,
+.app-field select:focus { border-color: var(--color-text); }
+
+.app-field__hint {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+.app-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.app-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
+.app-form__error {
+  margin: 0 0 16px;
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-signal);
+  background: color-mix(in srgb, var(--color-signal) 8%, var(--color-bg));
+}
+
+.app-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Dialogs ───────────────────────────────── */
+
+.app-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.app-dialog {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-bg);
+  border: 2px solid var(--color-divider);
+  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+.app-dialog:focus { outline: none; }
+.app-dialog .app-panel__head { align-items: center; }
+
+/* ── Responsive ────────────────────────────── */
+
+@media (max-width: 640px) {
+  .app-tabs { display: none; }
+  .app-topbar { padding: 12px 16px; }
+  .app-main { padding: 16px; gap: 16px; }
+  .app-rail__link { width: 44px; height: 44px; }
+  .app-whoami__name { display: none; }
+  .app-form { padding: 16px; }
+  .app-form__actions .app-btn { flex: 1; }
+}

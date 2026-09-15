@@ -1,227 +1,290 @@
-import { useState, useEffect } from "react";
-import useDocumentTitle from '../hooks/useDocumentTitle';
-import {
-  GoogleMap,
-  useJsApiLoader,
-  Marker,
-  InfoWindow,
-} from "@react-google-maps/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from "@react-google-maps/api";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
+import AppShell from "../components/AppShell";
+import "./locations.css";
 
-const mapContainerStyle = {
-  width: "100%",
-  height: "400px",
-  borderRadius: "12px",
+const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const DEFAULT_CENTER = { lat: 32.7157, lng: -117.1611 };
+const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
+
+// Google Maps styles only accept hex, so these mirror the tokens in index.css.
+const PALETTE = {
+  bg: "#ece7dd",
+  surface: "#e4ddd0",
+  text: "#1a1714",
+  muted: "#595550",
+  accent: "#d2452a",
 };
-const defaultCenter = { lat: 32.7157, lng: -117.1611 };
+
+const MAP_OPTIONS = {
+  disableDefaultUI: true,
+  zoomControl: true,
+  clickableIcons: false,
+  styles: [
+    { elementType: "geometry", stylers: [{ color: PALETTE.bg }] },
+    { elementType: "labels.text.fill", stylers: [{ color: PALETTE.muted }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: PALETTE.bg }] },
+    { featureType: "poi", stylers: [{ visibility: "off" }] },
+    { featureType: "transit", stylers: [{ visibility: "off" }] },
+    { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: PALETTE.surface }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#f6f2ea" }] },
+    { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#d6cdbd" }] },
+    { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#cbd1cb" }] },
+    { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#b8ae9f" }] },
+  ],
+};
+
+const dateFormat = new Intl.DateTimeFormat(undefined, {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+});
+
+function formatDay(recordedAt) {
+  return recordedAt ? dateFormat.format(new Date(recordedAt)) : "";
+}
+
+function reverseGeocode(lat, lng) {
+  return fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${MAPS_KEY}`,
+  )
+    .then((res) => res.json())
+    .then((data) => data.results?.[0]?.formatted_address || "Unknown location")
+    .catch(() => "Unknown location");
+}
+
+function getPosition() {
+  return new Promise((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+    }),
+  );
+}
 
 export default function Locations() {
-  useDocumentTitle('Locations');
+  useDocumentTitle("Locations");
 
   const [locations, setLocations] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [status, setStatus] = useState("");
+  const [loadState, setLoadState] = useState("loading");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [selectedId, setSelectedId] = useState(null);
+  const [capturing, setCapturing] = useState(false);
+  const [status, setStatus] = useState({ tone: "info", text: "" });
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-  });
-
-  const fetchLocations = async () => {
-    const res = await client.get("/api/locations");
-    setLocations(res.data);
-  };
+  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: MAPS_KEY });
 
   useEffect(() => {
-    // Intentional mount-only fetch. This is the standard "sync with an
-    // external system (the API) on mount" case the effect rule exists for;
-    // it isn't the cascading-render pattern the lint rule is guarding against.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchLocations();
-  }, []);
+    let cancelled = false;
+    client
+      .get("/api/locations")
+      .then((res) => {
+        if (cancelled) return;
+        setLocations(res.data);
+        setLoadState("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setLoadState("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
-  const captureLocation = () => {
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  const places = useMemo(
+    () => [...locations].sort((a, b) => (b.recordedAt ?? "").localeCompare(a.recordedAt ?? "")),
+    [locations],
+  );
+  const selected = places.find((p) => p.id === selectedId) ?? null;
+  // Stable object so the map only re-centers when the focused place changes.
+  const center = useMemo(() => {
+    const focus = places.find((p) => p.id === selectedId) ?? places[0];
+    return focus ? { lat: focus.latitude, lng: focus.longitude } : DEFAULT_CENTER;
+  }, [places, selectedId]);
+
+  const markerIcon = useMemo(
+    () =>
+      isLoaded
+        ? {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillColor: PALETTE.accent,
+            fillOpacity: 1,
+            strokeColor: PALETTE.text,
+            strokeWeight: 2,
+          }
+        : undefined,
+    [isLoaded],
+  );
+
+  const captureLocation = async () => {
     if (!navigator.geolocation) {
-      setStatus("Geolocation not supported by your browser");
+      setStatus({ tone: "error", text: "This browser can't share your location." });
       return;
     }
-    setStatus("Capturing location...");
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const placeName = await reverseGeocode(latitude, longitude);
-        await client.post("/api/locations", {
-          latitude,
-          longitude,
-          placeName,
-        });
-        setStatus(`Location captured: ${placeName}`);
-        fetchLocations();
-      },
-      () => setStatus("Unable to retrieve your location"),
-    );
-  };
+    setCapturing(true);
+    setStatus({ tone: "info", text: "Finding your location…" });
 
-  const reverseGeocode = async (lat, lng) => {
+    let position;
     try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`,
-      );
-      const data = await res.json();
-      return data.results[0]?.formatted_address || "Unknown location";
+      position = await getPosition();
+    } catch (err) {
+      setCapturing(false);
+      setStatus({
+        tone: "error",
+        text:
+          err?.code === 1
+            ? "Location access is blocked. Allow it in your browser's site settings, then try again."
+            : "Couldn't get your location. Check that location services are on, then try again.",
+      });
+      return;
+    }
+
+    const { latitude, longitude } = position.coords;
+    try {
+      const placeName = await reverseGeocode(latitude, longitude);
+      const res = await client.post("/api/locations", { latitude, longitude, placeName });
+      setStatus({ tone: "info", text: `Saved ${placeName}.` });
+      setSelectedId(res.data?.id ?? null);
+      reload();
     } catch {
-      return "Unknown location";
+      setStatus({ tone: "error", text: "Couldn't save this place. Check your connection and try again." });
+    } finally {
+      setCapturing(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.logo}>Mordi</h1>
-      </div>
-
-      <div style={styles.content}>
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Location Tracker</h2>
-          <button style={styles.button} onClick={captureLocation}>
-            📍 Capture My Location
-          </button>
-          {status && <p style={styles.status}>{status}</p>}
-        </div>
-
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Location Map</h2>
-          {isLoaded ? (
-            <GoogleMap
-              mapContainerStyle={mapContainerStyle}
-              center={
-                locations.length > 0
-                  ? { lat: locations[0].latitude, lng: locations[0].longitude }
-                  : defaultCenter
-              }
-              zoom={12}
-              options={{ styles: darkMapStyle }}
+    <AppShell>
+      <div className="loc">
+        <section className="app-panel loc__map-panel" aria-labelledby="loc-title">
+          <div className="app-panel__head">
+            <h1 id="loc-title" className="app-panel__title">
+              Places
+            </h1>
+            {loadState === "ready" && (
+              <span className="app-panel__meta">{places.length} saved</span>
+            )}
+            <div className="app-panel__spacer" />
+            <button
+              type="button"
+              className="app-btn"
+              onClick={captureLocation}
+              disabled={capturing}
             >
-              {locations.map((loc) => (
-                <Marker
-                  key={loc.id}
-                  position={{ lat: loc.latitude, lng: loc.longitude }}
-                  onClick={() => setSelected(loc)}
-                />
-              ))}
-              {selected && (
-                <InfoWindow
-                  position={{ lat: selected.latitude, lng: selected.longitude }}
-                  onCloseClick={() => setSelected(null)}
-                >
-                  <div style={{ color: "#000" }}>
-                    <p>
-                      <strong>{selected.placeName}</strong>
-                    </p>
-                    <p>{new Date(selected.recordedAt).toLocaleString()}</p>
-                  </div>
-                </InfoWindow>
-              )}
-            </GoogleMap>
-          ) : (
-            <p style={styles.status}>Loading map...</p>
-          )}
-        </div>
-
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>Location History</h2>
-          <div style={styles.list}>
-            {locations.map((loc) => (
-              <div key={loc.id} style={styles.listItem}>
-                <div>
-                  <p style={styles.placeName}>{loc.placeName || "Unknown"}</p>
-                  <p style={styles.coords}>
-                    {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
-                  </p>
-                </div>
-                <span style={styles.time}>
-                  {new Date(loc.recordedAt).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
+              {capturing ? "Finding you…" : "Save my location"}
+            </button>
           </div>
-        </div>
+
+          <div role="status">
+            {status.text && (
+              <p className={"loc__status" + (status.tone === "error" ? " loc__status--error" : "")}>
+                {status.text}
+              </p>
+            )}
+          </div>
+
+          <div className="loc__map">
+            {loadError ? (
+              <p className="app-empty">The map couldn&rsquo;t load. Your saved places are still listed.</p>
+            ) : !isLoaded ? (
+              <p className="app-empty">Loading map…</p>
+            ) : (
+              <GoogleMap
+                mapContainerStyle={MAP_CONTAINER_STYLE}
+                center={center}
+                zoom={12}
+                options={MAP_OPTIONS}
+              >
+                {places.map((loc) => (
+                  <MarkerF
+                    key={loc.id}
+                    position={{ lat: loc.latitude, lng: loc.longitude }}
+                    icon={markerIcon}
+                    title={loc.placeName || "Saved place"}
+                    onClick={() => setSelectedId(loc.id)}
+                  />
+                ))}
+                {selected && (
+                  <InfoWindowF
+                    position={{ lat: selected.latitude, lng: selected.longitude }}
+                    onCloseClick={() => setSelectedId(null)}
+                  >
+                    <div className="loc__info">
+                      <strong>{selected.placeName || "Unknown location"}</strong>
+                      <span>{formatDay(selected.recordedAt)}</span>
+                    </div>
+                  </InfoWindowF>
+                )}
+              </GoogleMap>
+            )}
+          </div>
+        </section>
+
+        <section className="app-panel loc__history" aria-labelledby="loc-history-title">
+          <div className="app-panel__head">
+            <h2 id="loc-history-title" className="app-panel__title">
+              History
+            </h2>
+          </div>
+
+          {loadState === "loading" && (
+            <p className="app-empty" role="status">
+              Loading your places…
+            </p>
+          )}
+
+          {loadState === "error" && (
+            <div className="app-empty" role="alert">
+              <p>Couldn&rsquo;t load your places.</p>
+              <button
+                type="button"
+                className="app-btn app-btn--ghost"
+                onClick={() => {
+                  setLoadState("loading");
+                  reload();
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {loadState === "ready" && places.length === 0 && (
+            <p className="app-empty">
+              No places saved yet. Save your location and it will show up here and on the map.
+            </p>
+          )}
+
+          {loadState === "ready" && places.length > 0 && (
+            <ul className="app-list">
+              {places.map((loc) => (
+                <li key={loc.id}>
+                  <button
+                    type="button"
+                    className="loc__place"
+                    aria-current={loc.id === selectedId ? "true" : undefined}
+                    onClick={() => setSelectedId(loc.id)}
+                  >
+                    <span className="loc__place-top">
+                      <span className="loc__place-name">{loc.placeName || "Unknown location"}</span>
+                      <span className="loc__place-date">{formatDay(loc.recordedAt)}</span>
+                    </span>
+                    <span className="loc__coords">
+                      {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-    </div>
+    </AppShell>
   );
 }
-
-const darkMapStyle = [
-  { elementType: "geometry", stylers: [{ color: "#212121" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#484848" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#000000" }],
-  },
-];
-
-const styles = {
-  container: { minHeight: "100vh", background: "#0f0f0f" },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "1.5rem 2rem",
-    borderBottom: "1px solid #2a2a2a",
-    background: "#1a1a1a",
-  },
-  logo: { color: "#6c63ff", margin: 0, fontSize: "1.5rem" },
-  content: {
-    padding: "2rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-  card: {
-    background: "#1a1a1a",
-    border: "1px solid #2a2a2a",
-    borderRadius: "12px",
-    padding: "1.5rem",
-  },
-  cardTitle: {
-    color: "#fff",
-    fontSize: "1.1rem",
-    fontWeight: "600",
-    marginTop: 0,
-    marginBottom: "1.5rem",
-  },
-  button: {
-    padding: "0.75rem 1.5rem",
-    background: "#6c63ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  status: { color: "#888", marginTop: "1rem", fontSize: "0.9rem" },
-  list: { display: "flex", flexDirection: "column", gap: "0.5rem" },
-  listItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0.75rem",
-    background: "#2a2a2a",
-    borderRadius: "8px",
-  },
-  placeName: { color: "#fff", margin: 0, fontSize: "0.9rem" },
-  coords: {
-    color: "#888",
-    margin: 0,
-    fontSize: "0.75rem",
-    marginTop: "0.25rem",
-  },
-  time: { color: "#6c63ff", fontSize: "0.8rem" },
-};

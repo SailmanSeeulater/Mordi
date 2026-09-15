@@ -37,13 +37,13 @@ function renderLogin() {
 }
 
 function fillAndSubmit({ email = "user@example.com", password = "correcthorse" } = {}) {
-  fireEvent.change(screen.getByPlaceholderText("Email"), {
+  fireEvent.change(screen.getByLabelText("Email"), {
     target: { value: email },
   });
-  fireEvent.change(screen.getByPlaceholderText("Password"), {
+  fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: password },
   });
-  fireEvent.click(screen.getByRole("button", { name: /login/i }));
+  fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 }
 
 // --- Tests ---------------------------------------------------------------
@@ -58,21 +58,21 @@ describe("Login", () => {
 
   it("renders email, password fields, and submit button", () => {
     renderLogin();
-    expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
   it("renders a link to the register page", () => {
     renderLogin();
-    const link = screen.getByRole("link", { name: /register/i });
+    const link = screen.getByRole("link", { name: /create an account/i });
     expect(link).toHaveAttribute("href", "/register");
   });
 
   it("updates input values as the user types", () => {
     renderLogin();
-    const emailInput = screen.getByPlaceholderText("Email");
-    const passwordInput = screen.getByPlaceholderText("Password");
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
 
     fireEvent.change(emailInput, { target: { value: "test@example.com" } });
     fireEvent.change(passwordInput, { target: { value: "hunter2" } });
@@ -149,13 +149,7 @@ describe("Login", () => {
     });
   });
 
-  // KNOWN GAP: Login.jsx has no loading/disabled state during submit.
-  // The button stays clickable while the request is in flight, so a slow
-  // network or an impatient double-click can fire client.post() twice.
-  // This test currently FAILS against the component as written — it's
-  // left in (skipped) as a marker for when the double-submit guard is
-  // added, rather than silently assuming protection that doesn't exist.
-  it.skip("disables the submit button while the request is in flight", async () => {
+  it("disables the submit button while the request is in flight", async () => {
     let resolveRequest;
     client.post.mockReturnValueOnce(
       new Promise((resolve) => {
@@ -164,17 +158,16 @@ describe("Login", () => {
     );
 
     renderLogin();
-    fireEvent.change(screen.getByPlaceholderText("Email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "correcthorse" },
     });
 
-    const button = screen.getByRole("button", { name: /login/i });
+    const button = screen.getByRole("button", { name: /sign in/i });
     fireEvent.click(button);
 
-    // Expected once a loading guard exists:
     expect(button).toBeDisabled();
 
     resolveRequest({

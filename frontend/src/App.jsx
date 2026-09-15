@@ -5,6 +5,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Locations from "./pages/Locations";
 import Placeholder from './pages/Placeholder';
+import AppShell from './components/AppShell';
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/useAuth";
 
@@ -30,30 +31,23 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/goals"
-          element={
-            <PrivateRoute>
-              <Placeholder title="Goals" />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/reports"
-          element={
-            <PrivateRoute>
-              <Placeholder title="Weekly report" />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <PrivateRoute>
-              <Placeholder title="Settings" />
-            </PrivateRoute>
-          }
-        />
+        {[
+          ["/goals", "Goals"],
+          ["/reports", "Weekly report"],
+          ["/settings", "Settings"],
+        ].map(([path, title]) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <PrivateRoute>
+                <AppShell>
+                  <Placeholder title={title} backTo="/dashboard" backLabel="Back to dashboard" />
+                </AppShell>
+              </PrivateRoute>
+            }
+          />
+        ))}
         <Route
           path="/locations"
           element={

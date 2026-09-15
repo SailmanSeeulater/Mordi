@@ -41,13 +41,13 @@ function fillAndSubmit({
   email = "user@example.com",
   password = "correcthorse",
 } = {}) {
-  fireEvent.change(screen.getByPlaceholderText("Full Name"), {
+  fireEvent.change(screen.getByLabelText("Name"), {
     target: { value: name },
   });
-  fireEvent.change(screen.getByPlaceholderText("Email"), {
+  fireEvent.change(screen.getByLabelText("Email"), {
     target: { value: email },
   });
-  fireEvent.change(screen.getByPlaceholderText("Password"), {
+  fireEvent.change(screen.getByLabelText("Password"), {
     target: { value: password },
   });
   fireEvent.click(screen.getByRole("button", { name: /create account/i }));
@@ -65,9 +65,9 @@ describe("Register", () => {
 
   it("renders name, email, password fields, and submit button", () => {
     renderRegister();
-    expect(screen.getByPlaceholderText("Full Name")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Email")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /create account/i })
     ).toBeInTheDocument();
@@ -75,15 +75,15 @@ describe("Register", () => {
 
   it("renders a link to the login page", () => {
     renderRegister();
-    const link = screen.getByRole("link", { name: /login/i });
+    const link = screen.getByRole("link", { name: /sign in/i });
     expect(link).toHaveAttribute("href", "/login");
   });
 
   it("updates input values as the user types", () => {
     renderRegister();
-    const nameInput = screen.getByPlaceholderText("Full Name");
-    const emailInput = screen.getByPlaceholderText("Email");
-    const passwordInput = screen.getByPlaceholderText("Password");
+    const nameInput = screen.getByLabelText("Name");
+    const emailInput = screen.getByLabelText("Email");
+    const passwordInput = screen.getByLabelText("Password");
 
     fireEvent.change(nameInput, { target: { value: "Jane Doe" } });
     fireEvent.change(emailInput, { target: { value: "jane@example.com" } });
@@ -155,10 +155,7 @@ describe("Register", () => {
     });
   });
 
-  // KNOWN GAP: Register.jsx has no loading/disabled state during submit.
-  // Same issue as Login.jsx — see the matching skipped test there.
-  // Left in (skipped) as a marker for when the double-submit guard lands.
-  it.skip("disables the submit button while the request is in flight", async () => {
+  it("disables the submit button while the request is in flight", async () => {
     let resolveRequest;
     client.post.mockReturnValueOnce(
       new Promise((resolve) => {
@@ -167,20 +164,19 @@ describe("Register", () => {
     );
 
     renderRegister();
-    fireEvent.change(screen.getByPlaceholderText("Full Name"), {
+    fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Test User" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Email"), {
+    fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "user@example.com" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Password"), {
+    fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "correcthorse" },
     });
 
     const button = screen.getByRole("button", { name: /create account/i });
     fireEvent.click(button);
 
-    // Expected once a loading guard exists:
     expect(button).toBeDisabled();
 
     resolveRequest({

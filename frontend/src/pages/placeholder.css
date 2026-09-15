@@ -11,6 +11,13 @@
   font-family: var(--font-body);
 }
 
+/* Inside the signed-in shell the rail and top bar already frame the page. */
+.app-main .wip {
+  min-height: 0;
+  justify-content: flex-start;
+  padding: 56px 8px;
+}
+
 .wip__inner {
   max-width: 52ch;
 }

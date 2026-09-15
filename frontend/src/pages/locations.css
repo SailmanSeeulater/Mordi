@@ -1,0 +1,98 @@
+/* Locations page. Shell, panels and buttons come from components/app.css. */
+
+.loc {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.loc__map-panel .app-panel__head { align-items: center; }
+
+.loc__status {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+.loc__status--error {
+  color: var(--color-signal);
+  background: color-mix(in srgb, var(--color-signal) 8%, var(--color-bg));
+}
+
+.loc__map {
+  height: clamp(320px, 62vh, 620px);
+  background: var(--color-surface);
+}
+
+.loc__info {
+  display: grid;
+  gap: 2px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text);
+}
+.loc__info strong { font-weight: 600; }
+.loc__info span { color: var(--color-text-muted); }
+
+.loc__history {
+  max-height: calc(62vh + 64px);
+  display: flex;
+  flex-direction: column;
+}
+.loc__history .app-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.loc__place {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  padding: 12px 20px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+.loc__place:hover { background: color-mix(in srgb, var(--color-text) 4%, var(--color-bg)); }
+.loc__place[aria-current="true"] {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+}
+li:last-child > .loc__place { border-bottom: 0; }
+
+.loc__place-top {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.loc__place-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.loc__place-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.loc__coords {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .loc { grid-template-columns: minmax(0, 1fr); }
+  .loc__map { height: clamp(280px, 50vh, 460px); }
+  .loc__history { max-height: none; }
+}

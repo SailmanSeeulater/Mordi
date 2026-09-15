@@ -24,6 +24,8 @@
   --color-on-accent: #ffffff; /* text/icon color for use on top of --color-accent */
   --color-signal: #b3241c;    /* errors / missed — a deeper red, distinct from accent */
   --color-divider: rgba(26, 23, 20, 0.18);
+  /* Secondary text and placeholders: 6:1 on --color-bg, 5.5:1 on --color-surface. */
+  --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
 
   --font-heading: 'Gambarino', 'Archivo', Georgia, serif;
   --font-body: 'Archivo', system-ui, -apple-system, sans-serif;
@@ -55,4 +57,15 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
   border-radius: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 24%, var(--color-bg));
+  color: var(--color-text);
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--color-accent);
 }

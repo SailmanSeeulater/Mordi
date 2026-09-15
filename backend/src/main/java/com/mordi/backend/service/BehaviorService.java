@@ -1,6 +1,7 @@
 package com.mordi.backend.service;
 
 import com.mordi.backend.dto.BehaviorRequest;
+import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Behavior;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
@@ -35,7 +36,8 @@ public class BehaviorService {
 
         if (request.getGoalId() != null) {
             Goal goal = goalRepository.findById(request.getGoalId())
-                        .orElseThrow(() -> new RuntimeException("Goal not found"));
+                        .filter(g -> g.isActive() && g.getUser().getEmail().equals(email))
+                        .orElseThrow(GoalNotFoundException::new);
             behavior.setGoal(goal);
         }
 

@@ -7,7 +7,7 @@ import './placeholder.css';
  * Used for /about, /privacy and /terms until real content exists.
  * Also handy as a known-good route target when smoke-testing routing.
  */
-export default function Placeholder({ title }) {
+export default function Placeholder({ title, backTo = '/', backLabel = 'Back to home' }) {
   useDocumentTitle(title);
 
   return (
@@ -19,8 +19,8 @@ export default function Placeholder({ title }) {
           This page doesn&rsquo;t have its content written yet. The route works
           &mdash; there&rsquo;s just nothing here to read.
         </p>
-        <Link to="/" className="btn btn-ghost wip__back">
-          Back to home
+        <Link to={backTo} className="btn btn-ghost wip__back">
+          {backLabel}
         </Link>
       </div>
     </div>
