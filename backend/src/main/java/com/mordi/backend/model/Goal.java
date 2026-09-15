@@ -29,6 +29,9 @@ public class Goal {
     @Column
     private String category;
 
+    @Column(name = "target_per_week", nullable = false)
+    private int targetPerWeek = 1;
+
     @Column
     private boolean active = true;
 

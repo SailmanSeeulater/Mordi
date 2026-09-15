@@ -9,4 +9,5 @@ public class GoalRequest {
     private String description;
     private String frequency;
     private String category;
+    private Integer targetPerWeek;
 }

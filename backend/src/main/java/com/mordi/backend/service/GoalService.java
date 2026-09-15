@@ -28,6 +28,15 @@ public class GoalService {
         goal.setFrequency(request.getFrequency());
         goal.setCategory(request.getCategory());
 
+        Integer target = request.getTargetPerWeek();
+        if (target == null) {
+            target = 1;
+        }
+        if (target < 1 || target > 7) {
+            throw new RuntimeException("targetPerWeek must be between 1 and 7");
+        }
+        goal.setTargetPerWeek(target);
+
         return goalRepository.save(goal);
     }
 

@@ -31,6 +31,30 @@ function App() {
           }
         />
         <Route
+          path="/goals"
+          element={
+            <PrivateRoute>
+              <Placeholder title="Goals" />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <PrivateRoute>
+              <Placeholder title="Weekly report" />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <Placeholder title="Settings" />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/locations"
           element={
             <PrivateRoute>
