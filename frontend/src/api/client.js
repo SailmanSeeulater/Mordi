@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: "https://latesailor.dev",
+  baseURL: "",
 });
 
 client.interceptors.request.use((config) => {
