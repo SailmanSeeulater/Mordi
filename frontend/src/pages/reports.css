@@ -1,0 +1,161 @@
+/* Weekly report. Glass cards over the ambient ground, one per week, newest
+   first. Shell, buttons and the mood chip come from components/app.css. */
+
+.rep-make {
+  display: grid;
+  gap: 12px;
+  padding: 20px 22px 22px;
+  border-radius: var(--r-pass);
+}
+
+.rep-make__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 700;
+  letter-spacing: var(--tracking-display);
+}
+
+.rep-make__body {
+  margin: 0;
+  max-width: 62ch;
+  font-size: var(--t-body);
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.rep-make__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.rep-make .app-form__error { margin: 0; }
+
+/* One column on narrow screens, two once there is room to compare weeks
+   side by side. */
+.rep-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 16px;
+}
+
+.rep-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  border-radius: var(--r-pass);
+}
+
+.rep-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rep-card__week {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rep-delta {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.rep-delta--up { color: var(--color-accent-700); }
+.rep-delta--down { color: var(--color-signal); }
+
+.rep-card__figure {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 6vw, 50px);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+.rep-card__figure small {
+  font-size: 0.38em;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.rep-bar {
+  display: block;
+  height: 8px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-text) 12%, transparent);
+  overflow: hidden;
+}
+.rep-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-gradient);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+}
+
+.rep-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin: 0;
+}
+.rep-card__stats > div { display: grid; gap: 3px; min-width: 0; }
+.rep-card__stats dt {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.rep-card__stats dd {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.rep-card__stats dd .mood { font-size: var(--t-micro); }
+.rep-card__none {
+  font-size: var(--t-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.rep-card__summary {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* A row written under the old rule says so, rather than being averaged in
+   with rows that answer a different question. */
+.rep-card__note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 560px) {
+  .rep-make { padding: 18px 16px 18px; }
+  .rep-make__actions .app-btn { flex: 1; }
+  .rep-card { padding: 16px 16px 18px; }
+}

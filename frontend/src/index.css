@@ -1,14 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
-/* Gambarino — self-hosted display face. File lives at
-   frontend/public/fonts/gambarino/Gambarino-Regular.woff2 */
-@font-face {
-  font-family: 'Gambarino';
-  src: url('/fonts/gambarino/Gambarino-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Crimson Pro, from Fontshare, is the site's face. The same family is
+   requested from Google Fonts above as a second source, because if Fontshare
+   is unreachable everything would otherwise silently fall back to Georgia. */
+@import url('https://api.fontshare.com/v2/css?f[]=crimson-pro@400,500,600,700&display=swap');
 
 :root {
   color-scheme: light;
@@ -27,9 +21,27 @@
   /* Secondary text and placeholders: 6:1 on --color-bg, 5.5:1 on --color-surface. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
 
-  --font-heading: 'Gambarino', 'Archivo', Georgia, serif;
-  --font-body: 'Archivo', system-ui, -apple-system, sans-serif;
+  /* One family for every piece of type on the site, public pages and signed-in
+     app alike. Headings differ from body by weight and tracking, never by
+     family — that swap between families was the inconsistency. --font-display
+     and --font-heading are aliases so no rule has to change to follow the
+     decision, and changing it means changing one line here. */
+  --font-body: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-body);
+  --font-heading: var(--font-body);
+  /* Mono is for tabular numerals and labels only, never for prose. */
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* One type scale. Every size in the app comes from here. */
+  --t-display: clamp(30px, 4.2vw, 42px);
+  --t-h1: 21px;
+  --t-h2: 18px;
+  --t-h3: 15px;
+  --t-body: 14px;
+  --t-small: 13px;
+  --t-micro: 11px;
+  --tracking-display: -0.025em;
+  --tracking-label: 0.07em;
 
   /* Paper-grain noise texture (from the mock), applied as a fixed overlay */
   --mordi-noise: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC43IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiByZXN1bHQ9Im5vaXNlIi8+PGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY1IgdHlwZT0ibGluZWFyIiBzbG9wZT0iMy4yIiBpbnRlcmNlcHQ9Ii0xLjEiLz48ZmVGdW5jRyB0eXBlPSJsaW5lYXIiIHNsb3BlPSIzLjIiIGludGVyY2VwdD0iLTEuMSIvPjxmZUZ1bmNCIHR5cGU9ImxpbmVhciIgc2xvcGU9IjMuMiIgaW50ZXJjZXB0PSItMS4xIi8+PC9mZUNvbXBvbmVudFRyYW5zZmVyPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==');

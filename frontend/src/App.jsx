@@ -5,9 +5,9 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Goals from "./pages/Goals";
 import Settings from "./pages/Settings";
+import Reports from "./pages/Reports";
 import Locations from "./pages/Locations";
 import Placeholder from './pages/Placeholder';
-import AppShell from './components/AppShell';
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -55,14 +55,7 @@ function App() {
             path="/reports"
             element={
               <PrivateRoute>
-                <AppShell title="Weekly report">
-                  <Placeholder
-                    title="Weekly report"
-                    backTo="/dashboard"
-                    backLabel="Back to today"
-                    headingTag="h2"
-                  />
-                </AppShell>
+                <Reports />
               </PrivateRoute>
             }
           />

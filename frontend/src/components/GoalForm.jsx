@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import client from '../api/client';
+import Select from './Select';
+import { capturePlace } from '../lib/geo';
+import { CATEGORY_OPTIONS } from '../lib/categories';
 
-const CATEGORIES = ['fitness', 'sleep', 'productivity', 'health'];
 const TARGETS = [1, 2, 3, 4, 5, 6, 7];
-
-const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 /** Creates a goal, or edits `goal` when one is passed. */
 export default function GoalForm({ goal, onSaved, onCancel }) {
@@ -12,8 +12,21 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
   const [title, setTitle] = useState(goal?.title ?? '');
   const [category, setCategory] = useState(goal?.category ?? '');
   const [target, setTarget] = useState(goal?.targetPerWeek ?? 3);
+  const [placeName, setPlaceName] = useState(goal?.placeName ?? '');
+  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const locate = async () => {
+    setLocating(true);
+    try {
+      const place = await capturePlace();
+      if (place.placeName) setPlaceName(place.placeName);
+    } catch {
+      setError('Location unavailable. Type the place instead.');
+    }
+    setLocating(false);
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -23,6 +36,7 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
       title: title.trim(),
       category,
       targetPerWeek: target,
+      placeName: placeName.trim() || null,
       // Keeps the frontend's target fallback accurate on older backends.
       frequency: target === 7 ? 'daily' : 'weekly',
     };
@@ -58,15 +72,14 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
       </div>
 
       <div className="app-field">
-        <label id="goal-target-label" htmlFor="goal-target-3">
+        <span className="app-field__label" id="goal-target-label">
           Times a week
-        </label>
+        </span>
         <div className="app-segments" role="group" aria-labelledby="goal-target-label">
           {TARGETS.map((n) => (
             <button
               key={n}
               type="button"
-              id={`goal-target-${n}`}
               className="app-segment"
               aria-pressed={n === target}
               onClick={() => setTarget(n)}
@@ -84,15 +97,40 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
       </div>
 
       <div className="app-field">
-        <label htmlFor="goal-category">Category</label>
-        <select id="goal-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">No category</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {capitalize(c)}
-            </option>
-          ))}
-        </select>
+        <span className="app-field__label" id="goal-category-label">
+          Category
+        </span>
+        <Select
+          id="goal-category"
+          labelledBy="goal-category-label"
+          value={category}
+          options={CATEGORY_OPTIONS}
+          onChange={setCategory}
+        />
+      </div>
+
+      <div className="app-field">
+        <label htmlFor="goal-place">Usual place</label>
+        <div className="app-inputrow">
+          <input
+            id="goal-place"
+            value={placeName}
+            onChange={(e) => setPlaceName(e.target.value)}
+            placeholder="The gym on Fifth"
+            maxLength={255}
+          />
+          <button
+            type="button"
+            className="app-btn app-btn--quiet app-btn--sm"
+            onClick={locate}
+            disabled={locating}
+          >
+            {locating ? 'Locating…' : 'Use my location'}
+          </button>
+        </div>
+        <p className="app-field__hint">
+          Optional. Entries you log against this goal start here.
+        </p>
       </div>
 
       {error && (

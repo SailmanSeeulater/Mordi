@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
@@ -65,28 +65,30 @@ export default function Landing() {
     return () => document.body.classList.remove('mordi-landing');
   }, []);
 
-  useEffect(() => {
-    if (!authOpen) return;
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') closeAuth();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [authOpen]);
-
   const openAuth = (tab) => {
     setAuthTab(tab);
     setError('');
     setAuthOpen(true);
   };
 
-  const closeAuth = () => {
+  // Declared before the effect that uses it, and memoised, so the listener is
+  // attached to a stable function rather than a new one on every render.
+  const closeAuth = useCallback(() => {
     setAuthOpen(false);
     setError('');
     setName('');
     setEmail('');
     setPassword('');
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!authOpen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeAuth();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [authOpen, closeAuth]);
 
   const switchTab = (tab) => {
     setAuthTab(tab);

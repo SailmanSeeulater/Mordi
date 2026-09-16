@@ -19,13 +19,20 @@
    custom property's var()s resolve against that element's own colors — the app
    shell, the landing page, the auth pages and the placeholder all get them. */
 [data-theme] {
-  /* Corner language: passes are the roundest thing, controls the least. */
-  --r-pass: 22px;
-  --r-panel: 16px;
-  --r-control: 12px;
+  /* Corner language. Squared down from the earlier pill-heavy scale: panels
+     and controls now read as software rather than as stickers. --r-pill is
+     reserved for things that are genuinely circular — rings, dots, the
+     colour chip — and is no longer used on buttons or inputs. */
+  --r-pass: 14px;
+  --r-panel: 10px;
+  --r-control: 8px;
+  --r-chip: 6px;
   --r-pill: 999px;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Used by anything that opens or closes over the page. Decelerating, no
+     overshoot — a card popping open should settle, not bounce. */
+  --ease-pop: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* One elevation system: offset plus soft blur, tinted by the ink. */
   --lift-1: 0 1px 2px color-mix(in srgb, var(--color-text) 10%, transparent),
@@ -39,6 +46,38 @@
 
   /* Secondary text: 70% ink over the ground. Verified >=4.5:1 in every theme. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
+
+  /* ── Glass ──────────────────────────────────────────────────
+     A real pane, not a tinted rectangle: a translucent fill that lets the
+     ambient layer through, a blur behind it, a bright hairline along the top
+     edge where light catches, a darker hairline underneath, and a wash of
+     gloss over the upper half. The four pieces together are what make it
+     read as glass rather than as low-opacity paint. */
+  --glass-fill: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  --glass-fill-strong: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  --glass-blur: saturate(160%) blur(18px);
+  --glass-line: color-mix(in srgb, var(--color-text) 12%, transparent);
+  --glass-top: color-mix(in srgb, #fff 20%, transparent);
+  --glass-under: color-mix(in srgb, var(--color-text) 8%, transparent);
+  --glass-edge:
+    inset 0 1px 0 var(--glass-top),
+    inset 0 -1px 0 var(--glass-under),
+    inset 0 0 0 1px var(--glass-line);
+  /* Matte finish: no specular sweep. The panes still read as glass from the
+     translucent fill, the blur and the hairline edges — what they no longer
+     have is a shine across the top. Kept as a gradient rather than removed so
+     the surfaces that paint it as a background layer stay valid CSS, and so
+     one value here is all it takes to put the sheen back. */
+  --glass-gloss: linear-gradient(to bottom, transparent, transparent);
+
+  /* ── Ambient (the Aero layer) ───────────────────────────────
+     Three soft blooms and a faint vertical sky, painted once behind the whole
+     app. This is what the glass has to refract; without it the panes would
+     blur a flat colour and look like nothing. Strengths are deliberately low
+     so text contrast over the ground is unaffected. */
+  --aero-orb-1: color-mix(in srgb, var(--color-accent) 9%, transparent);
+  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 7%, transparent);
+  --aero-sky: color-mix(in srgb, var(--color-surface) 30%, transparent);
 }
 
 [data-theme='paper'] {

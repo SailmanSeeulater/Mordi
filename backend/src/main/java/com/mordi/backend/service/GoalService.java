@@ -27,6 +27,7 @@ public class GoalService {
         goal.setFrequency(request.getFrequency());
         goal.setCategory(request.getCategory());
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), 1));
+        goal.setPlaceName(blankToNull(request.getPlaceName()));
 
         return goalRepository.save(goal);
     }
@@ -52,6 +53,11 @@ public class GoalService {
             goal.setCategory(request.getCategory().isBlank() ? null : request.getCategory());
         }
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), goal.getTargetPerWeek()));
+        // Like category, the usual place is clearable: an explicitly empty
+        // value removes it, a missing one leaves it alone.
+        if (request.getPlaceName() != null) {
+            goal.setPlaceName(blankToNull(request.getPlaceName()));
+        }
 
         return goalRepository.save(goal);
     }
@@ -77,6 +83,10 @@ public class GoalService {
             .findById(goalId)
             .filter(goal -> goal.isActive() && goal.getUser().getEmail().equals(email))
             .orElseThrow(GoalNotFoundException::new);
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private int validTarget(Integer requested, int fallback) {

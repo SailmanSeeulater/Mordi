@@ -34,6 +34,11 @@ public class Goal {
     @Column(name = "target_per_week", nullable = false)
     private int targetPerWeek = 1;
 
+    // The place this goal usually happens. Free text, so it can be "the gym
+    // on Fifth" rather than a coordinate pair.
+    @Column(name = "place_name")
+    private String placeName;
+
     @Column
     private boolean active = true;
 

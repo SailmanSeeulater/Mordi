@@ -6,12 +6,46 @@
 /* Radii, elevation, easing and the accent gradient come from the [data-theme]
    block in src/themes.css, which every themed root carries. */
 .app {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg);
   color: var(--color-text);
+  /* The face comes from :root now: the shell and the public pages use the
+     same one, so there is nothing to override here. */
   font-family: var(--font-body);
+}
+
+/* The Aero ground: a faint sky wash plus three soft blooms, fixed so it never
+   scrolls and never repaints. Everything the glass panes blur is here. It is
+   behind all content (z-index: -1 inside .app's own stacking context) and
+   takes no pointer events, so it cannot affect layout or interaction. */
+.app::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 40% at 12% 0%, var(--aero-orb-1), transparent 70%),
+    radial-gradient(44% 36% at 92% 14%, var(--aero-orb-2), transparent 72%),
+    radial-gradient(60% 46% at 68% 104%, var(--aero-orb-1), transparent 74%),
+    linear-gradient(to bottom, var(--aero-sky), transparent 46%);
+}
+
+/* Paper grain over the ground, at the strength the landing page uses. Fixed
+   and pointer-events-none, so it is never inside a scrolling container. */
+.app::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: var(--mordi-noise);
+  background-size: 200px 200px;
 }
 
 .app-sr {
@@ -51,6 +85,7 @@
   background: var(--accent-gradient);
   color: var(--color-on-accent);
   font-family: var(--font-heading);
+  font-weight: 700;
   font-size: 22px;
   line-height: 1;
   text-decoration: none;
@@ -98,7 +133,7 @@
 
 .app-topbar__title {
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 700;
   font-size: 21px;
   line-height: 1.1;
   margin: 0;
@@ -118,7 +153,7 @@
   height: 34px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: var(--accent-gradient);
   color: var(--color-on-accent);
   font-size: 14px;
@@ -139,7 +174,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
 
@@ -160,7 +195,7 @@
 .theme-switch__cycle {
   gap: 8px;
   padding: 0 4px 0 6px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
 }
 
 .theme-switch__chip {
@@ -177,7 +212,7 @@
   justify-content: center;
   width: 30px;
   padding: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   color: var(--color-text-muted);
 }
 .theme-switch__more:hover { color: var(--color-text); }
@@ -264,10 +299,18 @@
 
 /* ── Panels ────────────────────────────────── */
 
-.app-panel {
+/* Every panel is a pane: a translucent fill the ambient ground shows through,
+   a lit top edge, a shaded bottom edge and gloss over the upper part. There is
+   deliberately no backdrop blur here — panels sit inside the page scroll, and
+   blurring a scrolling container repaints continuously. Blur is reserved for
+   the panes that have real content behind them. */
+.app-panel,
+.app-status {
   border-radius: var(--r-panel);
-  background: var(--color-surface);
-  box-shadow: var(--lift-1);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 40%,
+    var(--glass-fill);
+  box-shadow: var(--glass-edge), var(--lift-1);
   min-width: 0;
   overflow: hidden;
 }
@@ -282,7 +325,7 @@
 
 .app-panel__title {
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 700;
   font-size: 19px;
   line-height: 1.15;
   margin: 0;
@@ -322,10 +365,7 @@
   flex-wrap: wrap;
   gap: 14px;
   padding: 18px;
-  border-radius: var(--r-panel);
-  background: var(--color-surface);
-  box-shadow: var(--lift-1);
-  font-size: 14px;
+  font-size: var(--t-body);
 }
 
 /* ── Buttons ───────────────────────────────── */
@@ -338,23 +378,30 @@
   min-height: 44px;
   padding: 10px 20px;
   border: 0;
-  border-radius: var(--r-pill);
-  background: var(--accent-gradient);
+  border-radius: var(--r-control);
+  /* A specular band across the top, the way a lit physical control catches
+     light. It is a second background layer rather than a pseudo-element, so
+     it composites over the accent gradient and stays behind the label. */
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 54%,
+    var(--accent-gradient);
   color: var(--color-on-accent);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--t-body);
   font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.005em;
   cursor: pointer;
-  box-shadow: var(--lift-1);
+  box-shadow: var(--lift-1), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
   transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
     opacity 160ms var(--ease-out);
 }
+
 .app-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--lift-2);
+  box-shadow: var(--lift-2), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
 }
-.app-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+.app-btn:active:not(:disabled) { transform: translateY(1px) scale(0.995); }
 .app-btn:disabled { opacity: 0.55; cursor: default; }
 
 .app-btn--block { width: 100%; }
@@ -419,7 +466,7 @@
   width: 40px;
   height: 40px;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
   color: var(--color-text);
   cursor: pointer;
@@ -432,10 +479,13 @@
 .app-form { padding: 4px 18px 18px; }
 
 .app-field { margin-bottom: 14px; }
-.app-field label {
+/* Both forms of field label: a real <label> when there is one control to
+   point at, a plain span when the control is a group. */
+.app-field label,
+.app-field__label {
   display: block;
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: var(--t-small);
   font-weight: 600;
   color: var(--color-text-muted);
 }
@@ -469,6 +519,16 @@
 .app-field textarea:focus {
   border-color: var(--color-accent-700);
 }
+/* An input with a control beside it. The button keeps its own height, so the
+   two never stretch each other. */
+.app-inputrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-inputrow input { flex: 1; min-width: 0; }
+.app-inputrow .app-btn { flex: 0 0 auto; }
+
 .app-field__hint {
   margin: 6px 0 0;
   font-size: 13px;
@@ -513,14 +573,14 @@
   display: flex;
   gap: 4px;
   padding: 4px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
 }
 .app-segment {
   flex: 1;
   min-height: 38px;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-chip);
   background: none;
   color: var(--color-text);
   font-family: var(--font-body);
@@ -564,9 +624,16 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   border-radius: var(--r-pass);
-  background: var(--color-surface);
-  box-shadow: var(--lift-3);
-  animation: app-rise 240ms var(--ease-out);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 22%,
+    var(--glass-fill-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-edge), var(--lift-3);
+  animation: app-rise 240ms var(--ease-pop);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-dialog { background: var(--color-surface); }
 }
 .app-dialog:focus { outline: none; }
 
@@ -606,6 +673,235 @@
   font-weight: 600;
   overflow: hidden;
 }
+
+/* ── Mood chip ─────────────────────────────── */
+
+/* Shared: the entry feed and the weekly report both label a mood. */
+.mood {
+  padding: 3px 8px;
+  border-radius: var(--r-chip);
+  font-size: var(--t-micro);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mood--up {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-700);
+}
+.mood--flat {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text-muted);
+}
+.mood--down {
+  background: color-mix(in srgb, var(--color-signal) 14%, transparent);
+  color: var(--color-signal);
+}
+
+/* ── Glass ─────────────────────────────────── */
+
+/* The pane, for anything that is not an .app-panel: translucent fill, a lit
+   top edge, a shaded bottom edge, gloss over the upper half. Anything using
+   this must sit above .app::before, which it does by default. */
+.app-glass {
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 46%,
+    var(--glass-fill);
+  box-shadow: var(--glass-edge), var(--lift-2);
+}
+
+/* Some people find translucency hard to read through. Honour the request:
+   opaque surfaces, no blur anywhere, and a much fainter ground. */
+@media (prefers-reduced-transparency: reduce) {
+  .app-glass,
+  .app-panel,
+  .app-status,
+  .app-dialog,
+  .app-select__list,
+  .app-topbar,
+  .app-tabbar,
+  .goal-pass,
+  .goal-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--color-surface);
+  }
+  .app::before,
+  .mordi-page::before { opacity: 0.35; }
+}
+
+/* ── Select ────────────────────────────────── */
+
+/* Replaces the native <select> for Goal, Category and anything else with a
+   short list. The native control paints in the OS's own colours and corner
+   radius, which was the one place the app stopped looking like itself. */
+.app-select { position: relative; }
+
+.app-select__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: var(--r-control);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 40%,
+    color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease-out);
+}
+.app-select__trigger:hover {
+  border-color: color-mix(in srgb, var(--color-text) 28%, transparent);
+}
+.app-select__trigger[aria-expanded='true'] {
+  border-color: var(--color-accent-700);
+}
+
+.app-select__value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-select__value--empty { color: var(--color-text-muted); }
+
+.app-select__caret {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  transition: transform 200ms var(--ease-out);
+}
+.app-select__trigger[aria-expanded='true'] .app-select__caret {
+  transform: rotate(180deg);
+}
+
+.app-select__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  max-height: 248px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: var(--r-panel);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 30%,
+    var(--glass-fill-strong);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-edge), var(--lift-3);
+  animation: app-pop 160ms var(--ease-pop);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-select__list { background: var(--color-surface); }
+}
+
+.app-select__option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--r-chip);
+  font-size: 14px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.app-select__option[aria-selected='true'] {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-700);
+  font-weight: 600;
+}
+/* Keyboard focus inside a listbox lives on the active option, not on a real
+   focused element, so it needs its own visible marker. */
+.app-select__option--active {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+.app-select__option[aria-selected='true'].app-select__option--active {
+  background: color-mix(in srgb, var(--color-accent) 24%, transparent);
+}
+.app-select__tick { flex: 0 0 auto; margin-left: auto; }
+
+/* ── Mood picker ───────────────────────────── */
+
+/* Five choices on one axis, so a row of tiles beats a dropdown: the whole
+   scale is visible and one tap sets it. */
+.mood-pick {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mood-pick__btn {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-height: 62px;
+  padding: 8px 2px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-radius: var(--r-control);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 44%,
+    color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+.mood-pick__btn:hover { transform: translateY(-1px); }
+.mood-pick__btn[aria-pressed='true'] {
+  border-color: var(--color-accent-700);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 44%,
+    color-mix(in srgb, var(--color-accent) 15%, var(--color-surface));
+  color: var(--color-accent-700);
+}
+.mood-pick__face { display: block; }
+
+/* ── Location field ───────────────────────── */
+
+.app-place {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 10px 8px 12px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  font-size: var(--t-small);
+}
+.app-place__icon { flex: 0 0 auto; color: var(--color-accent-700); }
+
+/* One line, clipped with an ellipsis. Needed on a child of any flex row that
+   truncates, because text-overflow is ignored on the flex container itself. */
+.app-trunc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-place__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-place__text--empty { color: var(--color-text-muted); }
+.app-place__actions { display: flex; flex: 0 0 auto; gap: 6px; }
 
 /* ── Responsive ────────────────────────────── */
 
