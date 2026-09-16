@@ -8,6 +8,8 @@ import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
 import LogEntryForm from '../components/LogEntryForm';
 import CalendarModal from '../components/CalendarModal';
+import WeatherStrip from '../components/WeatherStrip';
+import { CATEGORY_ICONS } from '../lib/categories';
 import {
   currentStreak,
   formatWeekRange,
@@ -65,66 +67,45 @@ function GoalRing({ row, onClick }) {
   );
 }
 
-// Four tint steps, so neighbouring passes in the deck never share a field.
-const TINTS = ['7%', '12%', '17%', '22%'];
-
-const catIcon = {
-  width: 14,
-  height: 14,
+const iconProps = {
+  width: 18,
+  height: 18,
   viewBox: '0 0 24 24',
   fill: 'none',
   stroke: 'currentColor',
-  strokeWidth: 2,
+  strokeWidth: 1.9,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
   'aria-hidden': true,
   focusable: false,
 };
 
-const CATEGORY_ICONS = {
-  fitness: (
-    <svg {...catIcon}>
-      <path d="M6 7v10M18 7v10M3 12h18" />
-    </svg>
-  ),
-  sleep: (
-    <svg {...catIcon}>
-      <path d="M20 14.5A8 8 0 019.5 4a8.5 8.5 0 1010.5 10.5z" />
-    </svg>
-  ),
-  productivity: (
-    <svg {...catIcon}>
-      <path d="M12 3v3.5M12 21v-3.5M3 12h3.5M21 12h-3.5" />
-      <circle cx="12" cy="12" r="3.2" />
-    </svg>
-  ),
-  health: (
-    <svg {...catIcon}>
-      <path d="M12 20s-7-4.4-7-9a4 4 0 017-2.6A4 4 0 0119 11c0 4.6-7 9-7 9z" />
-    </svg>
-  ),
-};
-
 const IconFanOut = () => (
-  <svg {...catIcon} width="18" height="18">
-    <rect x="3" y="4" width="18" height="5" rx="2" />
-    <rect x="3" y="12" width="18" height="5" rx="2" />
+  <svg {...iconProps}>
+    <rect x="3" y="4" width="18" height="5" rx="1.5" />
+    <rect x="3" y="12" width="18" height="5" rx="1.5" />
   </svg>
 );
 
 const IconRestack = () => (
-  <svg {...catIcon} width="18" height="18">
+  <svg {...iconProps}>
     <path d="M12 3l8 4.5-8 4.5-8-4.5L12 3z" />
     <path d="M4 13l8 4.5 8-4.5" />
   </svg>
 );
 
+const IconPin = () => (
+  <svg {...iconProps} width="12" height="12" strokeWidth="2">
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z" />
+    <circle cx="12" cy="10" r="2.6" />
+  </svg>
+);
 
-function GoalPass({ row, index, todayColumn, onLog }) {
+function GoalPass({ row, todayColumn, onLog }) {
   const left = row.target - row.done;
   const category = row.goal.category;
   return (
-    <div className="goal-pass" style={{ '--tint': TINTS[index % TINTS.length] }}>
+    <div className="goal-pass">
       <div className="goal-pass__title">
         <span className="goal-pass__mark" aria-hidden="true">
           {row.goal.title.trim()[0]?.toUpperCase() ?? 'M'}
@@ -141,6 +122,12 @@ function GoalPass({ row, index, todayColumn, onLog }) {
         )}
         <span>{targetLabel(row.goal)}</span>
         <span className="goal-pass__count">{left > 0 ? `${left} to go` : 'Target met'}</span>
+        {row.goal.placeName && (
+          <span className="goal-pass__place">
+            <IconPin />
+            <span className="app-trunc">{row.goal.placeName}</span>
+          </span>
+        )}
         <span className="app-sr">
           , {row.done} of {row.target} this week
         </span>
@@ -171,6 +158,107 @@ function GoalPass({ row, index, todayColumn, onLog }) {
   );
 }
 
+/**
+ * The goal deck.
+ *
+ * Every pass is rendered once, in one absolutely positioned layer, and opening
+ * or closing the deck only changes how far down each pass is translated. The
+ * container keeps its collapsed height at all times, so the page below never
+ * moves: the deck opens over what follows it rather than pushing it down.
+ * Because the movement is a transition on transform, closing is the same
+ * motion played backwards, staggered from the top card instead of the bottom.
+ */
+// Collapsed, only three layers of the deck are drawn behind the front pass.
+// A fourth adds nothing at 10px a card and makes the object taller for no
+// information.
+const PEEK = 10;
+const MAX_PEEK = 3;
+
+function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
+  const layers = Math.min(Math.max(rows.length - 1, 0), MAX_PEEK);
+  const collapsedHeight = `calc(var(--pass-h) + ${layers * PEEK}px)`;
+
+  // Escape closes it, and so does a press anywhere outside it. Both listeners
+  // are attached in an effect, which means they exist only from the render
+  // after the one that opened the deck — the press that opened it can never
+  // also close it. The toggle in the hint row counts as inside, or its own
+  // handler and this one would cancel each other out.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onToggle();
+    };
+    const onDown = (e) => {
+      if (!e.target.closest?.('.deck, .deck__hint')) onToggle();
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onDown);
+    };
+  }, [open, onToggle]);
+
+  return (
+    <div
+      className={`deck${open ? ' deck--open' : ''}`}
+      style={{ height: collapsedHeight }}
+      key={restackKey}
+    >
+      {/* Purely visual: it dims what the open deck floats over. Dismissal is
+          handled by the listeners above, so this takes no pointer events and
+          is not in the tab order. */}
+      {open && <div className="deck__scrim" aria-hidden="true" />}
+
+      <div
+        className="deck__layer"
+        style={{ '--open-h': `calc(${rows.length} * (var(--pass-h) + var(--deck-gap)))` }}
+      >
+        {/* Gives the open layer something to scroll. The passes are absolutely
+            positioned, so without it a deck taller than the screen would have
+            its last cards off the bottom with no way to reach them. */}
+        {open && <div className="deck__spacer" aria-hidden="true" />}
+        {rows.map((row, i) => (
+          <div
+            key={row.goal.id}
+            className="deck__card"
+            style={{
+              '--i': i,
+              // Collapsed, the first pass is the one in front and the rest
+              // peek out below it, each a little narrower — a deck seen
+              // edge-on rather than a column of slivers. Open, they are a
+              // list, so the order flips back.
+              '--y': open
+                ? `calc(${i} * (var(--pass-h) + var(--deck-gap)))`
+                : `${Math.min(i, MAX_PEEK) * PEEK}px`,
+              '--s': open ? 1 : 1 - Math.min(i, MAX_PEEK) * 0.03,
+              zIndex: open ? i + 1 : rows.length - i,
+            }}
+          >
+            <GoalPass
+              row={row}
+              todayColumn={todayColumn}
+              onLog={open ? () => onLog(row.goal.id) : undefined}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Collapsed, the whole deck is one target. Open, each pass carries its
+          own Log button and this is gone. */}
+      {!open && (
+        <button
+          type="button"
+          className="deck__grip"
+          onClick={onToggle}
+          aria-expanded={false}
+          aria-label={`Fan out ${rows.length} goal ${rows.length === 1 ? 'pass' : 'passes'}`}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   useDocumentTitle('Today');
 
@@ -181,23 +269,12 @@ export default function Dashboard() {
   const [modal, setModal] = useState(null);
   const [logGoalId, setLogGoalId] = useState('');
   const [fanned, setFanned] = useState(prefersReducedMotion);
-  // True only while the deck is springing open, so the fan animation never
-  // replays on an unrelated re-render.
-  // 'fanning' while it springs open, 'gathering' while it stacks back; cleared
-  // after the run so neither replays on an unrelated re-render.
-  const [deckMotion, setDeckMotion] = useState(null);
-  const toggleFan = () => {
-    setFanned((open) => {
-      setDeckMotion(open ? 'gathering' : 'fanning');
-      setTimeout(() => setDeckMotion(null), 700);
-      return !open;
-    });
-  };
+  const toggleFan = useCallback(() => setFanned((isOpen) => !isOpen), []);
 
-  // Changing the combination restacks the deck in the new colors — the second
-  // half of the signature interaction. The reduced-motion rule flattens it.
+  // Changing the combination restacks the deck in the new colors. A keyed
+  // remount rather than a class, so the entrance cannot replay on an
+  // unrelated re-render.
   const [restackKey, setRestackKey] = useState(0);
-  const [restacking, setRestacking] = useState(false);
   const firstTheme = useRef(true);
   useEffect(() => {
     if (firstTheme.current) {
@@ -205,11 +282,6 @@ export default function Dashboard() {
       return;
     }
     setRestackKey((k) => k + 1);
-    setRestacking(true);
-    // Cleared after the run, so the deck doesn't replay its entrance on an
-    // unrelated re-render such as the fan toggle.
-    const done = setTimeout(() => setRestacking(false), 600);
-    return () => clearTimeout(done);
   }, [theme]);
 
   const summary = useMemo(
@@ -225,10 +297,10 @@ export default function Dashboard() {
     reload();
   }, [reload]);
 
-  const openLog = (goalId = '') => {
+  const openLog = useCallback((goalId = '') => {
     setLogGoalId(goalId);
     setModal('log');
-  };
+  }, []);
 
   const [calendarDay, setCalendarDay] = useState(null);
   const openCalendar = (iso) => {
@@ -252,13 +324,6 @@ export default function Dashboard() {
       return 'missed';
     });
   }, [behaviors, weekStart, todayIso]);
-
-  // A long list of goals would make the collapsed deck taller than the screen,
-  // so the passes overlap more tightly the more there are.
-  const stackStep = summary.rows.length > 6 ? 14 : 26;
-  const stackHeight = fanned
-    ? `calc(${summary.rows.length} * (var(--pass-h) + var(--stack-gap)) - var(--stack-gap))`
-    : `calc(var(--pass-h) + ${Math.max(summary.rows.length - 1, 0) * stackStep}px)`;
 
   return (
     <AppShell
@@ -287,7 +352,7 @@ export default function Dashboard() {
       )}
 
       {loadState === 'ready' && goals.length === 0 && (
-        <section className="onboard" aria-labelledby="dash-onboard-title">
+        <section className="onboard app-glass" aria-labelledby="dash-onboard-title">
           <h2 className="onboard__title" id="dash-onboard-title">
             Start with one goal.
           </h2>
@@ -402,6 +467,12 @@ export default function Dashboard() {
                 ))}
               </div>
 
+              {/* Same card, because it is the same question: what is this week
+                  actually like. */}
+              <div className="pass__weather">
+                <WeatherStrip />
+              </div>
+
               <div className="pass__action">
                 <button type="button" className="pass__cta" onClick={() => openLog()}>
                   Log today
@@ -420,7 +491,7 @@ export default function Dashboard() {
               <h2 className="app-sr" id="dash-stack-title">
                 Goal passes
               </h2>
-              <div className="stack__hint">
+              <div className="deck__hint">
                 <span>
                   {summary.rows.length} {summary.rows.length === 1 ? 'pass' : 'passes'}
                 </span>
@@ -437,53 +508,14 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              <div
-                className={
-                  'stack' +
-                  (restacking ? ' stack--restack' : '') +
-                  (deckMotion ? ` stack--${deckMotion}` : '')
-                }
-                key={`${restackKey}-${fanned}`}
-                style={{ height: stackHeight }}
-              >
-                {fanned ? (
-                  summary.rows.map((row, i) => (
-                    <div
-                      key={row.goal.id}
-                      className="stack__card"
-                      style={{
-                        '--y': `calc(${i} * (var(--pass-h) + var(--stack-gap)))`,
-                        '--i': i,
-                        zIndex: i + 1,
-                      }}
-                    >
-                      <GoalPass
-                        row={row}
-                        index={i}
-                        todayColumn={todayColumn}
-                        onLog={() => openLog(row.goal.id)}
-                      />
-                    </div>
-                  ))
-                ) : (
-                  <button
-                    type="button"
-                    className="stack__deck"
-                    onClick={toggleFan}
-                    aria-label={`Fan out ${summary.rows.length} goal passes`}
-                  >
-                    {summary.rows.map((row, i) => (
-                      <div
-                        key={row.goal.id}
-                        className="stack__card"
-                        style={{ '--y': `${i * stackStep}px`, '--i': i, zIndex: i + 1 }}
-                      >
-                        <GoalPass row={row} index={i} todayColumn={todayColumn} />
-                      </div>
-                    ))}
-                  </button>
-                )}
-              </div>
+              <GoalDeck
+                rows={summary.rows}
+                open={fanned}
+                onToggle={toggleFan}
+                todayColumn={todayColumn}
+                onLog={openLog}
+                restackKey={restackKey}
+              />
             </section>
           </div>
 
@@ -512,7 +544,17 @@ export default function Dashboard() {
                         )}
                       </div>
                       <p className="feed__note">{entry.note}</p>
-                      {entry.goal && <span className="feed__goal">{entry.goal.title}</span>}
+                      {(entry.goal || entry.placeName) && (
+                        <div className="feed__foot">
+                          {entry.goal && <span className="feed__goal">{entry.goal.title}</span>}
+                          {entry.placeName && (
+                            <span className="feed__place">
+                              <IconPin />
+                              {entry.placeName}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

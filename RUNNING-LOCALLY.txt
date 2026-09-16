@@ -1,0 +1,285 @@
+===============================================================================
+ MORDI - RUNNING IT LOCALLY
+ A walkthrough with your own values. Windows paths; adjust for mac/Linux.
+===============================================================================
+
+There are two ways to run Mordi on your machine:
+
+  ROUTE A - Docker Compose. Everything at once, nothing to wire up. Best for
+            "does the whole thing work".
+  ROUTE B - Native. Postgres + Redis + Spring Boot + Vite, run separately.
+            Slower to set up, but you get hot reload while designing.
+
+Pick one. Route A first if you have never run it locally before.
+
+
+===============================================================================
+ 0. THE VALUES THAT ARE YOURS TO CHOOSE
+===============================================================================
+
+docker-compose.yml reads exactly THREE values from .env. Everything else in
+it is hardcoded, so the other lines in .env.example are not used by Compose:
+
+  DB_PASSWORD
+      Any password for the local Postgres user. Local only, so it can be
+      simple - e.g. mordi_local_pw
+      Compose uses it for both the postgres container and the backend.
+
+  JWT_SECRET
+      A long random string used to sign login tokens. 32+ characters.
+      Generate one:
+          node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+
+  VITE_GOOGLE_MAPS_API_KEY
+      From https://console.cloud.google.com - enable "Maps JavaScript API" and
+      "Geocoding API", then create an API key. Only the Places page needs it;
+      everything else works without it (the map shows a load error and the
+      saved-places list still renders).
+
+For the record, the database identity is fixed in docker-compose.yml, not in
+.env: database "mordi", user "mordi_user". The POSTGRES_USER,
+SPRING_DATASOURCE_* and VITE_API_BASE_URL lines in .env.example are leftovers
+that nothing reads - changing them has no effect. Worth cleaning up one day.
+
+Never commit real values. .env is gitignored; .env.example is the template.
+
+
+===============================================================================
+ ROUTE A - DOCKER COMPOSE
+===============================================================================
+
+ 1. Create your .env from the template:
+
+        cd "C:\Users\lesst\OneDrive\Documents\Coding Space\Mordi"
+        copy .env.example .env
+
+ 2. Open .env and make sure these three lines are present and filled in.
+    DB_PASSWORD is NOT in the template, so you have to add it - Compose will
+    refuse to start without it:
+
+        DB_PASSWORD=mordi_local_pw
+        JWT_SECRET=<paste your long random string>
+        VITE_GOOGLE_MAPS_API_KEY=<your Google key>
+
+    You can leave the rest of the template as it is; Compose ignores it.
+
+ 3. Build and start:
+
+        docker compose up -d --build
+
+ 4. Open it:
+
+        Frontend      http://localhost:3000
+        API           http://localhost:8080
+        Health        http://localhost:8080/actuator/health
+
+    The frontend and API are same-origin here, so login and everything behind
+    it just works. Register a new account on the landing page.
+
+ 5. Useful commands:
+
+        docker compose logs -f backend     # follow backend logs
+        docker compose ps                  # what is running
+        docker compose down                # stop
+        docker compose down -v             # stop AND delete the database
+
+
+===============================================================================
+ ROUTE B - NATIVE (hot reload for frontend work)
+===============================================================================
+
+ B1. POSTGRES
+ ------------
+ The backend's application.properties expects, outside Docker:
+
+        host      localhost:5432
+        database  mordi
+        user      mordi_user        <-- note: mordi_user, NOT mordi
+        password  ${DB_PASSWORD}    <-- from your environment
+
+ Easiest is to run just the database in Docker:
+
+        docker run --name mordi-pg -e POSTGRES_DB=mordi -e POSTGRES_USER=mordi_user -e POSTGRES_PASSWORD=mordi_local_pw -p 5432:5432 -d postgres:16
+
+ Or, with a Postgres you already have installed, in psql:
+
+        CREATE DATABASE mordi;
+        CREATE USER mordi_user WITH PASSWORD 'mordi_local_pw';
+        GRANT ALL PRIVILEGES ON DATABASE mordi TO mordi_user;
+        \c mordi
+        GRANT ALL ON SCHEMA public TO mordi_user;
+
+ B2. REDIS
+ ---------
+ The backend connects to localhost:6379 for rate limiting.
+
+        docker run --name mordi-redis -p 6379:6379 -d redis:7
+
+ B3. BACKEND
+ -----------
+ Set the two variables, then run. PowerShell:
+
+        $env:DB_PASSWORD="mordi_local_pw"
+        $env:JWT_SECRET="<your long random string>"
+        cd "C:\Users\lesst\OneDrive\Documents\Coding Space\Mordi\backend"
+        ./mvnw spring-boot:run
+
+ Git Bash:
+
+        export DB_PASSWORD=mordi_local_pw
+        export JWT_SECRET=<your long random string>
+        cd /c/Users/lesst/OneDrive/Documents/Coding\ Space/Mordi/backend
+        ./mvnw spring-boot:run
+
+ On boot, Flyway applies the migrations in
+ backend/src/main/resources/db/migration - including
+ V2__goal_target_per_week.sql, which adds the goals.target_per_week column.
+ Watch for a line like "Successfully applied 1 migration". If Flyway fails,
+ the app will not start, which is deliberate.
+
+ Check it is alive:
+
+        curl http://localhost:8080/actuator/health
+
+ B4. FRONTEND
+ ------------
+        cd "C:\Users\lesst\OneDrive\Documents\Coding Space\Mordi\frontend"
+        npm install
+        npm run dev
+
+ Opens on http://localhost:5173.
+
+ IMPORTANT - the /api proxy
+ --------------------------
+ The API client (frontend/src/api/client.js) uses an empty base URL, so it
+ calls /api/... on whatever origin serves the page. On the Vite dev server
+ there is no /api route, so those calls 404 and the dashboard shows
+ "Couldn't load your week".
+
+ To point the dev server at your local backend, add a server.proxy block to
+ frontend/vite.config.js:
+
+        export default defineConfig({
+          plugins: [react()],
+          server: {
+            proxy: {
+              '/api': 'http://localhost:8080',
+            },
+          },
+          test: {
+            environment: 'jsdom',
+            setupFiles: './src/test/setup.js',
+            globals: true,
+          },
+        })
+
+ Restart npm run dev afterwards. To test against the live API instead, use
+ 'https://latesailor.dev' as the target and add changeOrigin: true - but note
+ that goal editing, goal archiving and the times-a-week target are not
+ deployed there yet, so those will fail against production until the backend
+ ships.
+
+ Create an account at http://localhost:5173 and you are in.
+
+
+===============================================================================
+ LOOKING AT THE DESIGN WITHOUT ANY BACKEND
+===============================================================================
+
+Run only the frontend (B4, no proxy). The landing page, sign-in and
+create-account pages all render normally.
+
+To see the signed-in shell, all ten themes, and the Settings page without an
+API, open DevTools (F12) on http://localhost:5173 and paste into Console:
+
+        localStorage.setItem('token','local-test');
+        localStorage.setItem('user','{"name":"You","email":"you@example.com"}');
+        location.href='/dashboard';
+
+That is a fake session: no server is contacted, so the dashboard and goals
+pages show their error state with a Try again button - which is the correct
+behaviour with no API. Settings works fully except the data export.
+
+To clear it:
+
+        localStorage.clear(); location.href='/';
+
+To jump straight to a theme without clicking:
+
+        localStorage.setItem('mordi-theme','midnight'); location.reload();
+
+Valid ids: paper, sorbet, mint, lagoon, lilac, sand (light);
+graphite, midnight, forest, ember (dark). Sorbet is the default.
+
+
+===============================================================================
+ THINGS WORTH CLICKING
+===============================================================================
+
+  - Any day chip on the big week card opens a month calendar on that day.
+    The arrows page months.
+  - The stack icon above the goal passes fans the deck open and stacks it back.
+  - The color button in the top bar steps to the next combination; its caret
+    opens all ten. Settings has the same picker.
+  - Ctrl+Shift+M in DevTools for the phone layout: bottom tab bar, and dialogs
+    become bottom sheets.
+  - DevTools > Rendering > "Emulate prefers-reduced-motion" - the deck should
+    start fanned with no animation.
+  - Keyboard only: Tab to the deck and press Enter; Escape closes any dialog.
+
+
+===============================================================================
+ CHECKS YOU CAN RUN WITHOUT ANY SETUP
+===============================================================================
+
+        cd frontend
+        npm test                                  # 62 tests
+        npm run lint
+        npm run build
+        node scripts/check-theme-contrast.mjs     # 140 contrast checks
+
+        cd backend
+        ./mvnw test                               # 16 tests
+
+Note: npm run lint currently reports one pre-existing error in
+frontend/src/pages/Landing.jsx ("Cannot access variable before it is
+declared"). It predates the current work and may fail CI if CI runs lint.
+
+
+===============================================================================
+ WHEN SOMETHING WILL NOT START
+===============================================================================
+
+ "Port 5173 already in use"
+      A dev server is already running. Use it, or stop the old one.
+
+ "Port 8080 / 5432 / 6379 already in use"
+      Something else holds the port:
+          netstat -ano | findstr :8080
+      then stop that process, or change the port.
+
+ Backend exits immediately, complains about DB_PASSWORD or JWT_SECRET
+      The variables are not set in the shell you ran ./mvnw from. They do not
+      persist between terminals.
+
+ Backend fails with a Flyway "validate" or checksum error
+      Your local database is out of step with the migration files. For a
+      throwaway local DB, simplest is to drop it and let Flyway rebuild:
+          docker rm -f mordi-pg      (then re-run the docker run from B1)
+
+ Backend starts, but every API call returns 401
+      Your token was signed with a different JWT_SECRET. Clear site data in
+      DevTools (Application > Storage > Clear site data) and log in again.
+
+ Dashboard says "Couldn't load your week"
+      The frontend cannot reach an API. On Route B that usually means the
+      proxy is missing (see B4) or the backend is not running.
+
+ The map on Places will not load
+      Missing or restricted VITE_GOOGLE_MAPS_API_KEY. Restart the dev server
+      after changing .env - Vite only reads env at startup. The rest of the
+      page works regardless.
+
+ Times-a-week always shows as 1x weekly
+      You are talking to a backend without the target_per_week column, i.e.
+      production. Run the local backend (Route B) to exercise it.

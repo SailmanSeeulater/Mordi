@@ -6,13 +6,29 @@ import client from '../api/client';
 import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
+import { CATEGORY_ICONS } from '../lib/categories';
 import { targetLabel, weekSummary } from './dashboardData';
 import './goals.css';
 
 const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
-// Matches the dashboard deck, so a goal's field is the same on both pages.
-const TINTS = ['7%', '12%', '17%', '22%'];
+const IconPin = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z" />
+    <circle cx="12" cy="10" r="2.6" />
+  </svg>
+);
 
 export default function Goals() {
   useDocumentTitle('Goals');
@@ -92,7 +108,7 @@ export default function Goals() {
       )}
 
       {loadState === 'ready' && goals.length === 0 && (
-        <section className="onboard" aria-labelledby="goals-empty-title">
+        <section className="onboard app-glass" aria-labelledby="goals-empty-title">
           <h2 className="onboard__title" id="goals-empty-title">
             No goals yet.
           </h2>
@@ -122,14 +138,10 @@ export default function Goals() {
             </span>
           </p>
 
-          {summary.rows.map((row, i) => {
+          {summary.rows.map((row) => {
             const percent = Math.min(row.done / row.target, 1) * 100;
             return (
-              <article
-                className="goal-card"
-                key={row.goal.id}
-                style={{ '--tint': TINTS[i % TINTS.length] }}
-              >
+              <article className="goal-card" key={row.goal.id}>
                 <span className="goal-card__mark" aria-hidden="true">
                   {row.goal.title.trim()[0]?.toUpperCase() ?? 'M'}
                 </span>
@@ -171,13 +183,22 @@ export default function Goals() {
 
                 <div className="goal-card__meta">
                   {row.goal.category && (
-                    <span className="goal-card__tag">{capitalize(row.goal.category)}</span>
+                    <span className="goal-card__tag">
+                      {CATEGORY_ICONS[row.goal.category] ?? null}
+                      {capitalize(row.goal.category)}
+                    </span>
                   )}
                   <span>{targetLabel(row.goal)}</span>
                   <span aria-hidden="true">·</span>
                   <span>
                     {row.done} of {row.target} this week
                   </span>
+                  {row.goal.placeName && (
+                    <span className="goal-card__place">
+                      <IconPin />
+                      <span className="app-trunc">{row.goal.placeName}</span>
+                    </span>
+                  )}
                 </div>
 
                 <div className="goal-card__week" aria-hidden="true">

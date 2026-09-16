@@ -10,4 +10,7 @@ public class BehaviorRequest {
     private boolean completed;
     private String mood;
     private LocalDate logDate;
+    private Double latitude;
+    private Double longitude;
+    private String placeName;
 }

@@ -2,55 +2,43 @@
    Reconstructs the design-system layer the Claude Design mock referenced
    (_ds/modernist/styles.css) as plain CSS. No external token file needed. */
 
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-@import url('https://api.fontshare.com/v2/css?f[]=gambarino@400&display=swap');
-
-:root {
-  color-scheme: light;
-
-  --color-bg: #ece7dd;
-  --color-surface: #e4ddd0;
-  --color-text: #1a1714;
-  --color-accent: #d2452a;
-  --color-accent-700: #a8341f;
-  --color-signal: #b3241c;
-  --color-divider: rgba(26, 23, 20, 0.18);
-
-  --font-heading: 'Gambarino', Georgia, serif;
-  --font-body: 'Archivo', system-ui, -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-
-  --unit: 28px;
-
-  --mordi-noise: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC43IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiByZXN1bHQ9Im5vaXNlIi8+PGZlQ29sb3JNYXRyaXggaW49Im5vaXNlIiB0eXBlPSJzYXR1cmF0ZSIgdmFsdWVzPSIwIi8+PGZlQ29tcG9uZW50VHJhbnNmZXI+PGZlRnVuY1IgdHlwZT0ibGluZWFyIiBzbG9wZT0iMy4yIiBpbnRlcmNlcHQ9Ii0xLjEiLz48ZmVGdW5jRyB0eXBlPSJsaW5lYXIiIHNsb3BlPSIzLjIiIGludGVyY2VwdD0iLTEuMSIvPjxmZUZ1bmNCIHR5cGU9ImxpbmVhciIgc2xvcGU9IjMuMiIgaW50ZXJjZXB0PSItMS4xIi8+PC9mZUNvbXBvbmVudFRyYW5zZmVyPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNuKSIvPjwvc3ZnPg==');
-}
-
-* { box-sizing: border-box; }
+/* Fonts, colour tokens, the reset and the focus ring all come from
+   src/index.css and src/themes.css. Only what is specific to this page lives
+   here. */
 
 html { scroll-behavior: smooth; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-}
 
 body.mordi-landing {
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 3px;
 }
 
 /* ── Shell ─────────────────────────────────────────────── */
 
 .mordi-page {
+  --unit: 28px;
   position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+/* The same ambient ground the signed-in app stands on, so the two do not read
+   as two different products. Fixed and pointer-events-none. */
+.mordi-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(50% 38% at 10% 0%, var(--aero-orb-1), transparent 70%),
+    radial-gradient(42% 34% at 94% 10%, var(--aero-orb-2), transparent 72%),
+    radial-gradient(58% 44% at 72% 102%, var(--aero-orb-1), transparent 74%),
+    linear-gradient(to bottom, var(--aero-sky), transparent 42%);
 }
 
 .mordi-noise {
@@ -79,15 +67,6 @@ body.mordi-landing {
   background: var(--color-divider);
 }
 
-.mordi-kicker {
-  display: block;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-accent-700);
-  margin: 0 0 calc(2 * var(--unit));
-}
-
 /* ── Buttons ───────────────────────────────────────────── */
 
 .btn {
@@ -101,7 +80,7 @@ body.mordi-landing {
   line-height: 1;
   text-decoration: none;
   border: 2px solid transparent;
-  border-radius: 0;
+  border-radius: var(--r-control);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -168,6 +147,7 @@ body.mordi-landing {
 }
 .mordi-nav__brand {
   font-family: var(--font-heading);
+  font-weight: 700;
   font-size: 20px;
   letter-spacing: -0.01em;
   background: none;
@@ -197,7 +177,7 @@ body.mordi-landing {
   font-size: clamp(38px, 5.6vw, 72px);
   line-height: 1.05;
   letter-spacing: -0.02em;
-  font-weight: 400;
+  font-weight: 700;
   margin: 0 0 0 -0.05em; /* optical hang */
 }
 .mordi-hero__sub {
@@ -230,6 +210,7 @@ body.mordi-landing {
 }
 .mordi-card__title {
   font-family: var(--font-heading);
+  font-weight: 700;
   font-size: 15px;
 }
 .mordi-card__date {
@@ -321,7 +302,7 @@ body.mordi-landing {
 }
 .mordi-close__title {
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 700;
   font-size: clamp(34px, 4.2vw, 56px);
   line-height: 1.06;
   letter-spacing: -0.015em;
@@ -447,6 +428,7 @@ body.mordi-landing {
   background: none;
   border: none;
   font-family: var(--font-heading);
+  font-weight: 700;
   font-size: 16px;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
   padding: 0 0 12px;
@@ -479,7 +461,7 @@ body.mordi-landing {
   padding: 10px 12px;
   background: var(--color-bg);
   border: 2px solid var(--color-divider);
-  border-radius: 0;
+  border-radius: var(--r-control);
   font-family: var(--font-body);
   font-size: 15px;
   color: var(--color-text);
@@ -550,25 +532,27 @@ body.mordi-landing {
   color: var(--color-text);
 }
 
-/* Controls: pills, with the accent gradient on the primary action. */
+/* Controls match the app's: squared to the shared control radius, with the
+   accent gradient and a specular band on the primary action. */
 .mordi-page .btn {
   min-height: 44px;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   font-size: 14px;
   transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
     background-color 160ms var(--ease-out);
 }
 .mordi-page .btn-primary {
-  background: var(--accent-gradient);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 54%,
+    var(--accent-gradient);
   color: var(--color-on-accent);
-  box-shadow: var(--lift-1);
+  box-shadow: var(--lift-1), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
 }
 .mordi-page .btn-primary:hover {
-  background: var(--accent-gradient);
   color: var(--color-on-accent);
   transform: translateY(-1px);
-  box-shadow: var(--lift-2);
+  box-shadow: var(--lift-2), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
 }
 .mordi-page .btn-ghost {
   background: none;
@@ -597,20 +581,32 @@ body.mordi-landing {
   font-size: 14px;
 }
 
-/* The hero's task card becomes a pass: soft corners, one shadow, no hairline. */
+/* The hero's task card is the same glass pane as a goal pass in the app: the
+   first thing a visitor sees is the material the product is made of. */
 .mordi-page .mordi-card {
   border: 0;
   border-radius: var(--r-pass);
-  background: var(--color-surface);
-  box-shadow: var(--lift-2);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 34%,
+    var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-edge), var(--lift-2);
   overflow: hidden;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mordi-page .mordi-card {
+    background:
+      var(--glass-gloss) no-repeat top center / 100% 34%,
+      var(--color-surface);
+  }
 }
 .mordi-page .mordi-card__head {
   border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 .mordi-page .mordi-task { border-bottom: 0; }
 .mordi-page .mordi-task__box {
-  border-radius: 6px;
+  border-radius: var(--r-chip);
   border-width: 2px;
 }
 .mordi-page .mordi-task__box--done {
@@ -618,10 +614,10 @@ body.mordi-landing {
   border-color: transparent;
 }
 
-/* Tags are pills, like the app's mood chips. */
+/* Tags match the app's mood chips. */
 .mordi-page .tag {
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-chip);
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 700;

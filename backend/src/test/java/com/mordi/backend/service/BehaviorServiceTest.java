@@ -5,13 +5,16 @@ import com.mordi.backend.dto.BehaviorRequest;
 import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Behavior;
 import com.mordi.backend.model.Goal;
+import com.mordi.backend.model.Location;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.GoalRepository;
+import com.mordi.backend.repository.LocationRepository;
 import com.mordi.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -37,13 +40,17 @@ class BehaviorServiceTest {
     @Mock
     private GoalRepository goalRepository;
 
+    @Mock
+    private LocationRepository locationRepository;
+
     private BehaviorService behaviorService;
     private User me;
     private User someoneElse;
 
     @BeforeEach
     void setUp() {
-        behaviorService = new BehaviorService(behaviorRepository, userRepository, goalRepository);
+        behaviorService =
+            new BehaviorService(behaviorRepository, userRepository, goalRepository, locationRepository);
         me = user(1L, ME, "Me");
         someoneElse = user(2L, "other@mordi.com", "Someone Else");
     }
@@ -132,6 +139,57 @@ class BehaviorServiceTest {
 
         assertThat(saved.getGoal()).isNull();
         verify(goalRepository, never()).findById(any());
+    }
+
+    @Test
+    void logBehavior_withAFix_storesItAndAddsItToTheLocationHistory() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        BehaviorRequest request = request(null);
+        request.setLatitude(32.7157);
+        request.setLongitude(-117.1611);
+        request.setPlaceName("  Balboa Park  ");
+
+        Behavior saved = behaviorService.logBehavior(ME, request);
+
+        assertThat(saved.getLatitude()).isEqualTo(32.7157);
+        assertThat(saved.getLongitude()).isEqualTo(-117.1611);
+        assertThat(saved.getPlaceName()).isEqualTo("Balboa Park");
+
+        ArgumentCaptor<Location> location = ArgumentCaptor.forClass(Location.class);
+        verify(locationRepository).save(location.capture());
+        assertThat(location.getValue().getUser()).isSameAs(me);
+        assertThat(location.getValue().getLatitude()).isEqualTo(32.7157);
+        assertThat(location.getValue().getPlaceName()).isEqualTo("Balboa Park");
+    }
+
+    @Test
+    void logBehavior_withAPlaceNameButNoFix_doesNotTouchTheLocationHistory() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        BehaviorRequest request = request(null);
+        request.setPlaceName("The gym on Fifth");
+
+        Behavior saved = behaviorService.logBehavior(ME, request);
+
+        assertThat(saved.getPlaceName()).isEqualTo("The gym on Fifth");
+        assertThat(saved.getLatitude()).isNull();
+        verify(locationRepository, never()).save(any());
+    }
+
+    @Test
+    void logBehavior_withNoPlace_leavesEveryLocationFieldNull() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Behavior saved = behaviorService.logBehavior(ME, request(null));
+
+        assertThat(saved.getPlaceName()).isNull();
+        assertThat(saved.getLatitude()).isNull();
+        assertThat(saved.getLongitude()).isNull();
+        verify(locationRepository, never()).save(any());
     }
 
     @Test

@@ -36,6 +36,17 @@ public class Behavior {
     @Column(name = "log_date", nullable = false)
     private LocalDate logDate;
 
+    // Where it happened. Optional, and only ever set from a capture the
+    // person asked for.
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
+    @Column(name = "place_name")
+    private String placeName;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

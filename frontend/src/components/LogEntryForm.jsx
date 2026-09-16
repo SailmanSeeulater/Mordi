@@ -1,17 +1,33 @@
 import { useState } from 'react';
 import client from '../api/client';
 import { toIsoDate } from '../pages/dashboardData';
-
-const MOODS = ['great', 'good', 'neutral', 'bad', 'terrible'];
-const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
+import Select from './Select';
+import MoodPicker from './MoodPicker';
+import PlaceField from './PlaceField';
 
 export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCancel }) {
   const [goalId, setGoalId] = useState(initialGoalId ? String(initialGoalId) : '');
   const [note, setNote] = useState('');
   const [mood, setMood] = useState('good');
   const [completed, setCompleted] = useState(true);
+  // A goal can carry a usual place, so picking one offers it straight away.
+  const initialGoal = goals.find((g) => String(g.id) === String(initialGoalId));
+  const [place, setPlace] = useState(
+    initialGoal?.placeName ? { placeName: initialGoal.placeName } : null,
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const goalOptions = [
+    { value: '', label: 'Not linked to a goal' },
+    ...goals.map((goal) => ({ value: String(goal.id), label: goal.title })),
+  ];
+
+  const pickGoal = (next) => {
+    setGoalId(next);
+    const goal = goals.find((g) => String(g.id) === next);
+    if (!place && goal?.placeName) setPlace({ placeName: goal.placeName });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -25,6 +41,9 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
         completed,
         // Read at submit, so a form opened before midnight still logs today.
         logDate: toIsoDate(new Date()),
+        latitude: place?.latitude ?? null,
+        longitude: place?.longitude ?? null,
+        placeName: place?.placeName || null,
       });
       onSaved();
     } catch {
@@ -49,28 +68,27 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
 
       {goals.length > 0 && (
         <div className="app-field">
-          <label htmlFor="log-goal">Goal</label>
-          <select id="log-goal" value={goalId} onChange={(e) => setGoalId(e.target.value)}>
-            <option value="">Not linked to a goal</option>
-            {goals.map((goal) => (
-              <option key={goal.id} value={goal.id}>
-                {goal.title}
-              </option>
-            ))}
-          </select>
+          <span className="app-field__label" id="log-goal-label">
+            Goal
+          </span>
+          <Select
+            id="log-goal"
+            labelledBy="log-goal-label"
+            value={goalId}
+            options={goalOptions}
+            onChange={pickGoal}
+          />
         </div>
       )}
 
       <div className="app-field">
-        <label htmlFor="log-mood">Mood</label>
-        <select id="log-mood" value={mood} onChange={(e) => setMood(e.target.value)}>
-          {MOODS.map((m) => (
-            <option key={m} value={m}>
-              {capitalize(m)}
-            </option>
-          ))}
-        </select>
+        <span className="app-field__label" id="log-mood-label">
+          Mood
+        </span>
+        <MoodPicker value={mood} onChange={setMood} labelledBy="log-mood-label" />
       </div>
+
+      <PlaceField id="log-place-label" label="Where" value={place} onChange={setPlace} />
 
       <label className="app-check">
         <input

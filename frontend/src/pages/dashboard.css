@@ -86,9 +86,11 @@
 .pass {
   position: relative;
   border-radius: var(--r-pass);
-  background: var(--accent-gradient);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 38%,
+    var(--accent-gradient);
   color: var(--color-on-accent);
-  box-shadow: var(--lift-2);
+  box-shadow: var(--lift-2), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
   overflow: hidden;
 }
 
@@ -120,12 +122,13 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  font-family: var(--font-heading);
-  font-size: clamp(52px, 8vw, 76px);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(48px, 7.4vw, 68px);
   line-height: 0.92;
   margin: 0;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-display);
 }
 .pass__figure small {
   font-size: 0.34em;
@@ -252,7 +255,7 @@
   min-height: 44px;
   padding: 10px 22px;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-control);
   background: var(--color-on-accent);
   color: var(--color-accent);
   font-family: var(--font-body);
@@ -272,89 +275,119 @@
   font-weight: 600;
 }
 
-/* ── The goal stack ────────────────────────── */
+/* ── The goal deck ─────────────────────────── */
 
-.stack {
-  --pass-h: 108px;
-  --stack-step: 44px;
-  --stack-gap: 12px;
+/* The container never changes size. Its height is the collapsed stack, and
+   opening the deck translates the passes downward inside a layer that is
+   allowed to overflow, so the feed below it does not move. */
+.deck {
+  --pass-h: 104px;
+  --deck-gap: 10px;
   position: relative;
-  /* The container resizes instantly; the passes themselves carry the motion
-     on transform, so nothing animates a layout property. */
 }
 
-.stack__deck,
-.stack__card {
+/* Dims everything behind the open deck. Fixed, so it covers the whole page,
+   and inert: dismissal lives in the component's own listeners. */
+.deck__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-text) 16%, transparent);
+  animation: deck-scrim 200ms var(--ease-pop);
+}
+@keyframes deck-scrim {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.deck__layer {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+}
+
+/* Open, the layer is a panel floating over the page. It grows upward: its
+   bottom edge stays pinned where the collapsed deck sat, so opening it never
+   pushes past the bottom of the screen. The container itself never changes
+   size, and a deck taller than the cap scrolls inside itself. */
+.deck--open .deck__layer {
+  inset: auto 0 0;
+  height: min(var(--open-h, 0px), 68dvh);
+  padding: 0 3px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.deck__spacer { height: var(--open-h, 0px); }
+
+.deck__card {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
   height: var(--pass-h);
-  transform: translateY(var(--y, 0px));
-  transition: transform 300ms var(--ease-out);
+  transform: translate3d(0, var(--y, 0px), 0) scale(var(--s, 1));
+  transform-origin: 50% 0;
+  /* Only transform moves, so neither opening nor closing touches layout. */
+  transition: transform 420ms var(--ease-pop);
+  /* Both directions run top card first, so the deck reads as one hand being
+     spread and then gathered from the same end. */
+  transition-delay: calc(var(--i, 0) * 26ms);
+}
+.deck--open .deck__card {
+  transition-delay: calc(var(--i, 0) * 30ms);
 }
 
-/* The deck owns the stacked height, so its focus ring frames the whole
-   object instead of collapsing to a slit above it. */
-.stack__deck {
-  height: 100%;
+/* Collapsed, the deck is one object: one target, one hover. */
+.deck__grip {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   border: 0;
   padding: 0;
   background: none;
-  cursor: pointer;
-  text-align: left;
   border-radius: var(--r-pass);
+  cursor: pointer;
 }
-/* The whole deck lifts on hover, so it reads as one graspable object. */
-.stack__deck:hover .stack__card { transform: translateY(calc(var(--y, 0px) - 3px)); }
-
-/* Fanning the deck open: the passes arrive staggered, each with a slight
-   tilt, so it reads as a hand of cards being spread. Exponential ease-out
-   rather than a spring — an overshoot reads as bounce here. The
-   reduced-motion rule below flattens it. */
-.stack--fanning .stack__card {
-  animation: fan-in 420ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 38ms);
-}
-.stack--fanning .stack__card:nth-child(odd) { --tilt: -0.5deg; }
-.stack--fanning .stack__card:nth-child(even) { --tilt: 0.5deg; }
-
-@keyframes fan-in {
-  0% {
-    transform: translateY(calc(var(--y, 0px) - 22px)) scale(0.985) rotate(var(--tilt, 0deg));
-  }
-  100% {
-    transform: translateY(var(--y, 0px)) scale(1) rotate(0deg);
-  }
+/* The grip sits after the layer in the DOM, so this has to look forwards
+   from the layer rather than backwards from the grip. */
+.deck__layer:has(~ .deck__grip:hover) .deck__card {
+  transform: translate3d(0, calc(var(--y, 0px) - 3px), 0) scale(var(--s, 1));
 }
 
-/* Stacking back: the passes gather in, top card settling last. */
-.stack--gathering .stack__card {
-  animation: gather-in 340ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 26ms);
+.deck__hint {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
-@keyframes gather-in {
-  0% {
-    transform: translateY(calc(var(--y, 0px) + 16px)) scale(1.012);
-  }
-  100% {
-    transform: translateY(var(--y, 0px)) scale(1);
-  }
+/* Switching combination re-deals the deck in the new colours. The keyed
+   remount re-runs this once; it starts from a visible state, so nothing
+   fades in. */
+.deck__card {
+  animation: deck-deal 340ms var(--ease-pop) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+@keyframes deck-deal {
+  from { transform: translate3d(0, calc(var(--y, 0px) + 16px), 0) scale(calc(var(--s, 1) * 0.985)); }
+  to { transform: translate3d(0, var(--y, 0px), 0) scale(var(--s, 1)); }
 }
 
-/* Signature interaction, second half: switching combination restacks the deck.
-   Applied only for the duration of that change, and it starts from a visible
-   state rather than fading in. */
-.stack--restack .stack__card {
-  animation: stack-restack 320ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 45ms);
-}
-@keyframes stack-restack {
-  from { transform: translateY(calc(var(--y, 0px) + 18px)) scale(0.98); }
-  to { transform: translateY(var(--y, 0px)); }
-}
+/* ── A goal pass, in glass ─────────────────── */
 
+/* Actual glass: a translucent pane over the ambient ground, blurred, with a
+   lit top edge, a shaded bottom edge and a specular sweep across the upper
+   half. The colour under each pass comes from the ground behind it, which is
+   why they differ from one another without being tinted individually. */
 .goal-pass {
   position: relative;
   display: grid;
@@ -363,16 +396,27 @@
     "title action"
     "meta  dots";
   align-items: center;
-  gap: 8px 14px;
+  gap: 6px 14px;
   height: 100%;
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-radius: var(--r-pass);
-  /* Each pass carries its own accent-tinted field, set per goal by --tint,
-     so the deck is a spectrum of cards rather than a pile of identical rows.
-     Elevation is declared once, as shadow only. */
-  background: color-mix(in srgb, var(--color-accent) var(--tint, 8%), var(--color-surface));
-  box-shadow: var(--lift-2);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 48%,
+    var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-edge), var(--lift-2);
   overflow: hidden;
+}
+
+/* Without a blur the pane would be washed-out paint, so it becomes an opaque
+   card with the same edges. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .goal-pass {
+    background:
+      var(--glass-gloss) no-repeat top center / 100% 48%,
+      var(--color-surface);
+  }
 }
 
 /* The title sits on the same line as its mark. */
@@ -384,26 +428,31 @@
   min-width: 0;
 }
 
-/* The card's mark, the way a Wallet pass carries its issuer's tile. */
+/* The pass's own tile, the way a Wallet pass carries its issuer's mark. */
 .goal-pass__mark {
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-control);
-  background: var(--accent-gradient);
+  border-radius: var(--r-chip);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 50%,
+    var(--accent-gradient);
   color: var(--color-on-accent);
-  font-family: var(--font-heading);
-  font-size: 17px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
 }
 
 .goal-pass__name {
   min-width: 0;
-  font-size: 15px;
+  font-size: var(--t-h3);
   font-weight: 600;
   line-height: 1.25;
+  letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -414,10 +463,10 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 10px;
+  gap: 3px 10px;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.05em;
+  font-size: var(--t-micro);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
@@ -435,6 +484,16 @@
   white-space: nowrap;
 }
 
+.goal-pass__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 16ch;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .goal-pass__action {
   grid-area: action;
   justify-self: end;
@@ -445,34 +504,26 @@
   grid-area: dots;
   justify-self: end;
   display: grid;
-  grid-template-columns: repeat(7, 10px);
+  grid-template-columns: repeat(7, 9px);
   gap: 5px;
 }
 
 .week-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--color-text) 12%, transparent);
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
 }
-.week-dot--done { background: var(--accent-gradient); }
+.week-dot--done {
+  background: var(--accent-gradient);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+}
 .week-dot--missed {
   background: none;
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 45%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 48%, transparent);
 }
-.week-dot--today { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 45%, transparent); }
+.week-dot--today { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 48%, transparent); }
 
-.stack__hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 4px 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
 
 /* ── Entry feed ────────────────────────────── */
 
@@ -501,26 +552,6 @@
 
 .feed__spacer { flex: 1; }
 
-.mood {
-  padding: 3px 9px;
-  border-radius: var(--r-pill);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.mood--up {
-  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
-  color: var(--color-accent-700);
-}
-.mood--flat {
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
-  color: var(--color-text-muted);
-}
-.mood--down {
-  background: color-mix(in srgb, var(--color-signal) 14%, transparent);
-  color: var(--color-signal);
-}
-
 .feed__note {
   margin: 0;
   font-size: 14px;
@@ -534,20 +565,37 @@
   color: var(--color-text-muted);
 }
 
+/* The goal and the place an entry was logged at, under the note. */
+.feed__foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.feed__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 26ch;
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+
 /* ── First run ─────────────────────────────── */
 
+/* Surface and elevation come from .app-glass, which this carries alongside. */
 .onboard {
   display: grid;
   gap: 16px;
   padding: 28px 24px;
   border-radius: var(--r-pass);
-  background: var(--color-surface);
-  box-shadow: var(--lift-1);
 }
 .onboard__title {
   margin: 0;
   font-family: var(--font-heading);
-  font-weight: 400;
+  font-weight: 700;
   font-size: clamp(26px, 4vw, 34px);
   line-height: 1.1;
 }
@@ -590,6 +638,96 @@
 }
 .onboard__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* ── Weather, on the week card ─────────────── */
+
+.pass__weather {
+  padding: 2px 24px 14px;
+}
+
+/* A glass tile inside the pass. The fill is struck from the on-accent colour
+   rather than the surface, because the ground here is the accent gradient. */
+.wx {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-panel);
+  background:
+    var(--glass-gloss) no-repeat top center / 100% 46%,
+    color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-on-accent) 16%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  color: var(--color-on-accent);
+}
+
+.wx--offer {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.wx--waiting {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-on-accent);
+}
+
+.wx__glyph {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--color-on-accent);
+}
+
+.wx__temp {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+.wx__temp small {
+  font-size: 0.42em;
+  font-weight: 600;
+}
+
+.wx__lines {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.wx__label {
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.wx__range {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+}
+.wx__place {
+  font-size: var(--t-micro);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 34ch;
+}
+
+.wx__enable { flex: 0 0 auto; }
+.wx__note {
+  margin: 0;
+  flex: 1;
+  min-width: 14ch;
+  font-size: var(--t-micro);
+  line-height: 1.4;
+  color: var(--color-on-accent);
+}
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 1080px) {
@@ -603,4 +741,21 @@
   .pass__action { padding: 0 18px 20px; }
   .day-chip { padding: 6px 0 7px; font-size: 10px; }
   .pass__cta { flex: 1; }
+  .pass__weather { padding: 0 18px 12px; }
+  .wx { gap: 10px; padding: 9px 11px; }
+  .wx__temp { font-size: 26px; }
+  .deck { --pass-h: 116px; }
+  .goal-pass { padding: 12px 13px; }
+  .goal-pass__week { grid-template-columns: repeat(7, 8px); gap: 4px; }
+}
+
+/* Reduced motion: the deck still opens and closes, it just arrives rather
+   than travelling, and nothing is dealt in. */
+@media (prefers-reduced-motion: reduce) {
+  .deck__card {
+    animation: none;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+  .deck__scrim { animation: none; }
 }

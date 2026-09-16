@@ -38,6 +38,21 @@ public class Report {
     @Column(name ="most_common_mood")
     private String mostCommonMood;
 
+    // What the week was supposed to contain, and what it actually did: the
+    // sum of every active goal's weekly target, and how much of that was met.
+    // completionRate is achieved/planned as a percentage.
+    @Column(name = "planned_entries")
+    private Integer plannedEntries;
+
+    @Column(name = "achieved_entries")
+    private Integer achievedEntries;
+
+    @Column(name = "goals_on_track")
+    private Integer goalsOnTrack;
+
+    @Column(name = "goals_total")
+    private Integer goalsTotal;
+
     @Column(length = 1000)
     private String summary;
 
