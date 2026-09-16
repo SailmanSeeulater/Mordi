@@ -306,87 +306,6 @@ body.mordi-landing {
   border-color: var(--color-divider);
 }
 
-/* ── Why ───────────────────────────────────────────────── */
-
-.mordi-why {
-  padding: calc(2.5 * var(--unit)) 0;
-}
-.mordi-why__row {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 20px clamp(24px, 4vw, 64px);
-  padding: var(--unit) 0;
-}
-.mordi-why__row + .mordi-why__row {
-  border-top: 2px solid var(--color-divider);
-}
-.mordi-why__num {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  margin: 0;
-}
-.mordi-why__title {
-  font-family: var(--font-heading);
-  font-weight: 400;
-  font-size: 24px;
-  letter-spacing: -0.01em;
-  margin: 0 0 8px;
-}
-.mordi-why__body {
-  font-size: 15.5px;
-  line-height: 28px;
-  margin: 0;
-  max-width: 72ch;
-  color: color-mix(in srgb, var(--color-text) 78%, transparent);
-}
-
-/* ── Features ──────────────────────────────────────────── */
-
-.mordi-features {
-  padding: calc(2.5 * var(--unit)) 0;
-}
-.mordi-features .mordi-kicker {
-  margin-bottom: 14px;
-}
-.mordi-features__lede {
-  font-family: var(--font-heading);
-  font-weight: 400;
-  font-size: clamp(28px, 3.2vw, 40px);
-  letter-spacing: -0.015em;
-  line-height: 1.1;
-  margin: 0 0 calc(2 * var(--unit));
-  max-width: 24ch;
-}
-.mordi-features__grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-}
-.mordi-feature {
-  flex: 1 1 260px;
-  max-width: 380px;
-  background: var(--color-bg);
-  border: 2px solid var(--color-divider);
-  padding: var(--unit);
-}
-.mordi-feature__icon {
-  color: var(--color-accent);
-  display: block;
-}
-.mordi-feature__title {
-  font-family: var(--font-heading);
-  font-weight: 400;
-  font-size: 18px;
-  margin: 16px 0 8px;
-}
-.mordi-feature__body {
-  font-size: 14.5px;
-  line-height: 24px;
-  margin: 0;
-  color: color-mix(in srgb, var(--color-text) 78%, transparent);
-}
-
 /* ── Closing CTA (full-bleed accent band) ──────────────── */
 
 .mordi-close {
@@ -585,7 +504,6 @@ body.mordi-landing {
   font-size: 13px;
   color: var(--color-signal);
   background: color-mix(in srgb, var(--color-signal) 8%, transparent);
-  border-left: 3px solid var(--color-signal);
   padding: 9px 11px;
   margin-bottom: 16px;
 }
@@ -604,10 +522,6 @@ body.mordi-landing {
   .mordi-hero {
     grid-template-columns: 1fr;
   }
-  .mordi-why__row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -620,4 +534,162 @@ body.mordi-landing {
   }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
   .mordi-slip { animation: none; }
+}
+/* ════════════════════════════════════════════════════════
+   Shared world with the signed-in app
+   The landing page carries the same data-theme the app does, and the same
+   corner language, elevation system and gradient accent as components/app.css.
+   These rules come last so they win over the older flat-edged treatment.
+   ════════════════════════════════════════════════════════ */
+
+/* Radii, elevation and the accent gradient come from the [data-theme] block
+   in src/themes.css. */
+.mordi-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Controls: pills, with the accent gradient on the primary action. */
+.mordi-page .btn {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
+    background-color 160ms var(--ease-out);
+}
+.mordi-page .btn-primary {
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  box-shadow: var(--lift-1);
+}
+.mordi-page .btn-primary:hover {
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  transform: translateY(-1px);
+  box-shadow: var(--lift-2);
+}
+.mordi-page .btn-ghost {
+  background: none;
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-text) 22%, transparent);
+}
+.mordi-page .btn-ghost:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-text) 34%, transparent);
+}
+.mordi-page .btn-ghost--invert {
+  color: var(--color-on-accent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-on-accent) 55%, transparent);
+}
+.mordi-page .btn-ghost--invert:hover {
+  background: var(--color-on-accent);
+  color: var(--color-accent);
+  box-shadow: none;
+}
+.mordi-page .btn-text {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-accent-700);
+  font-size: 14px;
+}
+
+/* The hero's task card becomes a pass: soft corners, one shadow, no hairline. */
+.mordi-page .mordi-card {
+  border: 0;
+  border-radius: var(--r-pass);
+  background: var(--color-surface);
+  box-shadow: var(--lift-2);
+  overflow: hidden;
+}
+.mordi-page .mordi-card__head {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.mordi-page .mordi-task { border-bottom: 0; }
+.mordi-page .mordi-task__box {
+  border-radius: 6px;
+  border-width: 2px;
+}
+.mordi-page .mordi-task__box--done {
+  background: var(--accent-gradient);
+  border-color: transparent;
+}
+
+/* Tags are pills, like the app's mood chips. */
+.mordi-page .tag {
+  border: 0;
+  border-radius: var(--r-pill);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.mordi-page .tag-accent {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-700);
+}
+.mordi-page .tag-neutral,
+.mordi-page .tag-outline {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text-muted);
+}
+
+/* Nav and rules lose their hard edges. */
+.mordi-page .mordi-nav {
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.mordi-page .mordi-rule { display: none; }
+
+/* The closing band is the accent gradient, inset and rounded like a pass. */
+.mordi-page .mordi-close {
+  margin: 0 clamp(16px, 4vw, 48px) clamp(24px, 5vw, 56px);
+  border-radius: var(--r-pass);
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  box-shadow: var(--lift-2);
+}
+
+/* The auth slip matches the app's dialogs. */
+.mordi-page .mordi-slip {
+  border: 0;
+  border-radius: var(--r-pass);
+  background: var(--color-surface);
+  box-shadow: var(--lift-3);
+}
+.mordi-page .mordi-overlay {
+  background: color-mix(in srgb, var(--color-text) 45%, transparent);
+  backdrop-filter: blur(3px);
+}
+.mordi-page .mordi-field input {
+  min-height: 46px;
+  border-radius: var(--r-control);
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text);
+}
+.mordi-page .mordi-field input:focus {
+  border-color: var(--color-accent-700);
+}
+.mordi-page .mordi-slip__tab[aria-selected='true'],
+.mordi-page .mordi-slip__tab.is-active {
+  color: var(--color-accent-700);
+}
+.mordi-page .mordi-slip__error {
+  border-radius: var(--r-control);
+}
+
+@media (max-width: 560px) {
+  .mordi-page .mordi-close { margin: 0 12px 24px; }
+}
+
+/* The grain multiplies to nothing on a dark ground, so it lightens instead.
+   Keeps the paper texture present in all ten combinations. */
+[data-theme='graphite'] .mordi-noise,
+[data-theme='midnight'] .mordi-noise,
+[data-theme='forest'] .mordi-noise,
+[data-theme='ember'] .mordi-noise {
+  mix-blend-mode: screen;
+  opacity: 0.05;
 }

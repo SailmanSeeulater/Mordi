@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from "@react-google-maps/api";
+import { useTheme } from "../context/useTheme";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
 import AppShell from "../components/AppShell";
@@ -9,39 +10,81 @@ const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const DEFAULT_CENTER = { lat: 32.7157, lng: -117.1611 };
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 
-// Google Maps styles only accept hex, so these mirror the tokens in index.css.
-const PALETTE = {
-  bg: "#ece7dd",
-  surface: "#e4ddd0",
-  text: "#1a1714",
-  muted: "#595550",
-  accent: "#d2452a",
-};
+// Google Maps styles only accept hex, so the active theme's tokens are read off
+// the DOM and converted. The map then changes colour with the rest of the app.
+function readToken(name, fallback) {
+  if (typeof window === "undefined") return fallback;
+  const root = document.querySelector("[data-theme]") ?? document.documentElement;
+  const raw = getComputedStyle(root).getPropertyValue(name).trim();
+  if (!raw) return fallback;
+  if (raw.startsWith("#")) return raw;
+  const nums = raw.match(/[\d.]+/g);
+  if (!nums || nums.length < 3) return fallback;
+  return (
+    "#" +
+    nums
+      .slice(0, 3)
+      .map((n) => Math.round(parseFloat(n)).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
 
-const MAP_OPTIONS = {
-  disableDefaultUI: true,
-  zoomControl: true,
-  clickableIcons: false,
-  styles: [
-    { elementType: "geometry", stylers: [{ color: PALETTE.bg }] },
-    { elementType: "labels.text.fill", stylers: [{ color: PALETTE.muted }] },
-    { elementType: "labels.text.stroke", stylers: [{ color: PALETTE.bg }] },
-    { featureType: "poi", stylers: [{ visibility: "off" }] },
-    { featureType: "transit", stylers: [{ visibility: "off" }] },
-    { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: PALETTE.surface }] },
-    { featureType: "road", elementType: "geometry", stylers: [{ color: "#f6f2ea" }] },
-    { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#d6cdbd" }] },
-    { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-    { featureType: "water", elementType: "geometry", stylers: [{ color: "#cbd1cb" }] },
-    { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: "#b8ae9f" }] },
-  ],
-};
+/** Mixes two hex colors, so roads and water sit either side of the ground. */
+function mix(a, b, weight) {
+  const parse = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [ar, ag, ab] = parse(a);
+  const [br, bg, bb] = parse(b);
+  return (
+    "#" +
+    [ar, ag, ab]
+      .map((c, i) => Math.round(c * weight + [br, bg, bb][i] * (1 - weight)))
+      .map((c) => c.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+function buildMapOptions() {
+  const bg = readToken("--color-bg", "#ece7dd");
+  const surface = readToken("--color-surface", "#e4ddd0");
+  const text = readToken("--color-text", "#1a1714");
+  const muted = mix(text, bg, 0.7);
+
+  return {
+    disableDefaultUI: true,
+    zoomControl: true,
+    clickableIcons: false,
+    styles: [
+      { elementType: "geometry", stylers: [{ color: bg }] },
+      { elementType: "labels.text.fill", stylers: [{ color: muted }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: bg }] },
+      { featureType: "poi", stylers: [{ visibility: "off" }] },
+      { featureType: "transit", stylers: [{ visibility: "off" }] },
+      { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: surface }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: mix(bg, text, 0.94) }] },
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: mix(bg, text, 0.82) }] },
+      { featureType: "road", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: mix(surface, text, 0.86) }] },
+      { featureType: "administrative", elementType: "geometry.stroke", stylers: [{ color: mix(bg, text, 0.72) }] },
+    ],
+  };
+}
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   weekday: "short",
   month: "short",
   day: "numeric",
 });
+
+function buildMarkerIcon() {
+  return {
+    path: window.google.maps.SymbolPath.CIRCLE,
+    scale: 7,
+    fillColor: readToken("--color-accent", "#d2452a"),
+    fillOpacity: 1,
+    strokeColor: readToken("--color-text", "#1a1714"),
+    strokeWeight: 2,
+  };
+}
 
 function formatDay(recordedAt) {
   return recordedAt ? dateFormat.format(new Date(recordedAt)) : "";
@@ -75,7 +118,16 @@ export default function Locations() {
   const [capturing, setCapturing] = useState(false);
   const [status, setStatus] = useState({ tone: "info", text: "" });
 
+  const { theme } = useTheme();
   const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: MAPS_KEY });
+
+  // Rebuilt when the combination changes, so the map re-styles with the app.
+  // Both of these read the palette off the DOM, so they have to be recomputed
+  // when the combination changes; `theme` is that trigger.
+  const mapOptions = useMemo(() => {
+    void theme;
+    return isLoaded ? buildMapOptions() : null;
+  }, [isLoaded, theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +135,10 @@ export default function Locations() {
       .get("/api/locations")
       .then((res) => {
         if (cancelled) return;
+        if (!Array.isArray(res.data)) {
+          setLoadState("error");
+          return;
+        }
         setLocations(res.data);
         setLoadState("ready");
       })
@@ -107,20 +163,10 @@ export default function Locations() {
     return focus ? { lat: focus.latitude, lng: focus.longitude } : DEFAULT_CENTER;
   }, [places, selectedId]);
 
-  const markerIcon = useMemo(
-    () =>
-      isLoaded
-        ? {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 7,
-            fillColor: PALETTE.accent,
-            fillOpacity: 1,
-            strokeColor: PALETTE.text,
-            strokeWeight: 2,
-          }
-        : undefined,
-    [isLoaded],
-  );
+  const markerIcon = useMemo(() => {
+    void theme;
+    return isLoaded ? buildMarkerIcon() : undefined;
+  }, [isLoaded, theme]);
 
   const captureLocation = async () => {
     if (!navigator.geolocation) {
@@ -160,13 +206,13 @@ export default function Locations() {
   };
 
   return (
-    <AppShell>
+    <AppShell title="Places">
       <div className="loc">
         <section className="app-panel loc__map-panel" aria-labelledby="loc-title">
           <div className="app-panel__head">
-            <h1 id="loc-title" className="app-panel__title">
+            <h2 id="loc-title" className="app-panel__title">
               Places
-            </h1>
+            </h2>
             {loadState === "ready" && (
               <span className="app-panel__meta">{places.length} saved</span>
             )}
@@ -199,7 +245,7 @@ export default function Locations() {
                 mapContainerStyle={MAP_CONTAINER_STYLE}
                 center={center}
                 zoom={12}
-                options={MAP_OPTIONS}
+                options={mapOptions}
               >
                 {places.map((loc) => (
                   <MarkerF

@@ -18,21 +18,29 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<Goal> createGoal(
-                @AuthenticationPrincipal String email,
-                @RequestBody GoalRequest request) {
-                return ResponseEntity.ok(goalService.createGoal(email, request));
-        }
+            @AuthenticationPrincipal String email,
+            @RequestBody GoalRequest request) {
+        return ResponseEntity.ok(goalService.createGoal(email, request));
+    }
 
     @GetMapping
     public ResponseEntity<List<Goal>> getGoals(
-                @AuthenticationPrincipal String email) {
-            return ResponseEntity.ok(goalService.getActiveGoals(email));
-        }
+            @AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(goalService.getActiveGoals(email));
+    }
 
-    @DeleteMapping
+    @PutMapping("/{id}")
+    public ResponseEntity<Goal> updateGoal(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id,
+            @RequestBody GoalRequest request) {
+        return ResponseEntity.ok(goalService.updateGoal(email, id, request));
+    }
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<Goal> deleteGoal(
-                @AuthenticationPrincipal String email,
-                @PathVariable Long id) {
-            return ResponseEntity.ok(goalService.deactivateGoal(email, id));
-        }
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(goalService.deactivateGoal(email, id));
+    }
 }

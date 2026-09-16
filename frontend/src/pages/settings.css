@@ -1,0 +1,88 @@
+/* Settings: quiet, sectioned, one column. The loud surface is the dashboard. */
+
+.settings {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  max-width: 680px;
+}
+
+.settings__note {
+  margin: 0;
+  padding: 0 18px 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.settings__themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.settings__themes .theme-swatch {
+  gap: 7px;
+  padding: 10px 4px 9px;
+  font-size: 11px;
+  background: color-mix(in srgb, var(--color-bg) 45%, transparent);
+}
+.settings__themes .theme-swatch__face {
+  width: 46px;
+  height: 46px;
+}
+
+.settings__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 14px 18px;
+}
+.settings__row + .settings__row {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
+}
+
+.settings__label {
+  min-width: 96px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.settings__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 18px 18px;
+}
+
+.settings__status {
+  margin: 0;
+  padding: 0 18px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.settings__status--error { color: var(--color-signal); }
+
+.settings__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 4px 18px 18px;
+  font-size: 14px;
+}
+.settings__links a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}

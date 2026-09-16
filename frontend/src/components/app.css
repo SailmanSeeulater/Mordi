@@ -1,29 +1,34 @@
-/* Signed-in app UI: shell, panels, buttons, forms, dialogs.
-   Consumes the global tokens in src/index.css. Classes are app- prefixed
-   because landing.css stays loaded after navigation and owns names like .btn. */
+/* Signed-in app: shell, passes, panels, controls, dialogs.
+   World: Apple Wallet crossed with Instagram — full-bleed color passes with
+   soft corners, gradient progress rings, one shadow system, no square edges.
+   Colors come from the active theme in src/themes.css; nothing here hardcodes one. */
 
-.app-sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-/* ── Shell ─────────────────────────────────── */
-
+/* Radii, elevation, easing and the accent gradient come from the [data-theme]
+   block in src/themes.css, which every themed root carries. */
 .app {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
 }
 
+.app-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .app-body { min-width: 0; }
+
+/* ── Rail ──────────────────────────────────── */
 
 .app-rail {
   position: sticky;
@@ -32,9 +37,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 0 18px;
-  border-right: 2px solid var(--color-divider);
+  gap: 2px;
+  padding: 14px 8px 18px;
 }
 
 .app-rail__mark {
@@ -42,52 +46,62 @@
   height: 44px;
   display: grid;
   place-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+  border-radius: var(--r-control);
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
   font-family: var(--font-heading);
   font-size: 22px;
   line-height: 1;
-  color: var(--color-accent);
   text-decoration: none;
+  box-shadow: var(--lift-1);
 }
 
 .app-rail__link {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  padding: 8px 0 6px;
   display: grid;
-  place-items: center;
-  border: 2px solid transparent;
+  justify-items: center;
+  gap: 4px;
+  border-radius: var(--r-control);
+  color: color-mix(in srgb, var(--color-text) 72%, var(--color-bg));
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.app-rail__link:hover {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
   color: var(--color-text);
 }
-.app-rail__link:hover { border-color: var(--color-divider); }
-.app-rail__link[aria-current="page"] {
-  background: var(--color-text);
-  color: var(--color-bg);
+.app-rail__link[aria-current='page'] {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent-700);
 }
-
 .app-rail__spacer { flex: 1; }
 
+/* ── Top bar ───────────────────────────────── */
+
 .app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   padding: 14px 24px;
-  border-bottom: 2px solid var(--color-divider);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 
-.app-tabs { display: flex; gap: 2px; }
-
-.app-tab {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border: 2px solid transparent;
-  color: var(--color-text);
-  text-decoration: none;
-}
-.app-tab:hover { border-color: var(--color-divider); }
-.app-tab[aria-current="page"] {
-  background: var(--color-text);
-  color: var(--color-bg);
+.app-topbar__title {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.1;
+  margin: 0;
 }
 
 .app-topbar__spacer { flex: 1; }
@@ -95,56 +109,188 @@
 .app-whoami {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 13px;
 }
 
 .app-avatar {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  background: var(--color-accent);
+  border-radius: var(--r-pill);
+  background: var(--accent-gradient);
   color: var(--color-on-accent);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .app-main {
   display: grid;
   gap: 20px;
-  padding: 24px;
+  align-content: start;
+  padding: 22px 24px 40px;
   min-width: 0;
 }
+
+/* ── Color button ──────────────────────────── */
+
+.theme-switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.theme-switch__cycle,
+.theme-switch__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  background: none;
+  border: 0;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.theme-switch__cycle {
+  gap: 8px;
+  padding: 0 4px 0 6px;
+  border-radius: var(--r-pill);
+}
+
+.theme-switch__chip {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: var(--accent-gradient);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-bg) 70%, transparent);
+  transition: transform 220ms var(--ease-out);
+}
+.theme-switch__cycle:hover .theme-switch__chip { transform: rotate(45deg) scale(1.08); }
+
+.theme-switch__more {
+  justify-content: center;
+  width: 30px;
+  padding: 0;
+  border-radius: var(--r-pill);
+  color: var(--color-text-muted);
+}
+.theme-switch__more:hover { color: var(--color-text); }
+
+.theme-switch__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  z-index: 40;
+  width: min(320px, calc(100vw - 32px));
+  padding: 14px;
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--lift-3);
+  animation: app-pop 180ms var(--ease-out);
+}
+.theme-switch__menu--end { right: 0; }
+.theme-switch__menu--start { left: 0; }
+
+@keyframes app-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.theme-switch__menu-title {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.theme-switch__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-swatch {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 6px 2px 5px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-swatch:hover { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+
+/* Only the face carries data-theme, so it paints itself in the colors it
+   applies while the label stays legible on the surrounding surface. The
+   gradient is written out here rather than reusing --accent-gradient: a
+   custom property's var()s resolve where it was declared, which would have
+   painted every swatch in the active theme's accent. */
+.theme-swatch__face {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  background: var(--color-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 20%, transparent);
+  overflow: hidden;
+}
+.theme-swatch__blob {
+  position: absolute;
+  inset: 5px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+}
+.theme-swatch[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-700);
+}
+.theme-swatch__label { color: var(--color-text); }
+
+/* ── Bottom tab bar (phones) ───────────────── */
+
+.app-tabbar { display: none; }
 
 /* ── Panels ────────────────────────────────── */
 
 .app-panel {
-  border: 2px solid var(--color-divider);
-  background: var(--color-bg);
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--lift-1);
   min-width: 0;
+  overflow: hidden;
 }
 
 .app-panel__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  padding: 16px 20px;
-  border-bottom: 2px solid var(--color-divider);
+  gap: 6px 14px;
+  padding: 16px 18px 12px;
 }
 
 .app-panel__title {
   font-family: var(--font-heading);
   font-weight: 400;
-  font-size: 22px;
+  font-size: 19px;
   line-height: 1.15;
   margin: 0;
 }
 
 .app-panel__meta {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -154,14 +300,16 @@
 .app-list {
   list-style: none;
   margin: 0;
-  padding: 8px 0;
+  padding: 0 10px 10px;
+  display: grid;
+  gap: 6px;
 }
 
 .app-empty {
   margin: 0;
-  padding: 28px 20px;
+  padding: 8px 18px 22px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--color-text-muted);
 }
 .app-empty p { margin: 0; }
@@ -171,101 +319,159 @@
   margin: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 14px;
-  padding: 20px;
-  border: 2px solid var(--color-divider);
+  padding: 18px;
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--lift-1);
   font-size: 14px;
 }
 
 /* ── Buttons ───────────────────────────────── */
 
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: var(--lift-1);
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
+    opacity 160ms var(--ease-out);
+}
+.app-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--lift-2);
+}
+.app-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+.app-btn:disabled { opacity: 0.55; cursor: default; }
+
+.app-btn--block { width: 100%; }
+
+.app-btn--ghost {
+  background: none;
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-text) 22%, transparent);
+}
+.app-btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-text) 34%, transparent);
+}
+
+.app-btn--quiet {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+  box-shadow: none;
+}
+.app-btn--quiet:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-text) 13%, transparent);
+  box-shadow: none;
+}
+
+.app-btn--danger {
+  background: none;
+  color: var(--color-signal);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 40%, transparent);
+}
+.app-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-signal) 10%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--color-signal);
+}
+
+.app-btn--sm {
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
 .app-linkbtn {
-  /* 44px tap target; the negative margin keeps it from growing the row it sits in. */
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0;
   margin: -13px 0;
+  padding: 0;
   background: none;
-  border: none;
+  border: 0;
+  color: var(--color-accent-700);
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-accent-700);
   cursor: pointer;
   text-underline-offset: 3px;
 }
 .app-linkbtn:hover { text-decoration: underline; }
 
-.app-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 10px 20px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.2;
-  border: 2px solid var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  cursor: pointer;
-}
-.app-btn:hover:not(:disabled) {
-  background: var(--color-accent-700);
-  border-color: var(--color-accent-700);
-}
-.app-btn:disabled { opacity: 0.6; cursor: default; }
-
-.app-btn--block { width: 100%; }
-
-.app-btn--ghost {
-  background: transparent;
-  border-color: var(--color-divider);
+/* Round icon button, Wallet's control shape. */
+.app-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
   color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out);
 }
-.app-btn--ghost:hover:not(:disabled) {
-  background: transparent;
-  border-color: var(--color-text);
-}
+.app-iconbtn:hover { background: color-mix(in srgb, var(--color-text) 13%, transparent); }
 
 /* ── Forms ─────────────────────────────────── */
 
-.app-form { padding: 20px; }
+.app-form { padding: 4px 18px 18px; }
 
-.app-field { margin-bottom: 16px; }
+.app-field { margin-bottom: 14px; }
 .app-field label {
   display: block;
   margin-bottom: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 .app-field input,
-.app-field select {
+.app-field select,
+.app-field textarea {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text);
   font-family: var(--font-body);
   font-size: 15px;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 2px solid var(--color-divider);
-  border-radius: 0;
 }
-.app-field input::placeholder {
+.app-field textarea {
+  min-height: 84px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.app-field input::placeholder,
+.app-field textarea::placeholder {
   color: var(--color-text-muted);
   opacity: 1;
 }
+/* Keep the border change as an extra cue, but never suppress the focus ring:
+   a color-only border shift is not a visible focus indicator. */
 .app-field input:focus,
-.app-field select:focus { border-color: var(--color-text); }
-
+.app-field select:focus,
+.app-field textarea:focus {
+  border-color: var(--color-accent-700);
+}
 .app-field__hint {
   margin: 6px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--color-text-muted);
 }
 
@@ -279,25 +485,56 @@
   cursor: pointer;
 }
 .app-check input {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   margin: 0;
   accent-color: var(--color-accent);
 }
 
 .app-form__error {
-  margin: 0 0 16px;
-  padding: 9px 11px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
   font-size: 13px;
   line-height: 1.45;
   color: var(--color-signal);
-  background: color-mix(in srgb, var(--color-signal) 8%, var(--color-bg));
+  background: color-mix(in srgb, var(--color-signal) 10%, transparent);
 }
 
 .app-form__actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding-top: 2px;
+}
+
+/* Segmented control: how-often picker, Wallet's pill row. */
+.app-segments {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+.app-segment {
+  flex: 1;
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.app-segment:hover { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+.app-segment[aria-pressed='true'] {
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  box-shadow: var(--lift-1);
 }
 
 /* ── Dialogs ───────────────────────────────── */
@@ -310,30 +547,146 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: color-mix(in srgb, var(--color-text) 55%, transparent);
+  background: color-mix(in srgb, var(--color-text) 45%, transparent);
+  backdrop-filter: blur(3px);
+  animation: app-fade 160ms var(--ease-out);
+}
+
+@keyframes app-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .app-dialog {
   width: 100%;
-  max-width: 440px;
+  max-width: 430px;
   max-height: calc(100vh - 40px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--color-bg);
-  border: 2px solid var(--color-divider);
-  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--color-text) 60%, transparent);
+  border-radius: var(--r-pass);
+  background: var(--color-surface);
+  box-shadow: var(--lift-3);
+  animation: app-rise 240ms var(--ease-out);
 }
 .app-dialog:focus { outline: none; }
-.app-dialog .app-panel__head { align-items: center; }
+
+@keyframes app-rise {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.app-dialog .app-panel__head { padding: 18px 18px 8px; }
+
+/* ── Progress ring (Instagram's story ring) ── */
+
+.app-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  /* --ring-p is a percentage of the week's target that is done. */
+  background: conic-gradient(
+    from -90deg,
+    var(--color-accent) 0%,
+    var(--color-accent-2) calc(var(--ring-p, 0) * 1%),
+    color-mix(in srgb, var(--color-text) 14%, transparent) calc(var(--ring-p, 0) * 1%)
+  );
+}
+/* Nothing logged yet reads as a dashed outline, so an empty ring can't be
+   mistaken for a full one at a glance. */
+.app-ring--empty {
+  background: none;
+  border: 2px dashed color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+.app-ring__inner {
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--color-surface);
+  font-weight: 600;
+  overflow: hidden;
+}
 
 /* ── Responsive ────────────────────────────── */
 
-@media (max-width: 640px) {
-  .app-tabs { display: none; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .app-rail { display: none; }
+
   .app-topbar { padding: 12px 16px; }
-  .app-main { padding: 16px; gap: 16px; }
-  .app-rail__link { width: 44px; height: 44px; }
+  .app-main { padding: 16px 16px calc(84px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+
+  .app-tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: space-around;
+    gap: 2px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+  }
+  .app-tabbar__link {
+    flex: 1;
+    min-height: 48px;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 3px;
+    border-radius: var(--r-control);
+    color: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .app-tabbar__link[aria-current='page'] { color: var(--color-accent-700); }
+
   .app-whoami__name { display: none; }
-  .app-form { padding: 16px; }
+  .theme-switch__name { display: none; }
+  .theme-switch__cycle { padding: 0 2px 0 6px; }
   .app-form__actions .app-btn { flex: 1; }
+
+  /* Dialogs become bottom sheets. */
+  .app-overlay { align-items: flex-end; padding: 0; }
+  .app-dialog {
+    max-width: none;
+    max-height: 88vh;
+    border-radius: var(--r-pass) var(--r-pass) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation: app-sheet 260ms var(--ease-out);
+  }
+  @keyframes app-sheet {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+}
+
+/* Touch pointers get the full 44px target PRODUCT.md commits to; a mouse
+   keeps the compact controls. */
+@media (pointer: coarse) {
+  .app-btn--sm,
+  .app-segment,
+  .app-iconbtn,
+  .theme-switch__cycle,
+  .theme-switch__more {
+    min-height: 44px;
+  }
+  .app-iconbtn,
+  .theme-switch__more { min-width: 44px; }
+  .theme-switch__more { width: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app *,
+  .app-overlay,
+  .app-dialog,
+  .theme-switch__menu {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
 }

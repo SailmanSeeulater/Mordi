@@ -1,0 +1,172 @@
+/* Ten color combinations for the signed-in app: six light, four dark.
+   Applied as data-theme on the app shell root, so the public landing page
+   keeps the cream-and-red brand palette regardless of what a user picks.
+
+   Every theme sets the same nine roles:
+     --color-bg          the ground
+     --color-surface     raised cards and inputs
+     --color-text        primary ink
+     --color-accent      gradient stop one (fills, rings, filled controls)
+     --color-accent-2    gradient stop two
+     --color-accent-700  the accent at text strength on the ground (>=4.5:1)
+     --color-on-accent   ink that sits on the accent gradient (>=4.5:1 on both stops)
+     --color-signal      errors on the ground (>=4.5:1)
+     --color-divider     hairlines
+
+   Contrast for every pair is verified by scripts/check-theme-contrast.mjs. */
+
+/* Values derived from whichever theme is active. Declared on [data-theme] so a
+   custom property's var()s resolve against that element's own colors — the app
+   shell, the landing page, the auth pages and the placeholder all get them. */
+[data-theme] {
+  /* Corner language: passes are the roundest thing, controls the least. */
+  --r-pass: 22px;
+  --r-panel: 16px;
+  --r-control: 12px;
+  --r-pill: 999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* One elevation system: offset plus soft blur, tinted by the ink. */
+  --lift-1: 0 1px 2px color-mix(in srgb, var(--color-text) 10%, transparent),
+            0 2px 8px -2px color-mix(in srgb, var(--color-text) 14%, transparent);
+  --lift-2: 0 2px 4px color-mix(in srgb, var(--color-text) 10%, transparent),
+            0 12px 28px -12px color-mix(in srgb, var(--color-text) 26%, transparent);
+  --lift-3: 0 4px 8px color-mix(in srgb, var(--color-text) 12%, transparent),
+            0 28px 56px -20px color-mix(in srgb, var(--color-text) 34%, transparent);
+
+  --accent-gradient: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+
+  /* Secondary text: 70% ink over the ground. Verified >=4.5:1 in every theme. */
+  --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
+}
+
+[data-theme='paper'] {
+  color-scheme: light;
+  --color-bg: #ece7dd;
+  --color-surface: #e4ddd0;
+  --color-text: #1a1714;
+  --color-accent: #c33d22;
+  --color-accent-2: #b35a18;
+  --color-accent-700: #a8341f;
+  --color-on-accent: #ffffff;
+  --color-signal: #b3241c;
+  --color-divider: rgba(26, 23, 20, 0.18);
+}
+
+[data-theme='sorbet'] {
+  color-scheme: light;
+  --color-bg: #fdf0ea;
+  --color-surface: #f8e2d8;
+  --color-text: #2a1414;
+  --color-accent: #cf1e4e;
+  --color-accent-2: #cc4a22;
+  --color-accent-700: #b8143f;
+  --color-on-accent: #ffffff;
+  --color-signal: #b8143f;
+  --color-divider: rgba(42, 20, 20, 0.16);
+}
+
+[data-theme='mint'] {
+  color-scheme: light;
+  --color-bg: #edf5f0;
+  --color-surface: #dcece3;
+  --color-text: #10201a;
+  --color-accent: #0a7a5f;
+  --color-accent-2: #2b7a1f;
+  --color-accent-700: #0a6641;
+  --color-on-accent: #ffffff;
+  --color-signal: #ad2118;
+  --color-divider: rgba(16, 32, 26, 0.16);
+}
+
+[data-theme='lagoon'] {
+  color-scheme: light;
+  --color-bg: #ecf3f9;
+  --color-surface: #d9e7f3;
+  --color-text: #0f1f2b;
+  --color-accent: #0a5e9e;
+  --color-accent-2: #0e7f93;
+  --color-accent-700: #085184;
+  --color-on-accent: #ffffff;
+  --color-signal: #b3241c;
+  --color-divider: rgba(15, 31, 43, 0.16);
+}
+
+[data-theme='lilac'] {
+  color-scheme: light;
+  --color-bg: #f4f0fb;
+  --color-surface: #e7dff7;
+  --color-text: #1b1630;
+  --color-accent: #5b34c4;
+  --color-accent-2: #8a2fb0;
+  --color-accent-700: #4f2cb0;
+  --color-on-accent: #ffffff;
+  --color-signal: #b3241c;
+  --color-divider: rgba(27, 22, 48, 0.16);
+}
+
+[data-theme='sand'] {
+  color-scheme: light;
+  --color-bg: #f6f1e5;
+  --color-surface: #ece0c9;
+  --color-text: #221a10;
+  --color-accent: #8f4a0c;
+  --color-accent-2: #9e6410;
+  --color-accent-700: #7d400a;
+  --color-on-accent: #ffffff;
+  --color-signal: #a82a16;
+  --color-divider: rgba(34, 26, 16, 0.18);
+}
+
+[data-theme='graphite'] {
+  color-scheme: dark;
+  --color-bg: #15161c;
+  --color-surface: #1f2128;
+  --color-text: #f3f2f0;
+  --color-accent: #ff3f63;
+  --color-accent-2: #ff8a4c;
+  --color-accent-700: #ff96a8;
+  --color-on-accent: #1a0407;
+  --color-signal: #ff8b8b;
+  --color-divider: rgba(243, 242, 240, 0.16);
+}
+
+[data-theme='midnight'] {
+  color-scheme: dark;
+  --color-bg: #0d1124;
+  --color-surface: #181e39;
+  --color-text: #eef1fb;
+  --color-accent: #5b82ff;
+  --color-accent-2: #9a6bff;
+  --color-accent-700: #aec2ff;
+  --color-on-accent: #05081a;
+  --color-signal: #ff9494;
+  --color-divider: rgba(238, 241, 251, 0.16);
+}
+
+[data-theme='forest'] {
+  color-scheme: dark;
+  --color-bg: #0f1813;
+  --color-surface: #18251e;
+  --color-text: #eaf3ed;
+  --color-accent: #1fbe77;
+  --color-accent-2: #7ad96a;
+  --color-accent-700: #74e0a8;
+  --color-on-accent: #03120a;
+  --color-signal: #ff9090;
+  --color-divider: rgba(234, 243, 237, 0.16);
+}
+
+[data-theme='ember'] {
+  color-scheme: dark;
+  --color-bg: #17100e;
+  --color-surface: #241813;
+  --color-text: #f7eee9;
+  --color-accent: #ff6a3d;
+  --color-accent-2: #ffb13a;
+  --color-accent-700: #ffa98c;
+  --color-on-accent: #180602;
+  --color-signal: #ff9a8a;
+  --color-divider: rgba(247, 238, 233, 0.18);
+}

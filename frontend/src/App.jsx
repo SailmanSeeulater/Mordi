@@ -3,10 +3,13 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import Goals from "./pages/Goals";
+import Settings from "./pages/Settings";
 import Locations from "./pages/Locations";
 import Placeholder from './pages/Placeholder';
 import AppShell from './components/AppShell';
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
 
 function PrivateRoute({ children }) {
@@ -17,48 +20,64 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/about" element={<Placeholder title="About" />} />
-        <Route path="/privacy" element={<Placeholder title="Privacy" />} />
-        <Route path="/terms" element={<Placeholder title="Terms" />} />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        {[
-          ["/goals", "Goals"],
-          ["/reports", "Weekly report"],
-          ["/settings", "Settings"],
-        ].map(([path, title]) => (
+      <ThemeProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<Placeholder title="About" />} />
+          <Route path="/privacy" element={<Placeholder title="Privacy" />} />
+          <Route path="/terms" element={<Placeholder title="Terms" />} />
           <Route
-            key={path}
-            path={path}
+            path="/dashboard"
             element={
               <PrivateRoute>
-                <AppShell>
-                  <Placeholder title={title} backTo="/dashboard" backLabel="Back to dashboard" />
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/goals"
+            element={
+              <PrivateRoute>
+                <Goals />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                <Settings />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <PrivateRoute>
+                <AppShell title="Weekly report">
+                  <Placeholder
+                    title="Weekly report"
+                    backTo="/dashboard"
+                    backLabel="Back to today"
+                    headingTag="h2"
+                  />
                 </AppShell>
               </PrivateRoute>
             }
           />
-        ))}
-        <Route
-          path="/locations"
-          element={
-            <PrivateRoute>
-              <Locations />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/" element={<Landing />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+          <Route
+            path="/locations"
+            element={
+              <PrivateRoute>
+                <Locations />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/" element={<Landing />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

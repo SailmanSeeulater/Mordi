@@ -36,6 +36,32 @@ export function formatWeekRange(weekStart) {
   return `${startLabel} – ${endLabel}`;
 }
 
+export function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+export function addMonths(date, n) {
+  return new Date(date.getFullYear(), date.getMonth() + n, 1);
+}
+
+export function formatMonth(date) {
+  return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * Six Monday-led weeks covering the month, so the grid never changes height
+ * as you page through. Days outside the month are marked `outside`.
+ */
+export function monthGrid(date) {
+  const first = startOfMonth(date);
+  const gridStart = startOfWeek(first);
+  const month = first.getMonth();
+  return Array.from({ length: 42 }, (_, i) => {
+    const day = addDays(gridStart, i);
+    return { date: day, iso: toIsoDate(day), outside: day.getMonth() !== month };
+  });
+}
+
 export function goalTarget(goal) {
   if (Number.isInteger(goal.targetPerWeek) && goal.targetPerWeek >= 1) {
     return Math.min(goal.targetPerWeek, 7);
