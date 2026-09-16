@@ -574,16 +574,39 @@
   padding-top: 2px;
 }
 
-/* Segmented control: how-often picker, Wallet's pill row. */
+/* Segmented control: the how-often picker.
+   One filled thumb slides between the options rather than the fill jumping
+   from one to the next. No gap between the segments, so the thumb's width is
+   exactly one segment and it can be positioned by whole multiples of itself
+   without measuring anything. */
 .app-segments {
+  position: relative;
   display: flex;
-  gap: 4px;
+  gap: 0;
   padding: 4px;
   border-radius: var(--r-control);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
 }
+
+.app-segments__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--n, 1));
+  border-radius: var(--r-chip);
+  background: var(--accent-gradient);
+  box-shadow: var(--lift-1);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform 340ms var(--ease-pop);
+  pointer-events: none;
+}
+
 .app-segment {
+  position: relative;
+  z-index: 1;
   flex: 1;
+  min-width: 0;
   min-height: 38px;
   border: 0;
   border-radius: var(--r-chip);
@@ -594,13 +617,15 @@
   font-weight: 600;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
-  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+  transition: color 200ms var(--ease-out);
 }
-.app-segment:hover { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+/* Only the unselected ones take a hover fill: on the selected one it would
+   paint over the thumb. */
+.app-segment:not([aria-pressed='true']):hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
 .app-segment[aria-pressed='true'] {
-  background: var(--accent-gradient);
   color: var(--color-on-accent);
-  box-shadow: var(--lift-1);
 }
 
 /* ── Dialogs ───────────────────────────────── */
@@ -799,16 +824,13 @@
   padding: 6px;
   list-style: none;
   border-radius: var(--r-panel);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 30%,
-    var(--glass-fill-strong);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  /* Opaque, and no blur. A menu floats over whatever happens to be behind it
+     — another card, a photo on the map, the week card's gradient — and a
+     translucent one is unreadable against some of them. Elsewhere the panes
+     are translucent because what is behind them is the app's own ground. */
+  background: var(--color-surface);
   box-shadow: var(--glass-edge), var(--lift-3);
   animation: app-pop 160ms var(--ease-pop);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-select__list { background: var(--color-surface); }
 }
 
 .app-select__option {

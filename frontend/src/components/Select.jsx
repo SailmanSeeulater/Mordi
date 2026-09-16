@@ -45,12 +45,17 @@ const IconTick = () => (
  * expect from a collapsed listbox — moving real focus into the popup would
  * mean rebuilding Tab handling for no benefit.
  *
- * The list is rendered into document.body rather than next to the trigger.
- * Inside a dialog it would otherwise count towards that dialog's scrollable
- * overflow: opening the list made the dialog taller, a scrollbar appeared and
- * the whole thing resized under the pointer. A portal keeps the popup out of
- * every ancestor's box, so it works the same in a dialog, a panel, or
- * anything with overflow hidden.
+ * The list is portalled out of the trigger's subtree. Inside a dialog it
+ * would otherwise count towards that dialog's scrollable overflow: opening
+ * the list made the dialog taller, a scrollbar appeared and the whole thing
+ * resized under the pointer.
+ *
+ * It is portalled to the nearest [data-theme] ancestor, not to document.body.
+ * The theme's custom properties are declared on that element, so a popup
+ * outside it loses them: --glass-fill-strong stops resolving and the list
+ * renders see-through, and the colours that do still resolve come from the
+ * defaults on :root rather than from the theme the person picked. That
+ * element is still outside the dialog, so the overflow problem stays fixed.
  *
  * `options` is `[{ value, label, icon? }]`. `value` is always a string.
  */
@@ -69,6 +74,7 @@ export default function Select({
   const rootRef = useRef(null);
   const listRef = useRef(null);
   const [box, setBox] = useState(null);
+  const [host, setHost] = useState(null);
 
   const selectedIndex = Math.max(
     options.findIndex((o) => o.value === value),
@@ -102,6 +108,10 @@ export default function Select({
      rather than appearing at the wrong place for a frame. */
   useLayoutEffect(() => {
     if (!open) return undefined;
+    // The themed element the popup belongs to. Resolved here rather than at
+    // module scope because it depends on where this Select was mounted.
+    setHost(rootRef.current?.closest('[data-theme]') ?? document.body);
+
     const place = () => {
       const el = rootRef.current;
       if (!el) return;
@@ -218,6 +228,7 @@ export default function Select({
 
       {open &&
         box &&
+        host &&
         createPortal(
           <ul
             id={`${baseId}-list`}
@@ -250,7 +261,7 @@ export default function Select({
               </li>
             ))}
           </ul>,
-          document.body,
+          host,
         )}
     </div>
   );
