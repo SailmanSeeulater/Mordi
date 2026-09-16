@@ -39,3 +39,7 @@ skills-lock.json
 # OS
 .DS_Store
 Thumbs.db
+# Impeccable working captures (the surface briefs are tracked)
+.impeccable/review/
+.impeccable/build/
+.impeccable/config.local.json

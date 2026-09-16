@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   toIsoDate,
   startOfWeek,
+  startOfMonth,
+  addMonths,
+  formatMonth,
+  monthGrid,
   formatWeekRange,
   goalTarget,
   targetLabel,
@@ -182,5 +186,52 @@ describe('recentEntries', () => {
       log(1, '2026-09-15', true, { createdAt: '2026-09-15T21:00:00', note: 'c' }),
     ];
     expect(recentEntries(behaviors, 2).map((b) => b.note)).toEqual(['c', 'b']);
+  });
+});
+
+describe('month helpers', () => {
+  it('finds the first of the month', () => {
+    expect(toIsoDate(startOfMonth(day('2026-09-17')))).toBe('2026-09-01');
+  });
+
+  it('steps whole months and clamps to the first', () => {
+    expect(toIsoDate(addMonths(day('2026-09-17'), 1))).toBe('2026-10-01');
+    expect(toIsoDate(addMonths(day('2026-09-17'), -1))).toBe('2026-08-01');
+    // Across a year boundary in both directions.
+    expect(toIsoDate(addMonths(day('2026-01-15'), -1))).toBe('2025-12-01');
+    expect(toIsoDate(addMonths(day('2026-12-15'), 1))).toBe('2027-01-01');
+  });
+
+  it('labels the month', () => {
+    expect(formatMonth(day('2026-09-01'))).toBe('Sep 2026');
+  });
+
+  describe('monthGrid', () => {
+    it('always returns six Monday-led weeks', () => {
+      for (const iso of ['2026-02-01', '2026-09-17', '2027-01-31']) {
+        const grid = monthGrid(day(iso));
+        expect(grid).toHaveLength(42);
+        expect(grid[0].date.getDay()).toBe(1);
+      }
+    });
+
+    it('pads with the neighbouring months and marks them outside', () => {
+      const grid = monthGrid(day('2026-09-17'));
+      // September 2026 starts on a Tuesday, so the grid opens on Aug 31.
+      expect(grid[0].iso).toBe('2026-08-31');
+      expect(grid[0].outside).toBe(true);
+      expect(grid[1].iso).toBe('2026-09-01');
+      expect(grid[1].outside).toBe(false);
+      expect(grid.filter((d) => !d.outside)).toHaveLength(30);
+    });
+
+    it('covers every day of the month exactly once', () => {
+      const grid = monthGrid(day('2026-02-01'));
+      const inside = grid.filter((d) => !d.outside).map((d) => d.iso);
+      expect(inside).toHaveLength(28);
+      expect(new Set(inside).size).toBe(28);
+      expect(inside[0]).toBe('2026-02-01');
+      expect(inside.at(-1)).toBe('2026-02-28');
+    });
   });
 });

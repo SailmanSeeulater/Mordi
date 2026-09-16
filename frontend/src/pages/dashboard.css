@@ -1,253 +1,606 @@
-/* Dashboard-only pieces. Shell, panels, buttons and forms live in components/app.css. */
+/* Dashboard: the week pass, the goal ring rail, the goal stack, the entry feed.
+   Shell, panels and controls live in components/app.css. */
 
-.dash-week__scroll {
-  --dash-label-w: 220px;
-  position: relative;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-text) 35%, var(--color-bg)) transparent;
-}
-
-/* ── Week grid ─────────────────────────────── */
-
-.dash-week__days,
-.dash-week__row {
+.dash {
   display: grid;
-  grid-template-columns: var(--dash-label-w) repeat(7, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
 }
 
-.dash-week__days { border-bottom: 2px solid var(--color-divider); }
-
-.dash-week__day {
-  padding: 10px 0;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-text-muted);
-  border-left: 1px solid var(--color-divider);
-}
-.dash-week__day span {
-  display: block;
-  margin-top: 2px;
-  font-size: 15px;
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
-}
-.dash-week__day--today { background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg)); }
-.dash-week__day--today span {
-  color: var(--color-accent-700);
-  font-weight: 600;
-}
-
-.dash-week__row {
-  min-height: 58px;
-  border-bottom: 1px solid var(--color-divider);
-}
-.dash-week__row:last-child { border-bottom: 0; }
-
-.dash-week__row > * { grid-row: 1; }
-
-.dash-goal {
-  grid-column: 1;
-  align-self: center;
-  padding: 10px 16px;
+.dash__col {
+  display: grid;
+  gap: 20px;
+  align-content: start;
   min-width: 0;
 }
-.dash-goal__name {
-  font-size: 14.5px;
+
+/* ── Goal rings (the story rail) ───────────── */
+
+.rings {
+  display: flex;
+  gap: 14px;
+  padding: 2px 4px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.rings::-webkit-scrollbar { display: none; }
+
+.ring-item {
+  /* Positioned so the visually hidden text inside can't stretch the page. */
+  position: relative;
+  flex: 0 0 auto;
+  width: 76px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 2px 0 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: var(--font-body);
+  cursor: pointer;
+  scroll-snap-align: start;
+  border-radius: var(--r-control);
+}
+
+.ring-item__ring {
+  width: 64px;
+  height: 64px;
+  padding: 3px;
+  transition: transform 200ms var(--ease-out);
+}
+.ring-item:hover .ring-item__ring { transform: scale(1.06); }
+
+.ring-item__inner {
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.ring-item__label {
+  font-size: 11px;
   font-weight: 600;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--color-text);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   overflow: hidden;
 }
-.dash-goal__cat {
-  margin-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 11px;
+
+.ring-item--add .ring-item__inner {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-text) 22%, transparent);
+  font-size: 22px;
   color: var(--color-text-muted);
 }
 
-.dash-slot { border-left: 1px solid var(--color-divider); }
-.dash-slot--today { background: color-mix(in srgb, var(--color-accent) 7%, var(--color-bg)); }
+/* ── The week pass ─────────────────────────── */
 
-.dash-seg {
-  align-self: center;
-  z-index: 1;
-  min-width: 0;
-  height: 30px;
-  margin: 0 4px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  font-size: 12.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dash-seg--done {
-  background: var(--color-accent);
+.pass {
+  position: relative;
+  border-radius: var(--r-pass);
+  background: var(--accent-gradient);
   color: var(--color-on-accent);
+  box-shadow: var(--lift-2);
+  overflow: hidden;
 }
 
-.dash-seg--missed {
-  background: repeating-linear-gradient(
-    135deg,
-    transparent 0 5px,
-    color-mix(in srgb, var(--color-text) 12%, transparent) 5px 10px
+/* A single soft highlight, so the gradient reads as a surface catching light. */
+.pass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 88% 6%,
+    color-mix(in srgb, var(--color-on-accent) 16%, transparent),
+    transparent 60%
   );
-  color: color-mix(in srgb, var(--color-text) 78%, var(--color-bg));
-  border: 1px solid var(--color-divider);
+}
+.pass > * { position: relative; z-index: 1; }
+
+.pass__body {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 18px 26px;
+  padding: 26px 24px 20px;
 }
 
-/* ── Bottom cards ──────────────────────────── */
+.pass__headline { min-width: 0; }
 
-.dash-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.dash-entry {
-  padding: 13px 20px;
-  border-bottom: 1px solid var(--color-divider);
-}
-.dash-entry:last-child { border-bottom: 0; }
-
-.dash-entry__top {
+.pass__figure {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: clamp(52px, 8vw, 76px);
+  line-height: 0.92;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
 }
-.dash-entry__date {
+.pass__figure small {
+  font-size: 0.34em;
+  font-weight: 400;
+}
+
+/* Text on the gradient stays at full strength: a reduced alpha composites
+   below 4.5:1 over the darker accent stop. */
+.pass__sub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 32ch;
+  color: var(--color-on-accent);
+}
+.pass__range {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.pass__fields {
+  display: flex;
+  gap: 22px;
+  margin-left: auto;
+}
+.pass__field { display: grid; gap: 2px; }
+.pass__field dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-on-accent);
+}
+.pass__field dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Day strip along the pass's lower edge — each chip opens the month. */
+.pass__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px 24px 20px;
+}
+
+.day-chip {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 0 8px;
+  border-radius: var(--r-control);
+  /* No translucent fill: a 16% on-accent tint measured 3.6:1 for the text on
+     top. Undone days are an outline, so their text sits on the raw gradient. */
+  background: none;
+  border: 1.5px solid color-mix(in srgb, var(--color-on-accent) 34%, transparent);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-on-accent);
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out);
+}
+.day-chip:hover { transform: translateY(-1px); }
+.day-chip--today:hover { transform: translateY(-1px) scale(1.06); }
+.day-chip__num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.day-chip__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-on-accent) 70%, transparent);
+}
+/* Three distinguishable states: solid for logged, dashed for missed, a plain
+   thin outline for days still open. */
+.day-chip--done {
+  background: var(--color-on-accent);
+  border-color: var(--color-on-accent);
+  color: var(--color-accent);
+}
+.day-chip--done .day-chip__dot { background: var(--color-accent); }
+.day-chip--missed {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-on-accent) 62%, transparent);
+}
+.day-chip--missed .day-chip__dot {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-on-accent) 75%, transparent);
+}
+.day-chip--today {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-on-accent) 55%, transparent);
+}
+.day-chip__now {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.pass__action {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 24px;
+}
+
+/* The global focus ring is the accent, which on the pass is the ground itself. */
+.pass :focus-visible {
+  outline-color: var(--color-on-accent);
+}
+
+/* A filled pill in the on-accent color, sitting on the gradient. */
+.pass__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 22px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--color-on-accent);
+  color: var(--color-accent);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.pass__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, #000 45%, transparent);
+}
+
+.pass__cta--quiet {
+  background: color-mix(in srgb, var(--color-on-accent) 18%, transparent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+}
+
+/* ── The goal stack ────────────────────────── */
+
+.stack {
+  --pass-h: 108px;
+  --stack-step: 44px;
+  --stack-gap: 12px;
+  position: relative;
+  /* The container resizes instantly; the passes themselves carry the motion
+     on transform, so nothing animates a layout property. */
+}
+
+.stack__deck,
+.stack__card {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--pass-h);
+  transform: translateY(var(--y, 0px));
+  transition: transform 300ms var(--ease-out);
+}
+
+/* The deck owns the stacked height, so its focus ring frames the whole
+   object instead of collapsing to a slit above it. */
+.stack__deck {
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--r-pass);
+}
+/* The whole deck lifts on hover, so it reads as one graspable object. */
+.stack__deck:hover .stack__card { transform: translateY(calc(var(--y, 0px) - 3px)); }
+
+/* Fanning the deck open: the passes arrive staggered, each with a slight
+   tilt, so it reads as a hand of cards being spread. Exponential ease-out
+   rather than a spring — an overshoot reads as bounce here. The
+   reduced-motion rule below flattens it. */
+.stack--fanning .stack__card {
+  animation: fan-in 420ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 38ms);
+}
+.stack--fanning .stack__card:nth-child(odd) { --tilt: -0.5deg; }
+.stack--fanning .stack__card:nth-child(even) { --tilt: 0.5deg; }
+
+@keyframes fan-in {
+  0% {
+    transform: translateY(calc(var(--y, 0px) - 22px)) scale(0.985) rotate(var(--tilt, 0deg));
+  }
+  100% {
+    transform: translateY(var(--y, 0px)) scale(1) rotate(0deg);
+  }
+}
+
+/* Stacking back: the passes gather in, top card settling last. */
+.stack--gathering .stack__card {
+  animation: gather-in 340ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 26ms);
+}
+
+@keyframes gather-in {
+  0% {
+    transform: translateY(calc(var(--y, 0px) + 16px)) scale(1.012);
+  }
+  100% {
+    transform: translateY(var(--y, 0px)) scale(1);
+  }
+}
+
+/* Signature interaction, second half: switching combination restacks the deck.
+   Applied only for the duration of that change, and it starts from a visible
+   state rather than fading in. */
+.stack--restack .stack__card {
+  animation: stack-restack 320ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+@keyframes stack-restack {
+  from { transform: translateY(calc(var(--y, 0px) + 18px)) scale(0.98); }
+  to { transform: translateY(var(--y, 0px)); }
+}
+
+.goal-pass {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title action"
+    "meta  dots";
+  align-items: center;
+  gap: 8px 14px;
+  height: 100%;
+  padding: 14px 16px;
+  border-radius: var(--r-pass);
+  /* Each pass carries its own accent-tinted field, set per goal by --tint,
+     so the deck is a spectrum of cards rather than a pile of identical rows.
+     Elevation is declared once, as shadow only. */
+  background: color-mix(in srgb, var(--color-accent) var(--tint, 8%), var(--color-surface));
+  box-shadow: var(--lift-2);
+  overflow: hidden;
+}
+
+/* The title sits on the same line as its mark. */
+.goal-pass__title {
+  grid-area: title;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The card's mark, the way a Wallet pass carries its issuer's tile. */
+.goal-pass__mark {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-control);
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.goal-pass__name {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-pass__meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Category reads as an icon plus its name. */
+.goal-pass__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-accent-700);
+}
+
+.goal-pass__count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.goal-pass__action {
+  grid-area: action;
+  justify-self: end;
+}
+
+/* The week's dots sit under the Log button, on the right. */
+.goal-pass__week {
+  grid-area: dots;
+  justify-self: end;
+  display: grid;
+  grid-template-columns: repeat(7, 10px);
+  gap: 5px;
+}
+
+.week-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+.week-dot--done { background: var(--accent-gradient); }
+.week-dot--missed {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 45%, transparent);
+}
+.week-dot--today { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 45%, transparent); }
+
+.stack__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* ── Entry feed ────────────────────────────── */
+
+.feed { display: grid; gap: 2px; }
+
+.feed__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+}
+
+.feed__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feed__date {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
-.dash-entry__spacer { flex: 1; }
-.dash-entry__mood {
-  font-size: 12px;
-  font-weight: 600;
+
+.feed__spacer { flex: 1; }
+
+.mood {
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.mood--up {
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
   color: var(--color-accent-700);
 }
-.dash-entry__note {
-  margin: 3px 0 0;
+.mood--flat {
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  color: var(--color-text-muted);
+}
+.mood--down {
+  background: color-mix(in srgb, var(--color-signal) 14%, transparent);
+  color: var(--color-signal);
+}
+
+.feed__note {
+  margin: 0;
   font-size: 14px;
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
-.dash-prog {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--color-divider);
-}
-.dash-prog:last-child { border-bottom: 0; }
-
-.dash-prog__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  font-size: 14px;
-}
-.dash-prog__name {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.dash-prog__count {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.dash-prog__bar {
-  height: 8px;
-  margin-top: 8px;
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
-}
-.dash-prog__fill {
-  height: 100%;
-  background: var(--color-accent);
-}
-
-.dash-report { padding: 20px; }
-
-.dash-bignum {
-  font-family: var(--font-heading);
-  font-size: 64px;
-  line-height: 1;
-  margin: 0 0 4px -0.04em;
-  font-variant-numeric: tabular-nums;
-}
-.dash-bignum small { font-size: 22px; }
-
-.dash-report__label {
-  margin: 0;
-  font-size: 14px;
+.feed__goal {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
-.dash-report__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  margin: 20px 0 0;
-  background: var(--color-divider);
-  border: 1px solid var(--color-divider);
-}
+/* ── First run ─────────────────────────────── */
 
-.dash-stat {
-  background: var(--color-bg);
-  padding: 12px 14px;
+.onboard {
+  display: grid;
+  gap: 16px;
+  padding: 28px 24px;
+  border-radius: var(--r-pass);
+  background: var(--color-surface);
+  box-shadow: var(--lift-1);
 }
-.dash-stat__k {
+.onboard__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.1;
+}
+.onboard__body {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+.onboard__steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.onboard__steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.onboard__steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--accent-gradient);
+  color: var(--color-on-accent);
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--color-text-muted);
-}
-.dash-stat__v {
-  margin: 2px 0 0;
-  font-size: 19px;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
-
-.dash-report__cta { margin-top: 18px; }
+.onboard__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* ── Responsive ────────────────────────────── */
 
-@media (max-width: 900px) {
-  .dash-week__scroll {
-    --dash-label-w: 170px;
-    overflow-x: auto;
-  }
-  .dash-week__days,
-  .dash-week__row { min-width: 720px; }
-
-  /* Keep goal names in view while the days scroll sideways. */
-  .dash-goal,
-  .dash-week__days > :first-child {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    background: var(--color-bg);
-    border-right: 1px solid var(--color-divider);
-  }
-  .dash-goal {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+@media (max-width: 1080px) {
+  .dash { grid-template-columns: minmax(0, 1fr); }
 }
 
-@media (max-width: 640px) {
-  .dash-week__scroll { --dash-label-w: 128px; }
-  .dash-goal { padding: 10px 12px; }
-  .dash-goal__name { font-size: 13.5px; }
-  .dash-cards { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (max-width: 560px) {
+  .pass__body { padding: 22px 18px 16px; gap: 14px 18px; }
+  .pass__fields { margin-left: 0; gap: 18px; }
+  .pass__days { padding: 0 18px 16px; gap: 4px; }
+  .pass__action { padding: 0 18px 20px; }
+  .day-chip { padding: 6px 0 7px; font-size: 10px; }
+  .pass__cta { flex: 1; }
 }

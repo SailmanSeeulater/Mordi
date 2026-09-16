@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from '../api/client';
 import './landing.css';
@@ -14,72 +15,6 @@ const TASKS = [
   { label: 'Pay rent', done: false, tag: 'High', tone: 'accent' },
 ];
 
-const WHY = [
-  {
-    n: '01',
-    title: 'Most task lists get abandoned',
-    body: 'They ask you to maintain the system before it helps you do the work — tagging, sorting, re-prioritizing. Most people quit within a week.',
-  },
-  {
-    n: '02',
-    title: 'Mordi keeps the list moving on its own',
-    body: 'Habits and recurring tasks resurface themselves. Dates put things on your calendar automatically. You add tasks — Mordi handles the upkeep.',
-  },
-  {
-    n: '03',
-    title: 'One view, not five apps',
-    body: 'Tasks, calendar, notes, and priorities live together — so you stop switching between a to-do app, a calendar, and a notes app to plan one day.',
-  },
-];
-
-const IconLists = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M8 6h13M8 12h13M8 18h13" />
-    <path d="M3 6h.01M3 12h.01M3 18h.01" />
-  </svg>
-);
-const IconCalendar = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="4" width="18" height="18" rx="0" />
-    <path d="M3 10h18M8 2v4M16 2v4" />
-  </svg>
-);
-const IconRepeat = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M17 2l4 4-4 4" />
-    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-    <path d="M7 22l-4-4 4-4" />
-    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-  </svg>
-);
-const IconTag = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M21.2 15.2a2 2 0 0 1 0 2.8l-2.2 2.2a2 2 0 0 1-2.8 0L3 7V3h4l13.2 13.2z" />
-    <path d="M7 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
-  </svg>
-);
-const IconLink = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l8.49-8.49a3.5 3.5 0 0 1 4.95 4.95l-8.49 8.49a2 2 0 0 1-2.83-2.83l7.78-7.78" />
-  </svg>
-);
-const IconGrid = () => (
-  <svg className="mordi-feature__icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="3" width="7" height="7" />
-    <rect x="14" y="3" width="7" height="7" />
-    <rect x="3" y="14" width="7" height="7" />
-    <rect x="14" y="14" width="7" height="7" />
-  </svg>
-);
-
-const FEATURES = [
-  { Icon: IconLists, title: 'Lists & projects', body: 'Group tasks into projects and reorder freely.' },
-  { Icon: IconCalendar, title: 'Calendar view', body: 'See a day, week, or month at a glance.' },
-  { Icon: IconRepeat, title: 'Recurring habits', body: 'Set a task once, on your own schedule.' },
-  { Icon: IconTag, title: 'Priorities & tags', body: 'Three levels, sort by what matters.' },
-  { Icon: IconLink, title: 'Notes & attachments', body: 'Keep files and links on the task itself.' },
-  { Icon: IconGrid, title: 'One view for everything', body: 'No switching between apps to plan a day.' },
-];
 
 function useScrollReveal() {
   useEffect(() => {
@@ -120,6 +55,7 @@ export default function Landing() {
   const [password, setPassword] = useState('');
 
   const { login } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   useScrollReveal();
@@ -192,7 +128,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="mordi-page">
+    <div className="mordi-page" data-theme={theme}>
       <div className="mordi-noise" aria-hidden="true" />
 
       <nav className="mordi-nav">
@@ -253,40 +189,6 @@ export default function Landing() {
           </div>
         </section>
 
-        <hr className="mordi-rule" />
-
-        <section className="mordi-why" data-reveal>
-          <span className="mordi-kicker">Why Mordi</span>
-          {WHY.map((w) => (
-            <div className="mordi-why__row" key={w.n}>
-              <p className="mordi-why__num">{w.n}</p>
-              <div>
-                <h3 className="mordi-why__title">{w.title}</h3>
-                <p className="mordi-why__body">{w.body}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        <hr className="mordi-rule" />
-
-        <section className="mordi-features" id="features" data-reveal>
-          <span className="mordi-kicker">Features</span>
-          <h2 className="mordi-features__lede">
-            Everything a personal tracker needs, nothing it doesn&rsquo;t
-          </h2>
-          <div className="mordi-features__grid">
-            {FEATURES.map(({ Icon, title, body }) => (
-              <div className="mordi-feature" key={title}>
-                <Icon />
-                <h3 className="mordi-feature__title">{title}</h3>
-                <p className="mordi-feature__body">{body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <hr className="mordi-rule" />
       </div>
 
       <section className="mordi-close" data-reveal>

@@ -1,0 +1,74 @@
+{
+  "schema": "impeccable.design/1",
+  "product": "Mordi",
+  "surface": "signed-in app and landing page",
+  "world": "Apple Wallet crossed with Instagram (user-pinned)",
+  "buildPath": "code",
+  "sources": {
+    "structuralTokens": "frontend/src/index.css",
+    "derivedTokens": "frontend/src/themes.css ([data-theme] block)",
+    "themes": "frontend/src/themes.css",
+    "contrastCheck": "frontend/scripts/check-theme-contrast.mjs"
+  },
+  "themes": {
+    "default": "sorbet",
+    "appliedOn": ["[data-theme] on .app", ".mordi-page", ".auth", ".wip"],
+    "storageKey": "mordi-theme",
+    "roles": [
+      "--color-bg",
+      "--color-surface",
+      "--color-text",
+      "--color-accent",
+      "--color-accent-2",
+      "--color-accent-700",
+      "--color-on-accent",
+      "--color-signal",
+      "--color-divider"
+    ],
+    "derived": {
+      "--color-text-muted": "color-mix(in srgb, var(--color-text) 70%, var(--color-bg))",
+      "--accent-gradient": "linear-gradient(135deg, var(--color-accent), var(--color-accent-2))"
+    },
+    "light": ["paper", "sorbet", "mint", "lagoon", "lilac", "sand"],
+    "dark": ["graphite", "midnight", "forest", "ember"]
+  },
+  "radii": {
+    "--r-pass": "22px",
+    "--r-panel": "16px",
+    "--r-control": "12px",
+    "--r-pill": "999px",
+    "rule": "no square corners in the signed-in app"
+  },
+  "elevation": {
+    "tokens": ["--lift-1", "--lift-2", "--lift-3"],
+    "rule": "offset plus soft blur, tinted by the ink; declared once per element, shadow only"
+  },
+  "type": {
+    "display": { "family": "Gambarino", "selfHosted": "frontend/public/fonts/gambarino/Gambarino-Regular.woff2" },
+    "body": { "family": "Archivo", "sizes": ["15px", "14px", "13px", "11px"], "weights": [400, 600, 700] },
+    "mono": { "family": "IBM Plex Mono", "use": "dates, counts, small labels", "numerals": "tabular-nums" },
+    "bans": ["kicker or eyebrow above a heading"]
+  },
+  "motion": {
+    "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "durations": "140-320ms",
+    "properties": ["transform", "opacity"],
+    "signature": "the goal deck fans from an overlapped stack and restacks when the combination changes (45ms per-card stagger)",
+    "reducedMotion": "every duration collapses to 1ms; the deck defaults to fanned"
+  },
+  "components": {
+    "pass": ".pass — the week, full-bleed accent gradient, display figure, day strip opening the month calendar",
+    "goalPass": ".goal-pass / .goal-card — per-goal accent tint in four steps, gradient mark tile, 7-dot week",
+    "ring": ".app-ring — conic-gradient progress; dashed outline when empty; count repeated as text",
+    "shell": ".app — 76px labelled rail on desktop, bottom tab bar under 860px, sticky translucent top bar",
+    "dialog": ".app-dialog — centred card, bottom sheet under 860px, focus trap and scroll lock",
+    "calendar": ".cal — six Monday-led weeks, gradient for logged days, dashed for past empty days"
+  },
+  "accessibility": {
+    "contrast": "140 checks across 10 themes, all passing at 4.5:1 for text and 3:1 for fills",
+    "targets": "44px on coarse pointers; 36px minimum with spacing on fine pointers",
+    "focus": "never suppressed; inverts to --color-on-accent inside the pass",
+    "headings": "one h1 per page (top bar title); regions labelled by h2",
+    "colorAlone": "never carries meaning — progress states also read as text"
+  }
+}

@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import { useTheme } from '../context/useTheme';
 import './app.css';
 import './auth.css';
 
 export default function AuthPage({ title, footer, children }) {
+  const { theme } = useTheme();
+
   return (
-    <div className="auth">
+    <div className="auth" data-theme={theme}>
       <header className="auth__top">
         <Link to="/" className="auth__brand">
           Mordi
