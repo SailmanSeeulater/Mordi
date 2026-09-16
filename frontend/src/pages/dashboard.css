@@ -295,7 +295,7 @@
 .deck__scrim {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: 30;
   pointer-events: none;
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
   animation: deck-scrim 200ms var(--ease-pop);
@@ -311,13 +311,14 @@
   z-index: 2;
 }
 
-/* Open, the layer is a panel floating over the page. It grows upward: its
-   bottom edge stays pinned where the collapsed deck sat, so opening it never
-   pushes past the bottom of the screen. The container itself never changes
-   size, and a deck taller than the cap scrolls inside itself. */
+/* Open, the layer is a panel floating over the page, and its position and
+   height are set inline from a measurement — see GoalDeck. It prefers to grow
+   upward from the collapsed deck so it never pushes past the bottom of the
+   screen, but it is clamped to the viewport so it cannot walk off the top
+   either. Above the top bar, because a popover that is half hidden behind the
+   chrome is worse than one that covers it. */
 .deck--open .deck__layer {
-  inset: auto 0 0;
-  height: min(var(--open-h, 0px), 68dvh);
+  z-index: 31;
   padding: 0 3px 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -437,6 +438,7 @@
     color-mix(in srgb, var(--color-surface) 94%, transparent);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+  /* See .deck--open .goal-pass below: an open pass is opaque. */
   box-shadow: var(--glass-edge), var(--lift-2);
   overflow: hidden;
 }
@@ -449,6 +451,18 @@
       var(--glass-gloss) no-repeat top center / 100% 48%,
       var(--color-surface);
   }
+}
+
+/* An open pass is opaque, and no longer blurs.
+   Collapsed, a pass sits on the page and being translucent is what makes it
+   read as glass. Open, it floats over the week card's gradient, and there is
+   no opacity that survives that: the accent behind it shows through the text.
+   Readability wins over the material here. The hairline edges and the
+   elevation stay, so it is still the same object. */
+.deck--open .goal-pass {
+  background: var(--color-surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* The title sits on the same line as its mark. */
@@ -775,6 +789,13 @@
   outline-style: solid;
 }
 
+/* The block a release would swap with. */
+.mod--over {
+  outline-color: var(--color-accent-700);
+  outline-style: solid;
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
 .mod__grip {
   justify-self: start;
   display: inline-flex;
@@ -818,6 +839,19 @@
   transform: scale(1.06);
   cursor: grabbing;
 }
+
+/* Where the held ring would land. A bar on the leading edge rather than a
+   ring around the tile, because the question is "between which two". */
+.ring-item--over::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 14px;
+  left: -7px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-accent-700);
+}
 .ring-item--held .ring-item__ring {
   box-shadow: var(--lift-2);
 }
@@ -848,6 +882,16 @@
 /* The pass moves over to clear the grip, only when there is one. */
 .goal-pass:has(.goal-pass__grip) {
   padding-left: 26px;
+}
+
+/* The slot a release would drop into. Nothing moves until then: reordering
+   live pulls items out from under the pointer, which makes the drag oscillate
+   between two positions. */
+.deck__card--over .goal-pass {
+  box-shadow:
+    var(--glass-edge),
+    var(--lift-2),
+    0 0 0 2px var(--color-accent-700);
 }
 
 .deck__card--held {

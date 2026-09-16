@@ -75,8 +75,8 @@
      app. This is what the glass has to refract; without it the panes would
      blur a flat colour and look like nothing. Strengths are deliberately low
      so text contrast over the ground is unaffected. */
-  --aero-orb-1: color-mix(in srgb, var(--color-accent) 9%, transparent);
-  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 7%, transparent);
+  --aero-orb-1: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 13%, transparent);
   --aero-sky: color-mix(in srgb, var(--color-surface) 30%, transparent);
 }
 

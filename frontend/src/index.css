@@ -120,7 +120,7 @@ textarea {
   left: -14vmax;
   background: radial-gradient(closest-side, var(--aero-orb-1), transparent);
   animation-name: aurora-1;
-  animation-duration: 64s;
+  animation-duration: 26s;
 }
 
 .aurora__orb--2 {
@@ -130,7 +130,7 @@ textarea {
   right: -16vmax;
   background: radial-gradient(closest-side, var(--aero-orb-2), transparent);
   animation-name: aurora-2;
-  animation-duration: 83s;
+  animation-duration: 34s;
 }
 
 .aurora__orb--3 {
@@ -140,22 +140,22 @@ textarea {
   left: 22vmax;
   background: radial-gradient(closest-side, var(--aero-orb-1), transparent);
   animation-name: aurora-3;
-  animation-duration: 71s;
+  animation-duration: 29s;
 }
 
 @keyframes aurora-1 {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(9vmax, 7vmax, 0) scale(1.14); }
+  to { transform: translate3d(18vmax, 13vmax, 0) scale(1.3); }
 }
 
 @keyframes aurora-2 {
-  from { transform: translate3d(0, 0, 0) scale(1.08); }
-  to { transform: translate3d(-11vmax, 9vmax, 0) scale(0.94); }
+  from { transform: translate3d(0, 0, 0) scale(1.12); }
+  to { transform: translate3d(-21vmax, 16vmax, 0) scale(0.85); }
 }
 
 @keyframes aurora-3 {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-8vmax, -6vmax, 0) scale(1.18); }
+  to { transform: translate3d(-16vmax, -12vmax, 0) scale(1.34); }
 }
 
 /* Asked not to move: the blooms stay exactly where they start, so the ground

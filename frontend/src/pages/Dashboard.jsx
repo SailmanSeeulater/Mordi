@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useTheme } from '../context/useTheme';
 import useToday from '../hooks/useToday';
@@ -57,13 +57,17 @@ function entryDateLabel(entry) {
  * `touch-action: pan-y` leaves the page free to scroll vertically under a
  * finger while horizontal movement comes to us.
  */
-function GoalRing({ row, onClick, order, held, dragProps, onNudge }) {
+function GoalRing({ row, onClick, order, held, over, dragProps, onNudge }) {
   const percent = Math.min(row.done / row.target, 1) * 100;
   const empty = row.done === 0;
   return (
     <button
       type="button"
-      className={`ring-item${held ? ' ring-item--held' : ''}`}
+      className={
+        'ring-item' +
+        (held ? ' ring-item--held' : '') +
+        (over ? ' ring-item--over' : '')
+      }
       onClick={onClick}
       data-sort-id={row.id}
       {...dragProps}
@@ -218,29 +222,70 @@ function GoalPass({ row, todayColumn, onLog, grip }) {
 const PEEK = 10;
 const MAX_PEEK = 3;
 
+/** Breathing room between the open panel and the edges of the screen. */
+const PANEL_MARGIN = 14;
+
 function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, onNudge }) {
   const layers = Math.min(Math.max(rows.length - 1, 0), MAX_PEEK);
   const collapsedHeight = `calc(var(--pass-h) + ${layers * PEEK}px)`;
 
-  // The open panel hides its scrollbar, so it needs another way to say that
-  // there is more below. Measured rather than guessed from the row count,
-  // because the cap is a share of the viewport height. Set from a frame
-  // callback so nothing is set synchronously during the effect.
-  const layerRef = useRef(null);
-  const [clipped, setClipped] = useState(false);
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-    const check = () => {
-      const el = layerRef.current;
-      if (el) setClipped(el.scrollHeight > el.clientHeight + 1);
+  const deckRef = useRef(null);
+  const [panel, setPanel] = useState(null);
+
+  /* Where the open panel goes.
+   *
+   * It prefers to grow upward from the collapsed deck, so it never pushes
+   * past the bottom of the screen. But growing upward without a limit walks
+   * off the top instead, which is worse: the passes are then unreachable,
+   * because the panel is fixed and the page cannot scroll to it. So the
+   * height is capped to the viewport and the top edge is clamped, and if the
+   * deck still does not fit it scrolls inside itself.
+   *
+   * Fixed positioning, measured in viewport coordinates, with page scroll
+   * locked while it is open — the same treatment a dialog gets. Anything
+   * anchored to the page would drift out of view the moment you scrolled.
+   */
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const place = () => {
+      const el = deckRef.current;
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      // The pass height and gap stay declared in CSS, including the phone
+      // override, so they are read back rather than duplicated here.
+      const style = getComputedStyle(el);
+      const passH = parseFloat(style.getPropertyValue('--pass-h')) || 104;
+      const gap = parseFloat(style.getPropertyValue('--deck-gap')) || 10;
+      const full = rows.length * (passH + gap);
+
+      const height = Math.min(full, window.innerHeight - PANEL_MARGIN * 2);
+      const top = Math.min(
+        Math.max(box.bottom - height, PANEL_MARGIN),
+        window.innerHeight - height - PANEL_MARGIN,
+      );
+      setPanel({
+        top,
+        left: box.left,
+        width: box.width,
+        height,
+        full,
+        clipped: full > height + 1,
+      });
     };
-    const frame = requestAnimationFrame(check);
-    window.addEventListener('resize', check);
+    // A layout effect, measured and applied before the browser paints, so the
+    // panel never shows for a frame at the wrong size or in last time's
+    // position.
+    place();
+    // The panel is fixed, so it has to be re-placed as the page moves under
+    // it, which keeps it anchored to the deck and inside the viewport. An
+    // earlier version locked body scroll instead; because the body is the
+    // scrolling element here, `overflow: hidden` clamped it to the top and
+    // opening the deck jumped the whole page.
+    window.addEventListener('scroll', place, { passive: true });
+    window.addEventListener('resize', place);
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', check);
+      window.removeEventListener('scroll', place);
+      window.removeEventListener('resize', place);
     };
   }, [open, rows.length]);
 
@@ -258,8 +303,14 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
       if (!e.target.closest?.('.deck, .deck__hint')) onToggle();
     };
     document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onDown);
+    // A frame later, not immediately. Attaching it in the same tick as the
+    // render that opened the deck let the opening interaction's own trailing
+    // events reach it, so the deck opened and shut again on one press.
+    const armed = requestAnimationFrame(() =>
+      document.addEventListener('pointerdown', onDown),
+    );
     return () => {
+      cancelAnimationFrame(armed);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown);
     };
@@ -268,6 +319,7 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
   return (
     <div
       className={`deck${open ? ' deck--open' : ''}`}
+      ref={deckRef}
       style={{ height: collapsedHeight }}
       key={restackKey}
     >
@@ -277,9 +329,19 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
       {open && <div className="deck__scrim" aria-hidden="true" />}
 
       <div
-        className={`deck__layer${clipped ? ' deck__layer--clipped' : ''}`}
-        ref={layerRef}
-        style={{ '--open-h': `calc(${rows.length} * (var(--pass-h) + var(--deck-gap)))` }}
+        className={`deck__layer${open && panel?.clipped ? ' deck__layer--clipped' : ''}`}
+        style={
+          open && panel
+            ? {
+                position: 'fixed',
+                top: panel.top,
+                left: panel.left,
+                width: panel.width,
+                height: panel.height,
+                '--open-h': `${panel.full}px`,
+              }
+            : undefined
+        }
       >
         {/* Gives the open layer something to scroll. The passes are absolutely
             positioned, so without it a deck taller than the screen would have
@@ -288,7 +350,11 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
         {rows.map((row, i) => (
           <div
             key={row.goal.id}
-            className={`deck__card${drag.dragId === String(row.id) ? ' deck__card--held' : ''}`}
+            className={
+              'deck__card' +
+              (drag.dragId === String(row.id) ? ' deck__card--held' : '') +
+              (drag.overId === String(row.id) ? ' deck__card--over' : '')
+            }
             data-sort-id={row.id}
             style={{
               '--i': i,
@@ -369,9 +435,15 @@ const SECTIONS = [
  */
 function Block({ id, label, order, rearrange, drag, onNudge, children }) {
   const held = drag.dragId === id;
+  const over = drag.overId === id;
   return (
     <div
-      className={`mod${rearrange ? ' mod--movable' : ''}${held ? ' mod--held' : ''}`}
+      className={
+        'mod' +
+        (rearrange ? ' mod--movable' : '') +
+        (held ? ' mod--held' : '') +
+        (over ? ' mod--over' : '')
+      }
       style={{ order }}
       data-sort-id={rearrange ? id : undefined}
     >
@@ -562,6 +634,7 @@ export default function Dashboard() {
                     onClick={() => openLog(row.goal.id)}
                     order={goalOrder.indexOf(row.id)}
                     held={goalDrag.dragId === row.id}
+                    over={goalDrag.overId === row.id}
                     dragProps={goalDrag.handleProps(row.id)}
                     onNudge={goalOrder.nudge}
                   />

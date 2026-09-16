@@ -786,13 +786,13 @@
   transform: rotate(180deg);
 }
 
+/* Fixed and portalled to the body: top, left, width and max-height are set
+   inline from a measurement of the trigger. Inside a dialog an absolutely
+   positioned list counted towards that dialog's scrollable overflow, so
+   opening it grew the dialog and a scrollbar appeared. */
 .app-select__list {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 60;
-  max-height: 248px;
+  position: fixed;
+  z-index: 120;
   overflow-y: auto;
   overscroll-behavior: contain;
   margin: 0;

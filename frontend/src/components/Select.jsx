@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const IconCaret = () => (
   <svg
@@ -44,6 +45,13 @@ const IconTick = () => (
  * expect from a collapsed listbox — moving real focus into the popup would
  * mean rebuilding Tab handling for no benefit.
  *
+ * The list is rendered into document.body rather than next to the trigger.
+ * Inside a dialog it would otherwise count towards that dialog's scrollable
+ * overflow: opening the list made the dialog taller, a scrollbar appeared and
+ * the whole thing resized under the pointer. A portal keeps the popup out of
+ * every ancestor's box, so it works the same in a dialog, a panel, or
+ * anything with overflow hidden.
+ *
  * `options` is `[{ value, label, icon? }]`. `value` is always a string.
  */
 export default function Select({
@@ -60,6 +68,7 @@ export default function Select({
   const [active, setActive] = useState(0);
   const rootRef = useRef(null);
   const listRef = useRef(null);
+  const [box, setBox] = useState(null);
 
   const selectedIndex = Math.max(
     options.findIndex((o) => o.value === value),
@@ -78,11 +87,47 @@ export default function Select({
   useEffect(() => {
     if (!open) return undefined;
     const onDocDown = (e) => {
-      if (!rootRef.current?.contains(e.target)) close();
+      // The list is portalled, so "inside" means either element.
+      const inside =
+        rootRef.current?.contains(e.target) || listRef.current?.contains(e.target);
+      if (!inside) close();
     };
     document.addEventListener('mousedown', onDocDown);
     return () => document.removeEventListener('mousedown', onDocDown);
   }, [open, close]);
+
+  /* Where the popup goes. Measured from the trigger, dropped upward when
+     there is more room above than below, and never taller than the space it
+     has. A layout effect, so it is positioned before the browser paints
+     rather than appearing at the wrong place for a frame. */
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const place = () => {
+      const el = rootRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const gap = 6;
+      const cap = 248;
+      const below = window.innerHeight - rect.bottom - gap * 2;
+      const above = rect.top - gap * 2;
+      const dropUp = below < Math.min(cap, 160) && above > below;
+      const height = Math.max(Math.min(cap, dropUp ? above : below), 96);
+      setBox({
+        left: rect.left,
+        width: rect.width,
+        top: dropUp ? rect.top - height - gap : rect.bottom + gap,
+        height,
+      });
+    };
+    place();
+    // Capture, so scrolling inside a dialog counts too.
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
 
   // Keep the active option in view when arrowing through a long list.
   useEffect(() => {
@@ -171,33 +216,42 @@ export default function Select({
         <IconCaret />
       </button>
 
-      {open && (
-        <ul
-          id={`${baseId}-list`}
-          className="app-select__list"
-          role="listbox"
-          ref={listRef}
-          aria-labelledby={labelledBy ?? baseId}
-        >
-          {options.map((option, i) => (
-            <li
-              key={option.value}
-              id={`${baseId}-opt-${i}`}
-              role="option"
-              aria-selected={option.value === value}
-              className={
-                'app-select__option' + (i === active ? ' app-select__option--active' : '')
-              }
-              onMouseEnter={() => setActive(i)}
-              onClick={() => commit(i)}
-            >
-              {option.icon ?? null}
-              <span>{option.label}</span>
-              {option.value === value && <IconTick />}
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        box &&
+        createPortal(
+          <ul
+            id={`${baseId}-list`}
+            className="app-select__list"
+            role="listbox"
+            ref={listRef}
+            aria-labelledby={labelledBy ?? baseId}
+            style={{
+              top: box.top,
+              left: box.left,
+              width: box.width,
+              maxHeight: box.height,
+            }}
+          >
+            {options.map((option, i) => (
+              <li
+                key={option.value}
+                id={`${baseId}-opt-${i}`}
+                role="option"
+                aria-selected={option.value === value}
+                className={
+                  'app-select__option' + (i === active ? ' app-select__option--active' : '')
+                }
+                onMouseEnter={() => setActive(i)}
+                onClick={() => commit(i)}
+              >
+                {option.icon ?? null}
+                <span>{option.label}</span>
+                {option.value === value && <IconTick />}
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
