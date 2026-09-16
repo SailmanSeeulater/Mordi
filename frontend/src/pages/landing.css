@@ -26,19 +26,15 @@ body.mordi-landing {
   font-family: var(--font-body);
 }
 
-/* The same ambient ground the signed-in app stands on, so the two do not read
-   as two different products. Fixed and pointer-events-none. */
+/* The same sky wash the signed-in app stands on, so the two do not read as
+   two different products. The drifting blooms come from <Aurora />. */
 .mordi-page::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(50% 38% at 10% 0%, var(--aero-orb-1), transparent 70%),
-    radial-gradient(42% 34% at 94% 10%, var(--aero-orb-2), transparent 72%),
-    radial-gradient(58% 44% at 72% 102%, var(--aero-orb-1), transparent 74%),
-    linear-gradient(to bottom, var(--aero-sky), transparent 42%);
+  background: linear-gradient(to bottom, var(--aero-sky), transparent 42%);
 }
 
 .mordi-noise {

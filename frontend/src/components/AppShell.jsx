@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
+import Aurora from './Aurora';
 import './app.css';
 
 const svgProps = {
@@ -69,6 +70,7 @@ export default function AppShell({ title, action, children }) {
 
   return (
     <div className="app" data-theme={theme}>
+      <Aurora />
       <nav className="app-rail" aria-label="Sections">
         <Link to="/dashboard" className="app-rail__mark" aria-label="Mordi">
           M

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
+import Aurora from '../components/Aurora';
 import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from '../api/client';
@@ -131,6 +132,7 @@ export default function Landing() {
 
   return (
     <div className="mordi-page" data-theme={theme}>
+      <Aurora />
       <div className="mordi-noise" aria-hidden="true" />
 
       <nav className="mordi-nav">

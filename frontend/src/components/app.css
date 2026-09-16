@@ -18,21 +18,16 @@
   font-family: var(--font-body);
 }
 
-/* The Aero ground: a faint sky wash plus three soft blooms, fixed so it never
-   scrolls and never repaints. Everything the glass panes blur is here. It is
-   behind all content (z-index: -1 inside .app's own stacking context) and
-   takes no pointer events, so it cannot affect layout or interaction. */
+/* The sky wash. The drifting blooms are the .aurora layer, in index.css;
+   this is the flat gradient underneath them. Fixed, so it never scrolls and
+   never repaints, behind all content, and inert. */
 .app::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(52% 40% at 12% 0%, var(--aero-orb-1), transparent 70%),
-    radial-gradient(44% 36% at 92% 14%, var(--aero-orb-2), transparent 72%),
-    radial-gradient(60% 46% at 68% 104%, var(--aero-orb-1), transparent 74%),
-    linear-gradient(to bottom, var(--aero-sky), transparent 46%);
+  background: linear-gradient(to bottom, var(--aero-sky), transparent 46%);
 }
 
 /* Paper grain over the ground, at the strength the landing page uses. Fixed
