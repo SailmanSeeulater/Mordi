@@ -469,6 +469,17 @@
 }
 .app-iconbtn:hover { background: color-mix(in srgb, var(--color-text) 13%, transparent); }
 
+/* Sits inside a list row, where a 40px target would dominate it. The coarse
+   pointer block near the end of this file restores the full size on touch. */
+.app-iconbtn--sm {
+  width: 30px;
+  height: 30px;
+  color: var(--color-text-muted);
+  background: none;
+}
+.app-iconbtn--sm:hover { color: var(--color-text); }
+.app-iconbtn--sm[aria-pressed='true'] { color: var(--color-accent-700); }
+
 /* ── Forms ─────────────────────────────────── */
 
 .app-form { padding: 4px 18px 18px; }
@@ -912,7 +923,7 @@
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 10px, 0);
+    transform: translate3d(0, 18px, 0) scale(0.985);
   }
   to {
     opacity: 1;
@@ -924,11 +935,11 @@
    arriving all at once. Capped at the fourth block: past that the wait before
    anything appears starts to read as slowness rather than grace. */
 .app-main > * {
-  animation: page-in 320ms var(--ease-pop) backwards;
+  animation: page-in 440ms var(--ease-pop) backwards;
 }
-.app-main > *:nth-child(2) { animation-delay: 45ms; }
-.app-main > *:nth-child(3) { animation-delay: 90ms; }
-.app-main > *:nth-child(n + 4) { animation-delay: 130ms; }
+.app-main > *:nth-child(2) { animation-delay: 60ms; }
+.app-main > *:nth-child(3) { animation-delay: 120ms; }
+.app-main > *:nth-child(n + 4) { animation-delay: 170ms; }
 
 /* ── Responsive ────────────────────────────── */
 
@@ -1000,6 +1011,7 @@
   }
   .app-iconbtn,
   .theme-switch__more { min-width: 44px; }
+  .app-iconbtn--sm { width: 44px; height: 44px; }
   .theme-switch__more { width: 44px; }
 }
 

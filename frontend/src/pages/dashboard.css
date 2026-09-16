@@ -113,10 +113,14 @@
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 18px 26px;
-  padding: 26px 24px 20px;
+  padding: 18px 24px 20px;
 }
 
-.pass__headline { min-width: 0; }
+.pass__headline {
+  min-width: 0;
+  /* Room for the weather chip in the corner above. */
+  padding-right: 84px;
+}
 
 .pass__figure {
   display: flex;
@@ -317,7 +321,35 @@
   padding: 0 3px 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  /* No scrollbar: it would sit inside the floating panel and cut across the
+     passes. The fade below is the affordance instead. */
+  scrollbar-width: none;
+}
+.deck--open .deck__layer::-webkit-scrollbar { display: none; }
+
+/* Only a deck taller than the cap gets the fade: with the scrollbar gone it
+   is the only thing saying there is more below, and on a deck that fits it
+   would be a gradient over the first card for no reason. The class is set
+   from a measurement, not guessed from the number of goals, because the cap
+   is a share of the viewport height. */
+.deck--open .deck__layer--clipped {
+  /* Both edges, not just one. The panel grows upward but its content still
+     flows downward, so which end is hiding passes depends on where you have
+     scrolled to; a fade on one edge would be wrong half the time. */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
 }
 .deck__spacer { height: var(--open-h, 0px); }
 
@@ -645,29 +677,32 @@
    the glyph and the temperature lives in the accessible name and the tooltip,
    so it reads as one more small fact on the card rather than a panel. */
 .pass__crown {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 16px 24px 0;
 }
 
 .wx {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 9px 5px 7px;
+  gap: 7px;
+  padding: 7px 12px 7px 9px;
   border: 1.5px solid color-mix(in srgb, var(--color-on-accent) 34%, transparent);
   border-radius: var(--r-control);
   background: none;
   color: var(--color-on-accent);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .wx small {
-  font-size: 0.85em;
+  font-size: 0.8em;
 }
 
 .wx--btn {
@@ -690,13 +725,14 @@
 }
 
 @media (max-width: 560px) {
-  .pass__body { padding: 22px 18px 16px; gap: 14px 18px; }
+  .pass__body { padding: 16px 18px 16px; gap: 14px 18px; }
+  .pass__headline { padding-right: 72px; }
   .pass__fields { margin-left: 0; gap: 18px; }
   .pass__days { padding: 0 18px 16px; gap: 4px; }
   .pass__action { padding: 0 18px 20px; }
   .day-chip { padding: 6px 0 7px; font-size: 10px; }
   .pass__cta { flex: 1; }
-  .pass__crown { padding: 14px 18px 0; }
+  .pass__crown { top: 18px; right: 18px; }
   .deck { --pass-h: 116px; }
   .goal-pass { padding: 12px 13px; }
   .goal-pass__week { grid-template-columns: repeat(7, 8px); gap: 4px; }
@@ -712,3 +748,119 @@
   }
   .deck__scrim { animation: none; }
 }
+
+/* ── Rearranging ───────────────────────────── */
+
+/* Each block in the left column. Position comes from the CSS `order`
+   property, so the DOM order never changes and nothing re-animates
+   mid-drag. */
+.mod {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Only while Rearrange is on: an outline to show what the movable unit is,
+   and room for the grip above it. */
+.mod--movable {
+  padding: 8px;
+  margin: -8px;
+  border-radius: calc(var(--r-pass) + 6px);
+  outline: 1.5px dashed color-mix(in srgb, var(--color-text) 26%, transparent);
+  outline-offset: -1.5px;
+}
+
+.mod--held {
+  outline-color: var(--color-accent-700);
+  outline-style: solid;
+}
+
+.mod__grip {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 10px 0 7px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  cursor: grab;
+  /* The browser must not claim the gesture: this one is ours. */
+  touch-action: none;
+}
+.mod__grip:hover {
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  color: var(--color-text);
+}
+.mod--held .mod__grip {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent-700);
+}
+
+/* ── Held states ───────────────────────────── */
+
+/* A ring being dragged lifts and loses its hover growth, so the finger has
+   something that reads as picked up. */
+.ring-item {
+  /* Vertical pans still belong to the page; horizontal movement is a
+     reorder. */
+  touch-action: pan-y;
+}
+.ring-item--held {
+  z-index: 2;
+  transform: scale(1.06);
+  cursor: grabbing;
+}
+.ring-item--held .ring-item__ring {
+  box-shadow: var(--lift-2);
+}
+
+/* The grip on an open pass. Collapsed passes have none: there is nothing to
+   reorder when only one card is readable. */
+.goal-pass__grip {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 46px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: color-mix(in srgb, var(--color-text) 40%, transparent);
+  cursor: grab;
+  touch-action: none;
+}
+.goal-pass__grip:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* The pass moves over to clear the grip, only when there is one. */
+.goal-pass:has(.goal-pass__grip) {
+  padding-left: 26px;
+}
+
+.deck__card--held {
+  z-index: 99 !important;
+}
+.deck__card--held .goal-pass {
+  box-shadow: var(--glass-edge), var(--lift-3);
+  cursor: grabbing;
+}
+.deck__card--held .goal-pass__grip {
+  cursor: grabbing;
+  color: var(--color-accent-700);
+}
+
+/* Reduced motion: a held item still needs to look held, so the lift stays;
+   it is a state, not an animation. */
