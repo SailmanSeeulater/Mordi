@@ -638,96 +638,51 @@
 }
 .onboard__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
-/* ── Weather, on the week card ─────────────── */
+/* ── Weather chip ──────────────────────────── */
 
-.pass__weather {
-  padding: 2px 24px 14px;
-}
-
-/* A glass tile inside the pass. The fill is struck from the on-accent colour
-   rather than the surface, because the ground here is the accent gradient. */
-.wx {
+/* Top-left of the week card, built to the day chip's spec: same hairline in
+   the on-accent colour, same corner, same mono numerals. Everything except
+   the glyph and the temperature lives in the accessible name and the tooltip,
+   so it reads as one more small fact on the card rather than a panel. */
+.pass__crown {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-panel);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 46%,
-    color-mix(in srgb, var(--color-on-accent) 14%, transparent);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-on-accent) 16%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  gap: 8px;
+  padding: 16px 24px 0;
+}
+
+.wx {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px 5px 7px;
+  border: 1.5px solid color-mix(in srgb, var(--color-on-accent) 34%, transparent);
+  border-radius: var(--r-control);
+  background: none;
   color: var(--color-on-accent);
-}
-
-.wx--offer {
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-.wx--waiting {
-  margin: 0;
-  font-size: var(--t-small);
-  color: var(--color-on-accent);
-}
-
-.wx__glyph {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  color: var(--color-on-accent);
-}
-
-.wx__temp {
-  display: flex;
-  align-items: baseline;
-  gap: 1px;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: var(--tracking-display);
-  font-variant-numeric: tabular-nums;
-}
-.wx__temp small {
-  font-size: 0.42em;
-  font-weight: 600;
-}
-
-.wx__lines {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-.wx__label {
-  font-size: var(--t-small);
-  font-weight: 600;
-}
-.wx__range {
   font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.wx__place {
-  font-size: var(--t-micro);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 34ch;
+.wx small {
+  font-size: 0.85em;
 }
 
-.wx__enable { flex: 0 0 auto; }
-.wx__note {
-  margin: 0;
-  flex: 1;
-  min-width: 14ch;
-  font-size: var(--t-micro);
-  line-height: 1.4;
-  color: var(--color-on-accent);
+.wx--btn {
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
 }
+.wx--btn:hover {
+  background: color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-accent) 55%, transparent);
+}
+
+.wx--wait {
+  border-style: dashed;
+}
+
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 1080px) {
@@ -741,9 +696,7 @@
   .pass__action { padding: 0 18px 20px; }
   .day-chip { padding: 6px 0 7px; font-size: 10px; }
   .pass__cta { flex: 1; }
-  .pass__weather { padding: 0 18px 12px; }
-  .wx { gap: 10px; padding: 9px 11px; }
-  .wx__temp { font-size: 26px; }
+  .pass__crown { padding: 14px 18px 0; }
   .deck { --pass-h: 116px; }
   .goal-pass { padding: 12px 13px; }
   .goal-pass__week { grid-template-columns: repeat(7, 8px); gap: 4px; }

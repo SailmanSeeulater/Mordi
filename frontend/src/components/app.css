@@ -903,6 +903,38 @@
 .app-place__text--empty { color: var(--color-text-muted); }
 .app-place__actions { display: flex; flex: 0 0 auto; gap: 6px; }
 
+/* ── Page arrival ──────────────────────────── */
+
+/* Each page renders its own AppShell, so moving between Today, Goals, Places
+   and Report unmounts one shell and mounts the next: the blocks inside <main>
+   are fresh elements every time and play this on arrival, with no router
+   wiring and no transition state to manage.
+
+   The chrome is deliberately excluded. The rail, the top bar and the tab bar
+   should feel like they never moved — animating them would turn a change of
+   page into a change of app. Only opacity and transform, and the
+   reduced-motion rule at the end of this file flattens it. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Staggered by position, so a page of panels assembles top-down instead of
+   arriving all at once. Capped at the fourth block: past that the wait before
+   anything appears starts to read as slowness rather than grace. */
+.app-main > * {
+  animation: page-in 320ms var(--ease-pop) backwards;
+}
+.app-main > *:nth-child(2) { animation-delay: 45ms; }
+.app-main > *:nth-child(3) { animation-delay: 90ms; }
+.app-main > *:nth-child(n + 4) { animation-delay: 130ms; }
+
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 860px) {

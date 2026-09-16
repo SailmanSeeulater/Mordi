@@ -399,6 +399,11 @@ export default function Dashboard() {
               <h2 className="app-sr" id="dash-pass-title">
                 This week, {formatWeekRange(weekStart)}
               </h2>
+              {/* Same card, because it is the same question: what is this week
+                  actually like. */}
+              <div className="pass__crown">
+                <WeatherStrip />
+              </div>
               <div className="pass__body">
                 <div className="pass__headline">
                   <p className="pass__figure">
@@ -465,12 +470,6 @@ export default function Dashboard() {
                     )}
                   </button>
                 ))}
-              </div>
-
-              {/* Same card, because it is the same question: what is this week
-                  actually like. */}
-              <div className="pass__weather">
-                <WeatherStrip />
               </div>
 
               <div className="pass__action">
