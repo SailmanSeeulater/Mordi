@@ -81,3 +81,87 @@ select,
 textarea {
   caret-color: var(--color-accent);
 }
+/* ── The ambient ground ────────────────────────────────────────────────────
+   Three soft blooms drifting behind everything, on their own cycles so they
+   cross each other and the colour behind the glass panes keeps changing. The
+   glass refracts the movement, which is what makes it read as material
+   rather than as a tint.
+
+   Rules this obeys: fixed (never inside a scrolling container), inert, behind
+   all content, and animated only on transform, so each cycle re-composites
+   without repainting. The blooms are radial gradients rather than blurred
+   circles — a gradient is already soft and costs nothing to rasterise.
+   Strengths come from the active theme's --aero-* tokens, which are low
+   enough not to affect text contrast over the ground. */
+
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora__orb {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  /* Slow enough to be felt rather than watched, and `alternate` so a cycle
+     never restarts with a jump. */
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.aurora__orb--1 {
+  width: 68vmax;
+  height: 56vmax;
+  top: -18vmax;
+  left: -14vmax;
+  background: radial-gradient(closest-side, var(--aero-orb-1), transparent);
+  animation-name: aurora-1;
+  animation-duration: 26s;
+}
+
+.aurora__orb--2 {
+  width: 54vmax;
+  height: 48vmax;
+  top: -10vmax;
+  right: -16vmax;
+  background: radial-gradient(closest-side, var(--aero-orb-2), transparent);
+  animation-name: aurora-2;
+  animation-duration: 34s;
+}
+
+.aurora__orb--3 {
+  width: 76vmax;
+  height: 58vmax;
+  bottom: -26vmax;
+  left: 22vmax;
+  background: radial-gradient(closest-side, var(--aero-orb-1), transparent);
+  animation-name: aurora-3;
+  animation-duration: 29s;
+}
+
+@keyframes aurora-1 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(18vmax, 13vmax, 0) scale(1.3); }
+}
+
+@keyframes aurora-2 {
+  from { transform: translate3d(0, 0, 0) scale(1.12); }
+  to { transform: translate3d(-21vmax, 16vmax, 0) scale(0.85); }
+}
+
+@keyframes aurora-3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-16vmax, -12vmax, 0) scale(1.34); }
+}
+
+/* Asked not to move: the blooms stay exactly where they start, so the ground
+   looks the same as it would with the animation halfway through. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora__orb {
+    animation: none;
+  }
+}

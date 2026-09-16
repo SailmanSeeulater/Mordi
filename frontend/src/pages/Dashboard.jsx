@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useTheme } from '../context/useTheme';
 import useToday from '../hooks/useToday';
 import useWeekData from '../hooks/useWeekData';
+import useSortOrder from '../hooks/useSortOrder';
+import useDragSort from '../hooks/useDragSort';
 import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
 import LogEntryForm from '../components/LogEntryForm';
 import CalendarModal from '../components/CalendarModal';
 import WeatherStrip from '../components/WeatherStrip';
+import NotesPanel from '../components/NotesPanel';
 import { CATEGORY_ICONS } from '../lib/categories';
 import {
   currentStreak,
@@ -45,11 +48,41 @@ function entryDateLabel(entry) {
   return `${WEEKDAY_BY_INDEX[date.getDay()]} ${date.getDate()}`;
 }
 
-function GoalRing({ row, onClick }) {
+/**
+ * One goal's ring.
+ *
+ * It is draggable where it sits rather than behind a mode, because that is
+ * what a row of movable tiles implies. A press only becomes a drag after
+ * useDragSort's threshold, so tapping still opens the log form, and
+ * `touch-action: pan-y` leaves the page free to scroll vertically under a
+ * finger while horizontal movement comes to us.
+ */
+function GoalRing({ row, onClick, order, held, over, dragProps, onNudge }) {
   const percent = Math.min(row.done / row.target, 1) * 100;
   const empty = row.done === 0;
   return (
-    <button type="button" className="ring-item" onClick={onClick}>
+    <button
+      type="button"
+      className={
+        'ring-item' +
+        (held ? ' ring-item--held' : '') +
+        (over ? ' ring-item--over' : '')
+      }
+      onClick={onClick}
+      data-sort-id={row.id}
+      {...dragProps}
+      style={{ order }}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          onNudge(row.id, -1);
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          onNudge(row.id, 1);
+        }
+      }}
+    >
       <span
         className={`app-ring ring-item__ring${empty ? ' app-ring--empty' : ''}`}
         style={{ '--ring-p': percent }}
@@ -61,7 +94,8 @@ function GoalRing({ row, onClick }) {
       </span>
       <span className="ring-item__label">{row.goal.title}</span>
       <span className="app-sr">
-        {row.done} of {row.target} logged this week. Log an entry for this goal.
+        {row.done} of {row.target} logged this week. Log an entry for this goal. Use the left
+        and right arrow keys to move it.
       </span>
     </button>
   );
@@ -94,6 +128,19 @@ const IconRestack = () => (
   </svg>
 );
 
+const IconGrip = () => (
+  <svg {...iconProps} width="14" height="14" strokeWidth="2.2">
+    <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />
+  </svg>
+);
+
+const IconRearrange = () => (
+  <svg {...iconProps}>
+    <path d="M4 7h9M4 12h13M4 17h7" />
+    <path d="M17 5.5L20.5 9M20.5 9L17 12.5" />
+  </svg>
+);
+
 const IconPin = () => (
   <svg {...iconProps} width="12" height="12" strokeWidth="2">
     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z" />
@@ -101,11 +148,12 @@ const IconPin = () => (
   </svg>
 );
 
-function GoalPass({ row, todayColumn, onLog }) {
+function GoalPass({ row, todayColumn, onLog, grip }) {
   const left = row.target - row.done;
   const category = row.goal.category;
   return (
     <div className="goal-pass">
+      {grip}
       <div className="goal-pass__title">
         <span className="goal-pass__mark" aria-hidden="true">
           {row.goal.title.trim()[0]?.toUpperCase() ?? 'M'}
@@ -174,9 +222,72 @@ function GoalPass({ row, todayColumn, onLog }) {
 const PEEK = 10;
 const MAX_PEEK = 3;
 
-function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
+/** Breathing room between the open panel and the edges of the screen. */
+const PANEL_MARGIN = 14;
+
+function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, onNudge }) {
   const layers = Math.min(Math.max(rows.length - 1, 0), MAX_PEEK);
   const collapsedHeight = `calc(var(--pass-h) + ${layers * PEEK}px)`;
+
+  const deckRef = useRef(null);
+  const [panel, setPanel] = useState(null);
+
+  /* Where the open panel goes.
+   *
+   * It prefers to grow upward from the collapsed deck, so it never pushes
+   * past the bottom of the screen. But growing upward without a limit walks
+   * off the top instead, which is worse: the passes are then unreachable,
+   * because the panel is fixed and the page cannot scroll to it. So the
+   * height is capped to the viewport and the top edge is clamped, and if the
+   * deck still does not fit it scrolls inside itself.
+   *
+   * Fixed positioning, measured in viewport coordinates, with page scroll
+   * locked while it is open — the same treatment a dialog gets. Anything
+   * anchored to the page would drift out of view the moment you scrolled.
+   */
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const place = () => {
+      const el = deckRef.current;
+      if (!el) return;
+      const box = el.getBoundingClientRect();
+      // The pass height and gap stay declared in CSS, including the phone
+      // override, so they are read back rather than duplicated here.
+      const style = getComputedStyle(el);
+      const passH = parseFloat(style.getPropertyValue('--pass-h')) || 104;
+      const gap = parseFloat(style.getPropertyValue('--deck-gap')) || 10;
+      const full = rows.length * (passH + gap);
+
+      const height = Math.min(full, window.innerHeight - PANEL_MARGIN * 2);
+      const top = Math.min(
+        Math.max(box.bottom - height, PANEL_MARGIN),
+        window.innerHeight - height - PANEL_MARGIN,
+      );
+      setPanel({
+        top,
+        left: box.left,
+        width: box.width,
+        height,
+        full,
+        clipped: full > height + 1,
+      });
+    };
+    // A layout effect, measured and applied before the browser paints, so the
+    // panel never shows for a frame at the wrong size or in last time's
+    // position.
+    place();
+    // The panel is fixed, so it has to be re-placed as the page moves under
+    // it, which keeps it anchored to the deck and inside the viewport. An
+    // earlier version locked body scroll instead; because the body is the
+    // scrolling element here, `overflow: hidden` clamped it to the top and
+    // opening the deck jumped the whole page.
+    window.addEventListener('scroll', place, { passive: true });
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place);
+      window.removeEventListener('resize', place);
+    };
+  }, [open, rows.length]);
 
   // Escape closes it, and so does a press anywhere outside it. Both listeners
   // are attached in an effect, which means they exist only from the render
@@ -192,8 +303,14 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
       if (!e.target.closest?.('.deck, .deck__hint')) onToggle();
     };
     document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onDown);
+    // A frame later, not immediately. Attaching it in the same tick as the
+    // render that opened the deck let the opening interaction's own trailing
+    // events reach it, so the deck opened and shut again on one press.
+    const armed = requestAnimationFrame(() =>
+      document.addEventListener('pointerdown', onDown),
+    );
     return () => {
+      cancelAnimationFrame(armed);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown);
     };
@@ -202,6 +319,7 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
   return (
     <div
       className={`deck${open ? ' deck--open' : ''}`}
+      ref={deckRef}
       style={{ height: collapsedHeight }}
       key={restackKey}
     >
@@ -211,8 +329,19 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
       {open && <div className="deck__scrim" aria-hidden="true" />}
 
       <div
-        className="deck__layer"
-        style={{ '--open-h': `calc(${rows.length} * (var(--pass-h) + var(--deck-gap)))` }}
+        className={`deck__layer${open && panel?.clipped ? ' deck__layer--clipped' : ''}`}
+        style={
+          open && panel
+            ? {
+                position: 'fixed',
+                top: panel.top,
+                left: panel.left,
+                width: panel.width,
+                height: panel.height,
+                '--open-h': `${panel.full}px`,
+              }
+            : undefined
+        }
       >
         {/* Gives the open layer something to scroll. The passes are absolutely
             positioned, so without it a deck taller than the screen would have
@@ -221,7 +350,12 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
         {rows.map((row, i) => (
           <div
             key={row.goal.id}
-            className="deck__card"
+            className={
+              'deck__card' +
+              (drag.dragId === String(row.id) ? ' deck__card--held' : '') +
+              (drag.overId === String(row.id) ? ' deck__card--over' : '')
+            }
+            data-sort-id={row.id}
             style={{
               '--i': i,
               // Collapsed, the first pass is the one in front and the rest
@@ -239,6 +373,29 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
               row={row}
               todayColumn={todayColumn}
               onLog={open ? () => onLog(row.goal.id) : undefined}
+              grip={
+                open ? (
+                  <button
+                    type="button"
+                    className="goal-pass__grip"
+                    {...drag.handleProps(row.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        onNudge(row.id, -1);
+                      }
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        onNudge(row.id, 1);
+                      }
+                    }}
+                    aria-label={`Move ${row.goal.title}. Drag, or use the up and down arrow keys.`}
+                    title="Drag to reorder"
+                  >
+                    <IconGrip />
+                  </button>
+                ) : null
+              }
             />
           </div>
         ))}
@@ -255,6 +412,63 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey }) {
           aria-label={`Fan out ${rows.length} goal ${rows.length === 1 ? 'pass' : 'passes'}`}
         />
       )}
+    </div>
+  );
+}
+
+/* The left column's blocks, in their default order. Lately is not here: it
+   lives in the other column and is the one thing that stays put. */
+const SECTIONS = [
+  { id: 'rings', label: 'Goal rings' },
+  { id: 'week', label: 'This week' },
+  { id: 'deck', label: 'Goal passes' },
+  { id: 'notes', label: 'Notes' },
+];
+
+/**
+ * One rearrangeable block.
+ *
+ * Position comes from the CSS `order` property, not from re-sorting the DOM:
+ * moving a node restarts the CSS animations on it, which during a drag is a
+ * flicker on every step. The grip only exists while Rearrange is on, so the
+ * page carries no permanent chrome for a thing most people set once.
+ */
+function Block({ id, label, order, rearrange, drag, onNudge, children }) {
+  const held = drag.dragId === id;
+  const over = drag.overId === id;
+  return (
+    <div
+      className={
+        'mod' +
+        (rearrange ? ' mod--movable' : '') +
+        (held ? ' mod--held' : '') +
+        (over ? ' mod--over' : '')
+      }
+      style={{ order }}
+      data-sort-id={rearrange ? id : undefined}
+    >
+      {rearrange && (
+        <button
+          type="button"
+          className="mod__grip"
+          {...drag.handleProps(id)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              onNudge(id, -1);
+            }
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              onNudge(id, 1);
+            }
+          }}
+          aria-label={`Move ${label}. Drag, or use the up and down arrow keys.`}
+        >
+          <IconGrip />
+          {label}
+        </button>
+      )}
+      {children}
     </div>
   );
 }
@@ -288,6 +502,19 @@ export default function Dashboard() {
     () => weekSummary(goals, behaviors, weekStart, today),
     [goals, behaviors, weekStart, today],
   );
+
+  // One saved order drives both the ring rail and the deck, because they are
+  // two views of the same list: dragging a ring moves its pass too.
+  const rowsWithId = useMemo(
+    () => summary.rows.map((row) => ({ ...row, id: String(row.goal.id) })),
+    [summary.rows],
+  );
+  const goalOrder = useSortOrder('mordi-goal-order', rowsWithId);
+  const goalDrag = useDragSort(goalOrder.moveOver);
+
+  const [rearrange, setRearrange] = useState(false);
+  const blockOrder = useSortOrder('mordi-dash-blocks', SECTIONS);
+  const blockDrag = useDragSort(blockOrder.moveOver);
   const streak = useMemo(() => currentStreak(behaviors, today), [behaviors, today]);
   const recent = useMemo(() => recentEntries(behaviors, 6), [behaviors]);
 
@@ -330,9 +557,21 @@ export default function Dashboard() {
       title="Today"
       action={
         loadState === 'ready' && goals.length > 0 ? (
-          <button type="button" className="app-btn app-btn--sm" onClick={() => openLog()}>
-            Log entry
-          </button>
+          <>
+            <button
+              type="button"
+              className="app-iconbtn"
+              onClick={() => setRearrange((on) => !on)}
+              aria-pressed={rearrange}
+              aria-label={rearrange ? 'Finish rearranging' : 'Rearrange this page'}
+              title={rearrange ? 'Done rearranging' : 'Rearrange this page'}
+            >
+              <IconRearrange />
+            </button>
+            <button type="button" className="app-btn app-btn--sm" onClick={() => openLog()}>
+              Log entry
+            </button>
+          </>
         ) : null
       }
     >
@@ -379,26 +618,59 @@ export default function Dashboard() {
       {loadState === 'ready' && goals.length > 0 && (
         <div className="dash">
           <div className="dash__col">
-            <div className="rings">
-              {summary.rows.map((row) => (
-                <GoalRing key={row.goal.id} row={row} onClick={() => openLog(row.goal.id)} />
-              ))}
-              <button
-                type="button"
-                className="ring-item ring-item--add"
-                onClick={() => setModal('goal')}
-              >
-                <span className="app-ring ring-item__ring" aria-hidden="true">
-                  <span className="app-ring__inner ring-item__inner">+</span>
-                </span>
-                <span className="ring-item__label">Add goal</span>
-              </button>
-            </div>
+            <Block
+              id="rings"
+              label="Goal rings"
+              order={blockOrder.indexOf('rings')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
+              <div className="rings">
+                {rowsWithId.map((row) => (
+                  <GoalRing
+                    key={row.id}
+                    row={row}
+                    onClick={() => openLog(row.goal.id)}
+                    order={goalOrder.indexOf(row.id)}
+                    held={goalDrag.dragId === row.id}
+                    over={goalDrag.overId === row.id}
+                    dragProps={goalDrag.handleProps(row.id)}
+                    onNudge={goalOrder.nudge}
+                  />
+                ))}
+                {/* Always last, whatever the goals are doing. */}
+                <button
+                  type="button"
+                  className="ring-item ring-item--add"
+                  style={{ order: 999 }}
+                  onClick={() => setModal('goal')}
+                >
+                  <span className="app-ring ring-item__ring" aria-hidden="true">
+                    <span className="app-ring__inner ring-item__inner">+</span>
+                  </span>
+                  <span className="ring-item__label">Add goal</span>
+                </button>
+              </div>
+            </Block>
 
+            <Block
+              id="week"
+              label="This week"
+              order={blockOrder.indexOf('week')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
             <section className="pass" aria-labelledby="dash-pass-title">
               <h2 className="app-sr" id="dash-pass-title">
                 This week, {formatWeekRange(weekStart)}
               </h2>
+              {/* Same card, because it is the same question: what is this week
+                  actually like. */}
+              <div className="pass__crown">
+                <WeatherStrip />
+              </div>
               <div className="pass__body">
                 <div className="pass__headline">
                   <p className="pass__figure">
@@ -467,12 +739,6 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Same card, because it is the same question: what is this week
-                  actually like. */}
-              <div className="pass__weather">
-                <WeatherStrip />
-              </div>
-
               <div className="pass__action">
                 <button type="button" className="pass__cta" onClick={() => openLog()}>
                   Log today
@@ -486,7 +752,16 @@ export default function Dashboard() {
                 </button>
               </div>
             </section>
+            </Block>
 
+            <Block
+              id="deck"
+              label="Goal passes"
+              order={blockOrder.indexOf('deck')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
             <section aria-labelledby="dash-stack-title">
               <h2 className="app-sr" id="dash-stack-title">
                 Goal passes
@@ -509,14 +784,30 @@ export default function Dashboard() {
               </div>
 
               <GoalDeck
-                rows={summary.rows}
+                rows={goalOrder.ordered}
                 open={fanned}
                 onToggle={toggleFan}
                 todayColumn={todayColumn}
                 onLog={openLog}
                 restackKey={restackKey}
+                drag={goalDrag}
+                onNudge={goalOrder.nudge}
               />
             </section>
+            </Block>
+
+            <Block
+              id="notes"
+              label="Notes"
+              order={blockOrder.indexOf('notes')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
+              <section className="app-panel" aria-labelledby="dash-notes-title">
+                <NotesPanel />
+              </section>
+            </Block>
           </div>
 
           <div className="dash__col">

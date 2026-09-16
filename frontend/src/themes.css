@@ -53,8 +53,8 @@
      edge where light catches, a darker hairline underneath, and a wash of
      gloss over the upper half. The four pieces together are what make it
      read as glass rather than as low-opacity paint. */
-  --glass-fill: color-mix(in srgb, var(--color-surface) 72%, transparent);
-  --glass-fill-strong: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  --glass-fill: color-mix(in srgb, var(--color-surface) 86%, transparent);
+  --glass-fill-strong: color-mix(in srgb, var(--color-surface) 94%, transparent);
   --glass-blur: saturate(160%) blur(18px);
   --glass-line: color-mix(in srgb, var(--color-text) 12%, transparent);
   --glass-top: color-mix(in srgb, #fff 20%, transparent);
@@ -75,8 +75,8 @@
      app. This is what the glass has to refract; without it the panes would
      blur a flat colour and look like nothing. Strengths are deliberately low
      so text contrast over the ground is unaffected. */
-  --aero-orb-1: color-mix(in srgb, var(--color-accent) 9%, transparent);
-  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 7%, transparent);
+  --aero-orb-1: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 13%, transparent);
   --aero-sky: color-mix(in srgb, var(--color-surface) 30%, transparent);
 }
 

@@ -113,10 +113,14 @@
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 18px 26px;
-  padding: 26px 24px 20px;
+  padding: 18px 24px 20px;
 }
 
-.pass__headline { min-width: 0; }
+.pass__headline {
+  min-width: 0;
+  /* Room for the weather chip in the corner above. */
+  padding-right: 84px;
+}
 
 .pass__figure {
   display: flex;
@@ -291,9 +295,9 @@
 .deck__scrim {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: 30;
   pointer-events: none;
-  background: color-mix(in srgb, var(--color-text) 16%, transparent);
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
   animation: deck-scrim 200ms var(--ease-pop);
 }
 @keyframes deck-scrim {
@@ -307,17 +311,46 @@
   z-index: 2;
 }
 
-/* Open, the layer is a panel floating over the page. It grows upward: its
-   bottom edge stays pinned where the collapsed deck sat, so opening it never
-   pushes past the bottom of the screen. The container itself never changes
-   size, and a deck taller than the cap scrolls inside itself. */
+/* Open, the layer is a panel floating over the page, and its position and
+   height are set inline from a measurement — see GoalDeck. It prefers to grow
+   upward from the collapsed deck so it never pushes past the bottom of the
+   screen, but it is clamped to the viewport so it cannot walk off the top
+   either. Above the top bar, because a popover that is half hidden behind the
+   chrome is worse than one that covers it. */
 .deck--open .deck__layer {
-  inset: auto 0 0;
-  height: min(var(--open-h, 0px), 68dvh);
+  z-index: 31;
   padding: 0 3px 8px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  /* No scrollbar: it would sit inside the floating panel and cut across the
+     passes. The fade below is the affordance instead. */
+  scrollbar-width: none;
+}
+.deck--open .deck__layer::-webkit-scrollbar { display: none; }
+
+/* Only a deck taller than the cap gets the fade: with the scrollbar gone it
+   is the only thing saying there is more below, and on a deck that fits it
+   would be a gradient over the first card for no reason. The class is set
+   from a measurement, not guessed from the number of goals, because the cap
+   is a share of the viewport height. */
+.deck--open .deck__layer--clipped {
+  /* Both edges, not just one. The panel grows upward but its content still
+     flows downward, so which end is hiding passes depends on where you have
+     scrolled to; a fade on one edge would be wrong half the time. */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
 }
 .deck__spacer { height: var(--open-h, 0px); }
 
@@ -402,9 +435,10 @@
   border-radius: var(--r-pass);
   background:
     var(--glass-gloss) no-repeat top center / 100% 48%,
-    var(--glass-fill);
+    color-mix(in srgb, var(--color-surface) 94%, transparent);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+  /* See .deck--open .goal-pass below: an open pass is opaque. */
   box-shadow: var(--glass-edge), var(--lift-2);
   overflow: hidden;
 }
@@ -417,6 +451,18 @@
       var(--glass-gloss) no-repeat top center / 100% 48%,
       var(--color-surface);
   }
+}
+
+/* An open pass is opaque, and no longer blurs.
+   Collapsed, a pass sits on the page and being translucent is what makes it
+   read as glass. Open, it floats over the week card's gradient, and there is
+   no opacity that survives that: the accent behind it shows through the text.
+   Readability wins over the material here. The hairline edges and the
+   elevation stay, so it is still the same object. */
+.deck--open .goal-pass {
+  background: var(--color-surface);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* The title sits on the same line as its mark. */
@@ -638,96 +684,54 @@
 }
 .onboard__actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
-/* ── Weather, on the week card ─────────────── */
+/* ── Weather chip ──────────────────────────── */
 
-.pass__weather {
-  padding: 2px 24px 14px;
-}
-
-/* A glass tile inside the pass. The fill is struck from the on-accent colour
-   rather than the surface, because the ground here is the accent gradient. */
-.wx {
+/* Top-left of the week card, built to the day chip's spec: same hairline in
+   the on-accent colour, same corner, same mono numerals. Everything except
+   the glyph and the temperature lives in the accessible name and the tooltip,
+   so it reads as one more small fact on the card rather than a panel. */
+.pass__crown {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--r-panel);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 46%,
-    color-mix(in srgb, var(--color-on-accent) 14%, transparent);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-on-accent) 16%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  gap: 8px;
+}
+
+.wx {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px 7px 9px;
+  border: 1.5px solid color-mix(in srgb, var(--color-on-accent) 34%, transparent);
+  border-radius: var(--r-control);
+  background: none;
   color: var(--color-on-accent);
-}
-
-.wx--offer {
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-.wx--waiting {
-  margin: 0;
-  font-size: var(--t-small);
-  color: var(--color-on-accent);
-}
-
-.wx__glyph {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  color: var(--color-on-accent);
-}
-
-.wx__temp {
-  display: flex;
-  align-items: baseline;
-  gap: 1px;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: var(--tracking-display);
-  font-variant-numeric: tabular-nums;
-}
-.wx__temp small {
-  font-size: 0.42em;
-  font-weight: 600;
-}
-
-.wx__lines {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-}
-.wx__label {
-  font-size: var(--t-small);
-  font-weight: 600;
-}
-.wx__range {
   font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.wx__place {
-  font-size: var(--t-micro);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 34ch;
+.wx small {
+  font-size: 0.8em;
 }
 
-.wx__enable { flex: 0 0 auto; }
-.wx__note {
-  margin: 0;
-  flex: 1;
-  min-width: 14ch;
-  font-size: var(--t-micro);
-  line-height: 1.4;
-  color: var(--color-on-accent);
+.wx--btn {
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
 }
+.wx--btn:hover {
+  background: color-mix(in srgb, var(--color-on-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-on-accent) 55%, transparent);
+}
+
+.wx--wait {
+  border-style: dashed;
+}
+
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 1080px) {
@@ -735,15 +739,14 @@
 }
 
 @media (max-width: 560px) {
-  .pass__body { padding: 22px 18px 16px; gap: 14px 18px; }
+  .pass__body { padding: 16px 18px 16px; gap: 14px 18px; }
+  .pass__headline { padding-right: 72px; }
   .pass__fields { margin-left: 0; gap: 18px; }
   .pass__days { padding: 0 18px 16px; gap: 4px; }
   .pass__action { padding: 0 18px 20px; }
   .day-chip { padding: 6px 0 7px; font-size: 10px; }
   .pass__cta { flex: 1; }
-  .pass__weather { padding: 0 18px 12px; }
-  .wx { gap: 10px; padding: 9px 11px; }
-  .wx__temp { font-size: 26px; }
+  .pass__crown { top: 18px; right: 18px; }
   .deck { --pass-h: 116px; }
   .goal-pass { padding: 12px 13px; }
   .goal-pass__week { grid-template-columns: repeat(7, 8px); gap: 4px; }
@@ -759,3 +762,149 @@
   }
   .deck__scrim { animation: none; }
 }
+
+/* ── Rearranging ───────────────────────────── */
+
+/* Each block in the left column. Position comes from the CSS `order`
+   property, so the DOM order never changes and nothing re-animates
+   mid-drag. */
+.mod {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Only while Rearrange is on: an outline to show what the movable unit is,
+   and room for the grip above it. */
+.mod--movable {
+  padding: 8px;
+  margin: -8px;
+  border-radius: calc(var(--r-pass) + 6px);
+  outline: 1.5px dashed color-mix(in srgb, var(--color-text) 26%, transparent);
+  outline-offset: -1.5px;
+}
+
+.mod--held {
+  outline-color: var(--color-accent-700);
+  outline-style: solid;
+}
+
+/* The block a release would swap with. */
+.mod--over {
+  outline-color: var(--color-accent-700);
+  outline-style: solid;
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.mod__grip {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 10px 0 7px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  cursor: grab;
+  /* The browser must not claim the gesture: this one is ours. */
+  touch-action: none;
+}
+.mod__grip:hover {
+  background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  color: var(--color-text);
+}
+.mod--held .mod__grip {
+  cursor: grabbing;
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  color: var(--color-accent-700);
+}
+
+/* ── Held states ───────────────────────────── */
+
+/* A ring being dragged lifts and loses its hover growth, so the finger has
+   something that reads as picked up. */
+.ring-item {
+  /* Vertical pans still belong to the page; horizontal movement is a
+     reorder. */
+  touch-action: pan-y;
+}
+.ring-item--held {
+  z-index: 2;
+  transform: scale(1.06);
+  cursor: grabbing;
+}
+
+/* Where the held ring would land. A bar on the leading edge rather than a
+   ring around the tile, because the question is "between which two". */
+.ring-item--over::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 14px;
+  left: -7px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-accent-700);
+}
+.ring-item--held .ring-item__ring {
+  box-shadow: var(--lift-2);
+}
+
+/* The grip on an open pass. Collapsed passes have none: there is nothing to
+   reorder when only one card is readable. */
+.goal-pass__grip {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 46px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: color-mix(in srgb, var(--color-text) 40%, transparent);
+  cursor: grab;
+  touch-action: none;
+}
+.goal-pass__grip:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
+/* The pass moves over to clear the grip, only when there is one. */
+.goal-pass:has(.goal-pass__grip) {
+  padding-left: 26px;
+}
+
+/* The slot a release would drop into. Nothing moves until then: reordering
+   live pulls items out from under the pointer, which makes the drag oscillate
+   between two positions. */
+.deck__card--over .goal-pass {
+  box-shadow:
+    var(--glass-edge),
+    var(--lift-2),
+    0 0 0 2px var(--color-accent-700);
+}
+
+.deck__card--held {
+  z-index: 99 !important;
+}
+.deck__card--held .goal-pass {
+  box-shadow: var(--glass-edge), var(--lift-3);
+  cursor: grabbing;
+}
+.deck__card--held .goal-pass__grip {
+  cursor: grabbing;
+  color: var(--color-accent-700);
+}
+
+/* Reduced motion: a held item still needs to look held, so the lift stays;
+   it is a state, not an animation. */

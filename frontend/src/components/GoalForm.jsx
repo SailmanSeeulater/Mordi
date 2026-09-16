@@ -76,6 +76,14 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
           Times a week
         </span>
         <div className="app-segments" role="group" aria-labelledby="goal-target-label">
+          {/* The sliding fill. It is one element positioned by index rather
+              than a background on each option, so changing the target moves
+              it instead of repainting two of them. */}
+          <span
+            className="app-segments__thumb"
+            style={{ '--n': TARGETS.length, '--i': TARGETS.indexOf(target) }}
+            aria-hidden="true"
+          />
           {TARGETS.map((n) => (
             <button
               key={n}
