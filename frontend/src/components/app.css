@@ -13,14 +13,9 @@
   min-height: 100dvh;
   background: var(--color-bg);
   color: var(--color-text);
-  /* Crimson Pro for the whole shell. Redeclaring the two tokens rather than
-     only font-family means every rule inside the app that reads
-     --font-body or --font-display follows, including the ones in
-     pages/*.css, without each of them having to know about this. */
-  --font-body: var(--font-app);
-  --font-display: var(--font-app);
-  --font-heading: var(--font-app);
-  font-family: var(--font-app);
+  /* The face comes from :root now: the shell and the public pages use the
+     same one, so there is nothing to override here. */
+  font-family: var(--font-body);
 }
 
 /* The Aero ground: a faint sky wash plus three soft blooms, fixed so it never

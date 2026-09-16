@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Crimson+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-/* Crimson Pro, from Fontshare, is the signed-in app's face. The same family is
-   requested from Google Fonts above as a second source, because if Fontshare is
-   unreachable the app would otherwise silently fall back to Georgia. */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Crimson Pro, from Fontshare, is the site's face. The same family is
+   requested from Google Fonts above as a second source, because if Fontshare
+   is unreachable everything would otherwise silently fall back to Georgia. */
 @import url('https://api.fontshare.com/v2/css?f[]=crimson-pro@400,500,600,700&display=swap');
 
 :root {
@@ -21,18 +21,16 @@
   /* Secondary text and placeholders: 6:1 on --color-bg, 5.5:1 on --color-surface. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
 
-  /* One UI family for every piece of type on the site. Headings differ from
-     body by weight and tracking, never by family — that swap between a serif
-     display face and a sans body was the inconsistency. --font-heading is kept
-     as an alias so no rule has to change to follow the decision. */
-  --font-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* One family for every piece of type on the site, public pages and signed-in
+     app alike. Headings differ from body by weight and tracking, never by
+     family — that swap between families was the inconsistency. --font-display
+     and --font-heading are aliases so no rule has to change to follow the
+     decision, and changing it means changing one line here. */
+  --font-body: 'Crimson Pro', Georgia, 'Times New Roman', serif;
   --font-display: var(--font-body);
   --font-heading: var(--font-body);
   /* Mono is for tabular numerals and labels only, never for prose. */
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
-  /* The signed-in app's face, applied on .app in components/app.css. The
-     public pages stay on --font-body. */
-  --font-app: 'Crimson Pro', Georgia, 'Times New Roman', serif;
 
   /* One type scale. Every size in the app comes from here. */
   --t-display: clamp(30px, 4.2vw, 42px);
