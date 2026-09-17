@@ -1,0 +1,139 @@
+/* To do: one-line reminders, above the entry feed in the same card. */
+
+.todo__add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 10px;
+}
+
+.todo__input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+}
+.todo__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+.todo__input:focus {
+  border-color: var(--color-accent-700);
+}
+
+.todo__error {
+  margin: 0 14px 10px;
+}
+
+.todo__empty {
+  padding-top: 2px;
+}
+
+.todo__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 6px;
+  display: grid;
+  gap: 2px;
+}
+
+.todo__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--r-control);
+}
+.todo__item:hover {
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+/* The whole row is the checkbox, so the target is the full line, not a 16px
+   square. */
+.todo__check {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 6px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.todo__box {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 38%, transparent);
+  border-radius: var(--r-chip);
+  color: var(--color-on-accent);
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out);
+}
+.todo__item--done .todo__box {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.todo__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.todo__item--done .todo__text {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+
+/* Quiet until the row is hovered or focused, so a long list is not a column of
+   crosses. Always visible on touch, where there is no hover. */
+.todo__remove {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+.todo__item:hover .todo__remove,
+.todo__item:focus-within .todo__remove {
+  opacity: 1;
+}
+.todo__remove:hover {
+  background: color-mix(in srgb, var(--color-signal) 12%, transparent);
+  color: var(--color-signal);
+}
+@media (hover: none) {
+  .todo__remove { opacity: 1; }
+}
+@media (pointer: coarse) {
+  .todo__remove { width: 44px; height: 44px; }
+  .todo__check { min-height: 44px; }
+}
+
+.todo__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 18px 12px;
+}

@@ -18,31 +18,6 @@
   font-family: var(--font-body);
 }
 
-/* The sky wash. The drifting blooms are the .aurora layer, in index.css;
-   this is the flat gradient underneath them. Fixed, so it never scrolls and
-   never repaints, behind all content, and inert. */
-.app::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to bottom, var(--aero-sky), transparent 46%);
-}
-
-/* Paper grain over the ground, at the strength the landing page uses. Fixed
-   and pointer-events-none, so it is never inside a scrolling container. */
-.app::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.05;
-  background-image: var(--mordi-noise);
-  background-size: 200px 200px;
-}
-
 .app-sr {
   position: absolute;
   width: 1px;
@@ -77,7 +52,7 @@
   place-items: center;
   margin-bottom: 10px;
   border-radius: var(--r-control);
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-heading);
   font-weight: 700;
@@ -121,9 +96,10 @@
   align-items: center;
   gap: 12px;
   padding: 14px 24px;
-  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+  /* Solid, not translucent: content scrolls under a bar, it does not show
+     through one. */
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .app-topbar__title {
@@ -149,7 +125,7 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-control);
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   font-size: 14px;
   font-weight: 600;
@@ -197,7 +173,7 @@
   width: 22px;
   height: 22px;
   border-radius: var(--r-pill);
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-bg) 70%, transparent);
   transition: transform 220ms var(--ease-out);
 }
@@ -216,7 +192,13 @@
   position: absolute;
   top: calc(100% + 10px);
   z-index: 40;
-  width: min(320px, calc(100vw - 32px));
+  width: min(340px, calc(100vw - 32px));
+  /* Twenty-five swatches outgrow a short phone screen, so the menu scrolls
+     inside itself — without a visible scrollbar, like every dropdown here. */
+  max-height: min(70dvh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   padding: 14px;
   border-radius: var(--r-panel);
   background: var(--color-surface);
@@ -231,19 +213,29 @@
   to { opacity: 1; transform: none; }
 }
 
-.theme-switch__menu-title {
-  margin: 0 0 10px;
+.theme-switch__menu::-webkit-scrollbar { display: none; }
+
+/* Light and dark, each under its own quiet heading. */
+.theme-grid {
+  display: grid;
+  gap: 14px;
+}
+.theme-grid__group {
+  display: grid;
+  gap: 8px;
+}
+.theme-grid__heading {
+  margin: 0;
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: var(--t-micro);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
-
-.theme-switch__grid {
+.theme-grid__swatches {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .theme-swatch {
@@ -264,7 +256,7 @@
 
 /* Only the face carries data-theme, so it paints itself in the colors it
    applies while the label stays legible on the surrounding surface. The
-   gradient is written out here rather than reusing --accent-gradient: a
+   color is written out here rather than reusing a shared token: a
    custom property's var()s resolve where it was declared, which would have
    painted every swatch in the active theme's accent. */
 .theme-swatch__face {
@@ -280,7 +272,7 @@
   position: absolute;
   inset: 5px;
   border-radius: var(--r-pill);
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  background: var(--color-accent);
 }
 .theme-swatch[aria-pressed='true'] {
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
@@ -294,18 +286,13 @@
 
 /* ── Panels ────────────────────────────────── */
 
-/* Every panel is a pane: a translucent fill the ambient ground shows through,
-   a lit top edge, a shaded bottom edge and gloss over the upper part. There is
-   deliberately no backdrop blur here — panels sit inside the page scroll, and
-   blurring a scrolling container repaints continuously. Blur is reserved for
-   the panes that have real content behind them. */
+/* Every panel is a matte card: the surface color, a hairline edge, one soft
+   shadow. */
 .app-panel,
 .app-status {
   border-radius: var(--r-panel);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 40%,
-    var(--glass-fill);
-  box-shadow: var(--glass-edge), var(--lift-1);
+  background: var(--color-surface);
+  box-shadow: var(--edge), var(--lift-1);
   min-width: 0;
   overflow: hidden;
 }
@@ -366,6 +353,7 @@
 /* ── Buttons ───────────────────────────────── */
 
 .app-btn {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -377,9 +365,7 @@
   /* A specular band across the top, the way a lit physical control catches
      light. It is a second background layer rather than a pseudo-element, so
      it composites over the accent gradient and stays behind the label. */
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 54%,
-    var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-body);
   font-size: var(--t-body);
@@ -387,14 +373,14 @@
   line-height: 1.2;
   letter-spacing: -0.005em;
   cursor: pointer;
-  box-shadow: var(--lift-1), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: var(--lift-1);
   transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out),
     opacity 160ms var(--ease-out);
 }
 
 .app-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: var(--lift-2), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: var(--lift-2);
 }
 .app-btn:active:not(:disabled) { transform: translateY(1px) scale(0.995); }
 .app-btn:disabled { opacity: 0.55; cursor: default; }
@@ -567,6 +553,11 @@
   background: color-mix(in srgb, var(--color-signal) 10%, transparent);
 }
 
+/* The Sign in / Create account switch at the top of the account dialog. */
+.auth-switch {
+  padding: 2px 18px 10px;
+}
+
 .app-form__actions {
   display: flex;
   justify-content: flex-end;
@@ -595,7 +586,7 @@
   left: 4px;
   width: calc((100% - 8px) / var(--n, 1));
   border-radius: var(--r-chip);
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   box-shadow: var(--lift-1);
   transform: translateX(calc(var(--i, 0) * 100%));
   transition: transform 340ms var(--ease-pop);
@@ -639,7 +630,6 @@
   justify-content: center;
   padding: 20px;
   background: color-mix(in srgb, var(--color-text) 45%, transparent);
-  backdrop-filter: blur(3px);
   animation: app-fade 160ms var(--ease-out);
 }
 
@@ -655,16 +645,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   border-radius: var(--r-pass);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 22%,
-    var(--glass-fill-strong);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-edge), var(--lift-3);
+  background: var(--color-surface);
+  box-shadow: var(--edge), var(--lift-3);
   animation: app-rise 240ms var(--ease-pop);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .app-dialog { background: var(--color-surface); }
 }
 .app-dialog:focus { outline: none; }
 
@@ -686,7 +669,7 @@
   background: conic-gradient(
     from -90deg,
     var(--color-accent) 0%,
-    var(--color-accent-2) calc(var(--ring-p, 0) * 1%),
+    var(--color-accent) calc(var(--ring-p, 0) * 1%),
     color-mix(in srgb, var(--color-text) 14%, transparent) calc(var(--ring-p, 0) * 1%)
   );
 }
@@ -728,36 +711,14 @@
   color: var(--color-signal);
 }
 
-/* ── Glass ─────────────────────────────────── */
+/* ── Pane ──────────────────────────────────── */
 
-/* The pane, for anything that is not an .app-panel: translucent fill, a lit
-   top edge, a shaded bottom edge, gloss over the upper half. Anything using
-   this must sit above .app::before, which it does by default. */
+/* A matte card, for anything that is not an .app-panel: the surface color, a
+   hairline edge so a surface one step off the ground still has a boundary,
+   and one soft shadow. */
 .app-glass {
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 46%,
-    var(--glass-fill);
-  box-shadow: var(--glass-edge), var(--lift-2);
-}
-
-/* Some people find translucency hard to read through. Honour the request:
-   opaque surfaces, no blur anywhere, and a much fainter ground. */
-@media (prefers-reduced-transparency: reduce) {
-  .app-glass,
-  .app-panel,
-  .app-status,
-  .app-dialog,
-  .app-select__list,
-  .app-topbar,
-  .app-tabbar,
-  .goal-pass,
-  .goal-card {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: var(--color-surface);
-  }
-  .app::before,
-  .mordi-page::before { opacity: 0.35; }
+  background: var(--color-surface);
+  box-shadow: var(--edge), var(--lift-1);
 }
 
 /* ── Select ────────────────────────────────── */
@@ -777,7 +738,6 @@
   border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
   border-radius: var(--r-control);
   background:
-    var(--glass-gloss) no-repeat top center / 100% 40%,
     color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
   color: var(--color-text);
   font-family: var(--font-body);
@@ -819,19 +779,20 @@
   position: fixed;
   z-index: 120;
   overflow-y: auto;
+  /* Scrolls when it has to, but never draws a scrollbar: it sat inside the
+     menu's rounded box and read as a second control. */
+  scrollbar-width: none;
   overscroll-behavior: contain;
   margin: 0;
   padding: 6px;
   list-style: none;
   border-radius: var(--r-panel);
-  /* Opaque, and no blur. A menu floats over whatever happens to be behind it
-     — another card, a photo on the map, the week card's gradient — and a
-     translucent one is unreadable against some of them. Elsewhere the panes
-     are translucent because what is behind them is the app's own ground. */
   background: var(--color-surface);
-  box-shadow: var(--glass-edge), var(--lift-3);
+  box-shadow: var(--edge), var(--lift-3);
   animation: app-pop 160ms var(--ease-pop);
 }
+
+.app-select__list::-webkit-scrollbar { display: none; }
 
 .app-select__option {
   display: flex;
@@ -878,7 +839,6 @@
   border: 1.5px solid color-mix(in srgb, var(--color-text) 14%, transparent);
   border-radius: var(--r-control);
   background:
-    var(--glass-gloss) no-repeat top center / 100% 44%,
     color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
   color: var(--color-text-muted);
   font-family: var(--font-body);
@@ -892,7 +852,6 @@
 .mood-pick__btn[aria-pressed='true'] {
   border-color: var(--color-accent-700);
   background:
-    var(--glass-gloss) no-repeat top center / 100% 44%,
     color-mix(in srgb, var(--color-accent) 15%, var(--color-surface));
   color: var(--color-accent-700);
 }
@@ -982,9 +941,8 @@
     justify-content: space-around;
     gap: 2px;
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-divider);
   }
   .app-tabbar__link {
     flex: 1;
@@ -1018,6 +976,35 @@
   @keyframes app-sheet {
     from { transform: translateY(100%); }
     to { transform: none; }
+  }
+}
+
+/* Phones. The top bar carries a title, the rearrange toggle, the primary
+   action, the color button and the account, and at 360px that did not fit:
+   buttons wrapped onto two lines, Log out was cut off, and the whole page
+   scrolled sideways. Log out moves to Settings, where the Session section
+   already has it, and the rest tighten. */
+@media (max-width: 560px) {
+  .app-topbar {
+    gap: 6px;
+    padding: 10px 12px;
+  }
+  .app-topbar__title {
+    font-size: 19px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .app-topbar .app-btn--sm {
+    padding: 7px 12px;
+    white-space: nowrap;
+  }
+  .app-whoami .app-linkbtn {
+    display: none;
+  }
+  .app-whoami {
+    gap: 0;
   }
 }
 

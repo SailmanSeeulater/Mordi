@@ -6,6 +6,7 @@ import { useTheme } from '../context/useTheme';
 import { THEMES } from '../context/theme-context-value';
 import client from '../api/client';
 import AppShell from '../components/AppShell';
+import ThemeGrid from '../components/ThemeGrid';
 import { toIsoDate } from './dashboardData';
 import './settings.css';
 
@@ -77,27 +78,13 @@ export default function Settings() {
             <div className="app-panel__spacer" />
             <span className="app-panel__meta">{current.label}</span>
           </div>
-          <div className="settings__themes" role="group" aria-label="Color combinations">
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className="theme-swatch"
-                aria-pressed={t.id === theme}
-                onClick={() => setTheme(t.id)}
-              >
-                <span className="theme-swatch__face" data-theme={t.id} aria-hidden="true">
-                  <span className="theme-swatch__blob" />
-                </span>
-                <span className="theme-swatch__label">{t.label}</span>
-                <span className="app-sr">{` — ${t.scheme} colors`}</span>
-              </button>
-            ))}
+          <div className="settings__themes">
+            <ThemeGrid theme={theme} onPick={setTheme} idPrefix="set-themes" />
           </div>
           <p className="settings__note">
-            Ten combinations, six light and four dark. Sorbet is the default. Your pick applies
-            across the whole site, landing page included, and is saved in this browser only — so
-            another device keeps its own.
+            Twenty-five combinations, sixteen light and nine dark. Sorbet is the default. Your
+            pick applies across the whole site, landing page included, and is saved in this
+            browser only — so another device keeps its own.
           </p>
         </section>
 

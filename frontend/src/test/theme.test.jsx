@@ -3,6 +3,15 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '../context/ThemeContext';
 import { useTheme } from '../context/useTheme';
 import { DEFAULT_THEME, THEMES, THEME_STORAGE_KEY } from '../context/theme-context-value';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { cwd } from 'node:process';
+
+// Read from disk: Vitest replaces CSS imports, including ?raw, with an empty
+// module, which would make the drift check below pass on nothing. Resolved
+// from the working directory because under jsdom import.meta.url is not a
+// file URL; Vitest runs from the frontend folder.
+const themesCss = readFileSync(join(cwd(), 'src', 'themes.css'), 'utf8');
 
 function Probe() {
   const { theme, setTheme, cycleTheme } = useTheme();
@@ -37,11 +46,28 @@ describe('themes', () => {
     vi.restoreAllMocks();
   });
 
-  it('ships ten combinations, six light and four dark', () => {
-    expect(THEMES).toHaveLength(10);
-    expect(THEMES.filter((t) => t.scheme === 'light')).toHaveLength(6);
-    expect(THEMES.filter((t) => t.scheme === 'dark')).toHaveLength(4);
-    expect(new Set(THEMES.map((t) => t.id)).size).toBe(10);
+  it('ships twenty-five combinations, sixteen light and nine dark', () => {
+    expect(THEMES).toHaveLength(25);
+    expect(THEMES.filter((t) => t.scheme === 'light')).toHaveLength(16);
+    expect(THEMES.filter((t) => t.scheme === 'dark')).toHaveLength(9);
+    expect(new Set(THEMES.map((t) => t.id)).size).toBe(25);
+  });
+
+  it('lists exactly the combinations themes.css defines, with matching schemes', () => {
+    // A theme in the picker with no CSS block renders with no colors at all,
+    // and a CSS block missing from the picker can never be chosen.
+    const blocks = [...themesCss.matchAll(/\[data-theme='([\w-]+)'\]\s*\{([^}]+)\}/g)].map(
+      ([, id, body]) => ({ id, scheme: body.match(/color-scheme:\s*(\w+)/)?.[1] }),
+    );
+    expect(blocks.map((b) => b.id).sort()).toEqual(THEMES.map((t) => t.id).sort());
+    for (const theme of THEMES) {
+      expect(blocks.find((b) => b.id === theme.id).scheme).toBe(theme.scheme);
+    }
+  });
+
+  it('lists light combinations before dark ones, as the picker groups them', () => {
+    const firstDark = THEMES.findIndex((t) => t.scheme === 'dark');
+    expect(THEMES.slice(firstDark).every((t) => t.scheme === 'dark')).toBe(true);
   });
 
   it('starts on Sorbet, the site-wide default', () => {

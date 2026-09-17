@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTheme } from '../context/useTheme';
 import { THEMES } from '../context/theme-context-value';
+import ThemeGrid from './ThemeGrid';
 
 /**
  * The color button. Pressing it advances to the next combination; the caret
@@ -64,27 +65,14 @@ export default function ThemeSwitcher({ align = 'end' }) {
           role="group"
           aria-label="Color combinations"
         >
-          <p className="theme-switch__menu-title">Colors</p>
-          <div className="theme-switch__grid">
-            {THEMES.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className="theme-swatch"
-                aria-pressed={t.id === theme}
-                onClick={() => {
-                  setTheme(t.id);
-                  setOpen(false);
-                }}
-              >
-                <span className="theme-swatch__face" data-theme={t.id} aria-hidden="true">
-                  <span className="theme-swatch__blob" />
-                </span>
-                <span className="theme-swatch__label">{t.label}</span>
-                <span className="app-sr">{` — ${t.scheme} colors`}</span>
-              </button>
-            ))}
-          </div>
+          <ThemeGrid
+            theme={theme}
+            idPrefix={menuId}
+            onPick={(id) => {
+              setTheme(id);
+              setOpen(false);
+            }}
+          />
         </div>
       )}
     </div>
