@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,11 @@ public class RefreshTokenService {
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
+    // @Autowired is required, not decoration. With two constructors and neither
+    // marked, Spring does not choose one: it looks for a no-argument
+    // constructor, finds none, and the application fails to start with
+    // NoSuchMethodException: RefreshTokenService.<init>().
+    @Autowired
     public RefreshTokenService(
             RefreshTokenRepository repository,
             UserRepository userRepository,
