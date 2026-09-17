@@ -62,7 +62,7 @@
 
 /* A day with something logged carries the accent gradient. */
 .cal__day--done {
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   font-weight: 700;
 }
@@ -115,7 +115,7 @@
   height: 12px;
   border-radius: 3px;
 }
-.cal__key--done { background: var(--accent-gradient); }
+.cal__key--done { background: var(--color-accent); }
 .cal__key--partial { background: color-mix(in srgb, var(--color-accent) 20%, transparent); }
 .cal__key--missed {
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-text) 18%, transparent);

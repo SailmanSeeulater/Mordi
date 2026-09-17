@@ -22,13 +22,15 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 
 - Web app, phone and desktop, used in short sessions at the edges of the day.
 - Routes: landing (`/`), sign in and create account, dashboard (`/dashboard`), goals (`/goals`), locations (`/locations`), weekly report (`/reports`), settings (`/settings`).
-- Auth is email plus password, JWT in `localStorage`; the frontend talks to a Spring Boot API at `https://latesailor.dev`.
+- Auth is email plus password. A 15-minute access token is kept in `localStorage`; a 30-day refresh token, rotated on every use, lives in an httpOnly cookie, so a session survives from one day to the next. The frontend calls a same-origin Spring Boot API.
 - A companion Locations feature saves places with a map, sharing the same shell.
 
 ## Capabilities and Constraints
 
-- Goals: title, optional category (fitness / sleep / productivity / health), `targetPerWeek` 1–7, soft-delete via an `active` flag, `createdAt`.
-- Entries ("behaviors"): note, mood (great / good / neutral / bad / terrible), `completed` boolean, `logDate`, optional link to one goal.
+- Goals: title, optional category (fitness / sleep / productivity / health), `targetPerWeek` 1–7, optional usual place, soft-delete via an `active` flag, `createdAt`.
+- Notes: up to five per user, optional title, pinnable.
+- To-dos: one line of text, done or not, no description or due date.
+- Entries ("behaviors"): note, mood (great / good / neutral / bad / terrible), `completed` boolean, `logDate`, optional link to one goal, optional place, and an optional `durationSeconds` for sessions saved from the time logger (0 to 7 days).
 - Entries are done-or-not; there is no partial state, and adding one would be a backend change.
 - Weekly progress, streaks, and the goal × day grid are computed in the browser from `GET /api/goals` and `GET /api/behaviors/range`; the backend has no streak or per-goal aggregation.
 - A `Report` entity exists (weekly totals, completion rate, most common mood) but no per-goal or per-day breakdown.
@@ -37,9 +39,9 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 
 ## Brand Commitments
 
-- Name: Mordi. Display face Gambarino (self-hosted), body Archivo, mono IBM Plex Mono.
-- The user has pinned a visual world of Apple Wallet crossed with Instagram, and a user-selectable set of ten color combinations (six light, four dark).
-- The combination applies site-wide, landing page included, and **Sorbet** is the default. The cream-and-red `paper` combination is kept as one of the ten, so the original public face remains available, but it is no longer fixed.
+- Name: Mordi. One type family, Crimson Pro, for everything; IBM Plex Mono for dates and counts.
+- The user has pinned a **matte** finish: no gradients, gloss, translucency, or background wash anywhere, on the app or the landing page.
+- Twenty-five user-selectable color combinations, sixteen light and nine dark. The combination applies site-wide, landing page included, and **Sorbet** is the default. The cream-and-red `paper` combination remains one of them.
 
 ## Evidence on Hand
 

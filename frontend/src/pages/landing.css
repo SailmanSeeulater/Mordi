@@ -26,28 +26,6 @@ body.mordi-landing {
   font-family: var(--font-body);
 }
 
-/* The same sky wash the signed-in app stands on, so the two do not read as
-   two different products. The drifting blooms come from <Aurora />. */
-.mordi-page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to bottom, var(--aero-sky), transparent 42%);
-}
-
-.mordi-noise {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: var(--mordi-noise);
-  background-size: 200px 200px;
-  opacity: 0.12;
-  mix-blend-mode: multiply;
-}
-
 .mordi-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -360,140 +338,6 @@ body.mordi-landing {
   transform: translateY(0);
 }
 
-/* ── Auth modal (the log slip) ─────────────────────────── */
-
-.mordi-overlay {
-  position: fixed;
-  inset: 0;
-  background: color-mix(in srgb, var(--color-text) 55%, transparent);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 100;
-}
-
-.mordi-slip {
-  position: relative;
-  width: 100%;
-  max-width: 420px;
-  background: var(--color-surface);
-  border: 2px solid var(--color-divider);
-  box-shadow: 0 24px 60px -20px rgba(26, 23, 20, 0.55);
-  overflow: hidden;
-  animation: mordi-slip-rise 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes mordi-slip-rise {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.mordi-slip__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 24px 24px 0;
-}
-.mordi-slip__label {
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--color-accent-700);
-}
-.mordi-slip__close {
-  background: none;
-  border: none;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  font-family: var(--font-body);
-  font-size: 14px;
-  cursor: pointer;
-  padding: 2px 4px;
-  line-height: 1;
-}
-.mordi-slip__close:hover { color: var(--color-text); }
-
-.mordi-slip__tabs {
-  display: flex;
-  margin: 14px 24px 0;
-  border-bottom: 2px solid var(--color-divider);
-}
-.mordi-slip__tab {
-  flex: 1;
-  background: none;
-  border: none;
-  font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 16px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
-  padding: 0 0 12px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-.mordi-slip__tab.active {
-  color: var(--color-text);
-  border-bottom-color: var(--color-accent);
-}
-.mordi-slip__tab:hover:not(.active) {
-  color: var(--color-text);
-}
-
-.mordi-slip__body { padding: 24px; }
-
-.mordi-field { margin-bottom: 16px; }
-.mordi-field label {
-  display: block;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 13px;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  margin-bottom: 6px;
-}
-.mordi-field input {
-  width: 100%;
-  padding: 10px 12px;
-  background: var(--color-bg);
-  border: 2px solid var(--color-divider);
-  border-radius: var(--r-control);
-  font-family: var(--font-body);
-  font-size: 15px;
-  color: var(--color-text);
-  transition: border-color 0.15s ease;
-}
-.mordi-field input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-.mordi-field input::placeholder {
-  color: color-mix(in srgb, var(--color-text) 45%, transparent);
-}
-
-.mordi-slip__submit {
-  width: 100%;
-  margin-top: 4px;
-  padding: 13px;
-}
-
-.mordi-slip__error {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--color-signal);
-  background: color-mix(in srgb, var(--color-signal) 8%, transparent);
-  padding: 9px 11px;
-  margin-bottom: 16px;
-}
-
-.mordi-slip__foot {
-  padding: 0 24px 24px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
-  text-align: center;
-}
-
 /* ── Responsive ────────────────────────────────────────── */
 
 @media (max-width: 720px) {
@@ -511,7 +355,6 @@ body.mordi-landing {
     mask-image: none;
   }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
-  .mordi-slip { animation: none; }
 }
 /* ════════════════════════════════════════════════════════
    Shared world with the signed-in app
@@ -539,16 +382,14 @@ body.mordi-landing {
     background-color 160ms var(--ease-out);
 }
 .mordi-page .btn-primary {
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 54%,
-    var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
-  box-shadow: var(--lift-1), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: var(--lift-1);
 }
 .mordi-page .btn-primary:hover {
   color: var(--color-on-accent);
   transform: translateY(-1px);
-  box-shadow: var(--lift-2), inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: var(--lift-2);
 }
 .mordi-page .btn-ghost {
   background: none;
@@ -577,25 +418,13 @@ body.mordi-landing {
   font-size: 14px;
 }
 
-/* The hero's task card is the same glass pane as a goal pass in the app: the
-   first thing a visitor sees is the material the product is made of. */
+/* The hero's task card is the same matte card as a goal pass in the app. */
 .mordi-page .mordi-card {
   border: 0;
   border-radius: var(--r-pass);
-  background:
-    var(--glass-gloss) no-repeat top center / 100% 34%,
-    var(--glass-fill);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--glass-edge), var(--lift-2);
+  background: var(--color-surface);
+  box-shadow: var(--edge), var(--lift-2);
   overflow: hidden;
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .mordi-page .mordi-card {
-    background:
-      var(--glass-gloss) no-repeat top center / 100% 34%,
-      var(--color-surface);
-  }
 }
 .mordi-page .mordi-card__head {
   border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
@@ -606,7 +435,7 @@ body.mordi-landing {
   border-width: 2px;
 }
 .mordi-page .mordi-task__box--done {
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   border-color: transparent;
 }
 
@@ -638,50 +467,12 @@ body.mordi-landing {
 .mordi-page .mordi-close {
   margin: 0 clamp(16px, 4vw, 48px) clamp(24px, 5vw, 56px);
   border-radius: var(--r-pass);
-  background: var(--accent-gradient);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   box-shadow: var(--lift-2);
-}
-
-/* The auth slip matches the app's dialogs. */
-.mordi-page .mordi-slip {
-  border: 0;
-  border-radius: var(--r-pass);
-  background: var(--color-surface);
-  box-shadow: var(--lift-3);
-}
-.mordi-page .mordi-overlay {
-  background: color-mix(in srgb, var(--color-text) 45%, transparent);
-  backdrop-filter: blur(3px);
-}
-.mordi-page .mordi-field input {
-  min-height: 46px;
-  border-radius: var(--r-control);
-  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
-  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
-  color: var(--color-text);
-}
-.mordi-page .mordi-field input:focus {
-  border-color: var(--color-accent-700);
-}
-.mordi-page .mordi-slip__tab[aria-selected='true'],
-.mordi-page .mordi-slip__tab.is-active {
-  color: var(--color-accent-700);
-}
-.mordi-page .mordi-slip__error {
-  border-radius: var(--r-control);
 }
 
 @media (max-width: 560px) {
   .mordi-page .mordi-close { margin: 0 12px 24px; }
 }
 
-/* The grain multiplies to nothing on a dark ground, so it lightens instead.
-   Keeps the paper texture present in all ten combinations. */
-[data-theme='graphite'] .mordi-noise,
-[data-theme='midnight'] .mordi-noise,
-[data-theme='forest'] .mordi-noise,
-[data-theme='ember'] .mordi-noise {
-  mix-blend-mode: screen;
-  opacity: 0.05;
-}

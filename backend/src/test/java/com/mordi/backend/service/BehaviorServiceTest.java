@@ -193,6 +193,57 @@ class BehaviorServiceTest {
     }
 
     @Test
+    void logBehavior_withADuration_storesIt() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        BehaviorRequest request = request(null);
+        request.setDurationSeconds(5025);
+
+        assertThat(behaviorService.logBehavior(ME, request).getDurationSeconds()).isEqualTo(5025);
+    }
+
+    @Test
+    void logBehavior_withoutADuration_leavesItNull() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(behaviorService.logBehavior(ME, request(null)).getDurationSeconds()).isNull();
+    }
+
+    @Test
+    void logBehavior_acceptsAZeroAndAFullWeekButNothingOutsideThat() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        BehaviorRequest zero = request(null);
+        zero.setDurationSeconds(0);
+        assertThat(behaviorService.logBehavior(ME, zero).getDurationSeconds()).isZero();
+
+        BehaviorRequest week = request(null);
+        week.setDurationSeconds(BehaviorService.MAX_DURATION_SECONDS);
+        assertThat(behaviorService.logBehavior(ME, week).getDurationSeconds())
+            .isEqualTo(BehaviorService.MAX_DURATION_SECONDS);
+    }
+
+    @Test
+    void logBehavior_refusesANegativeOrRunawayDurationAndSavesNothing() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+
+        BehaviorRequest negative = request(null);
+        negative.setDurationSeconds(-1);
+        assertThatThrownBy(() -> behaviorService.logBehavior(ME, negative))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        BehaviorRequest runaway = request(null);
+        runaway.setDurationSeconds(BehaviorService.MAX_DURATION_SECONDS + 1);
+        assertThatThrownBy(() -> behaviorService.logBehavior(ME, runaway))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        verify(behaviorRepository, never()).save(any());
+    }
+
+    @Test
     void serializedBehavior_neverIncludesOwnerDetails() throws Exception {
         Behavior behavior = new Behavior();
         behavior.setUser(me);

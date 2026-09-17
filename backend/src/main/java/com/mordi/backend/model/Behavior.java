@@ -47,6 +47,11 @@ public class Behavior {
     @Column(name = "place_name")
     private String placeName;
 
+    // How long it took, for an entry saved from the time logger. Null for an
+    // ordinary entry.
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

@@ -14,10 +14,11 @@
   background: color-mix(in srgb, var(--color-bg) 55%, transparent);
 }
 
-/* A pinned note is marked by a bar on its leading edge rather than a
-   different fill, so the list stays one material. */
+/* A pinned note is marked by its filled pin and a faint accent tint. Not a
+   colored bar down one edge: that is a stock callout treatment and it made a
+   note read as a warning. */
 .note--pinned {
-  box-shadow: inset 2px 0 0 var(--color-accent-700);
+  background: color-mix(in srgb, var(--color-accent) 9%, var(--color-bg));
 }
 
 .note__open {

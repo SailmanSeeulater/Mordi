@@ -12,6 +12,11 @@ import LogEntryForm from '../components/LogEntryForm';
 import CalendarModal from '../components/CalendarModal';
 import WeatherStrip from '../components/WeatherStrip';
 import NotesPanel from '../components/NotesPanel';
+import ClockChip from '../components/ClockChip';
+import TimeLogger from '../components/TimeLogger';
+import ActivityHeatmap from '../components/ActivityHeatmap';
+import TodoList from '../components/TodoList';
+import LatelyFeed from '../components/LatelyFeed';
 import { CATEGORY_ICONS } from '../lib/categories';
 import {
   currentStreak,
@@ -27,15 +32,7 @@ import './dashboard.css';
 
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const WEEKDAY_BY_INDEX = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const MOOD_TONE = {
-  great: 'up',
-  good: 'up',
-  neutral: 'flat',
-  bad: 'down',
-  terrible: 'down',
-};
 
 const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
@@ -43,10 +40,6 @@ const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-function entryDateLabel(entry) {
-  const date = parseIsoDate(entry.logDate);
-  return `${WEEKDAY_BY_INDEX[date.getDay()]} ${date.getDate()}`;
-}
 
 /**
  * One goal's ring.
@@ -421,7 +414,9 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
 const SECTIONS = [
   { id: 'rings', label: 'Goal rings' },
   { id: 'week', label: 'This week' },
+  { id: 'timer', label: 'Time logger' },
   { id: 'deck', label: 'Goal passes' },
+  { id: 'activity', label: 'Activity' },
   { id: 'notes', label: 'Notes' },
 ];
 
@@ -516,12 +511,20 @@ export default function Dashboard() {
   const blockOrder = useSortOrder('mordi-dash-blocks', SECTIONS);
   const blockDrag = useDragSort(blockOrder.moveOver);
   const streak = useMemo(() => currentStreak(behaviors, today), [behaviors, today]);
-  const recent = useMemo(() => recentEntries(behaviors, 6), [behaviors]);
+  const recent = useMemo(() => recentEntries(behaviors, 40), [behaviors]);
+  // Bumped after a save, so the year of activity picks up the new entry too.
+  const [historyKey, setHistoryKey] = useState(0);
 
   const closeModal = useCallback(() => setModal(null), []);
   const handleSaved = useCallback(() => {
     setModal(null);
     reload();
+    setHistoryKey((k) => k + 1);
+  }, [reload]);
+
+  const handleTimeSaved = useCallback(() => {
+    reload();
+    setHistoryKey((k) => k + 1);
   }, [reload]);
 
   const openLog = useCallback((goalId = '') => {
@@ -669,6 +672,7 @@ export default function Dashboard() {
               {/* Same card, because it is the same question: what is this week
                   actually like. */}
               <div className="pass__crown">
+                <ClockChip />
                 <WeatherStrip />
               </div>
               <div className="pass__body">
@@ -755,6 +759,17 @@ export default function Dashboard() {
             </Block>
 
             <Block
+              id="timer"
+              label="Time logger"
+              order={blockOrder.indexOf('timer')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
+              <TimeLogger onSaved={handleTimeSaved} />
+            </Block>
+
+            <Block
               id="deck"
               label="Goal passes"
               order={blockOrder.indexOf('deck')}
@@ -797,6 +812,17 @@ export default function Dashboard() {
             </Block>
 
             <Block
+              id="activity"
+              label="Activity"
+              order={blockOrder.indexOf('activity')}
+              rearrange={rearrange}
+              drag={blockDrag}
+              onNudge={blockOrder.nudge}
+            >
+              <ActivityHeatmap today={today} reloadKey={historyKey} onPickDay={openCalendar} />
+            </Block>
+
+            <Block
               id="notes"
               label="Notes"
               order={blockOrder.indexOf('notes')}
@@ -811,46 +837,12 @@ export default function Dashboard() {
           </div>
 
           <div className="dash__col">
-            <section className="app-panel" aria-labelledby="dash-feed-title">
-              <div className="app-panel__head">
-                <h2 className="app-panel__title" id="dash-feed-title">
-                  Lately
-                </h2>
-                <div className="app-panel__spacer" />
-                <span className="app-panel__meta">{summary.entries} this week</span>
-              </div>
-              {recent.length === 0 ? (
-                <p className="app-empty">Nothing logged yet. Your entries show up here.</p>
-              ) : (
-                <ul className="app-list feed">
-                  {recent.map((entry) => (
-                    <li className="feed__item" key={entry.id}>
-                      <div className="feed__top">
-                        <span className="feed__date">{entryDateLabel(entry)}</span>
-                        <span className="feed__spacer" />
-                        {entry.mood && (
-                          <span className={`mood mood--${MOOD_TONE[entry.mood] ?? 'flat'}`}>
-                            {capitalize(entry.mood)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="feed__note">{entry.note}</p>
-                      {(entry.goal || entry.placeName) && (
-                        <div className="feed__foot">
-                          {entry.goal && <span className="feed__goal">{entry.goal.title}</span>}
-                          {entry.placeName && (
-                            <span className="feed__place">
-                              <IconPin />
-                              {entry.placeName}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            {/* To do and Lately share one card: both are the short, everyday list
+                beside the week, one of things to do and one of things done. */}
+            <div className="app-panel side">
+              <TodoList />
+              <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries} />
+            </div>
           </div>
         </div>
       )}

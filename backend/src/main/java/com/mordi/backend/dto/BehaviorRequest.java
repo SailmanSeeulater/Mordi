@@ -13,4 +13,5 @@ public class BehaviorRequest {
     private Double latitude;
     private Double longitude;
     private String placeName;
+    private Integer durationSeconds;
 }

@@ -49,6 +49,7 @@ public class BehaviorService {
         behavior.setPlaceName(trimToNull(request.getPlaceName()));
         behavior.setLatitude(request.getLatitude());
         behavior.setLongitude(request.getLongitude());
+        behavior.setDurationSeconds(validDuration(request.getDurationSeconds()));
 
         Behavior saved = behaviorRepository.save(behavior);
 
@@ -67,6 +68,23 @@ public class BehaviorService {
         return saved;
     }
 
+
+    /**
+     * A week is the longest single session accepted. Anything longer is a
+     * timer left running by mistake, and saving it would put a week of a
+     * person's time into one line of their feed.
+     */
+    static final int MAX_DURATION_SECONDS = 7 * 24 * 60 * 60;
+
+    private Integer validDuration(Integer seconds) {
+        if (seconds == null) {
+            return null;
+        }
+        if (seconds < 0 || seconds > MAX_DURATION_SECONDS) {
+            throw new IllegalArgumentException("A timed entry must be between 0 seconds and 7 days");
+        }
+        return seconds;
+    }
 
     private String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();

@@ -1,28 +1,36 @@
-/* Ten color combinations for the signed-in app: six light, four dark.
-   Applied as data-theme on the app shell root, so the public landing page
-   keeps the cream-and-red brand palette regardless of what a user picks.
+/* Twenty-five matte color combinations: sixteen light, nine dark.
+   The active one is set as data-theme on the app shell and on the landing
+   page, so the whole site follows the person's pick.
 
-   Every theme sets the same nine roles:
+   Every theme sets the same eleven roles:
      --color-bg          the ground
-     --color-surface     raised cards and inputs
+     --color-surface     cards, panels, inputs, menus
      --color-text        primary ink
-     --color-accent      gradient stop one (fills, rings, filled controls)
-     --color-accent-2    gradient stop two
-     --color-accent-700  the accent at text strength on the ground (>=4.5:1)
-     --color-on-accent   ink that sits on the accent gradient (>=4.5:1 on both stops)
-     --color-signal      errors on the ground (>=4.5:1)
+     --color-accent      filled controls, rings, dots, the selected state
+     --color-accent-700  the accent at text strength (>=4.5:1 on ground and surface)
+     --color-on-accent   ink on an accent fill (>=4.5:1)
+     --color-pass        the week card's field
+     --color-on-pass     ink on the week card (>=4.5:1)
+     --color-signal      errors (>=4.5:1)
      --color-divider     hairlines
 
-   Contrast for every pair is verified by scripts/check-theme-contrast.mjs. */
+   Matte throughout: no gradients, no gloss, no translucency for its own sake.
+   Depth is a surface step plus one soft shadow.
+
+   On light themes the week card is the accent itself. On dark themes it is a
+   deep, accent-tinted field with light ink: a large light block on a dark
+   ground is what made the old dark themes read as harsh.
+
+   The colors are generated in OKLCH so every light theme shares one lightness
+   ladder and every dark theme another, then tuned until each pair clears its
+   WCAG minimum with headroom. scripts/check-theme-contrast.mjs re-verifies
+   the file as written. */
 
 /* Values derived from whichever theme is active. Declared on [data-theme] so a
-   custom property's var()s resolve against that element's own colors — the app
-   shell, the landing page, the auth pages and the placeholder all get them. */
+   custom property's var()s resolve against that element's own colors. */
 [data-theme] {
-  /* Corner language. Squared down from the earlier pill-heavy scale: panels
-     and controls now read as software rather than as stickers. --r-pill is
-     reserved for things that are genuinely circular — rings, dots, the
-     colour chip — and is no longer used on buttons or inputs. */
+  /* Corner language: controls the least round, the week card the most.
+     --r-pill is only for things that are genuinely circular. */
   --r-pass: 14px;
   --r-panel: 10px;
   --r-control: 8px;
@@ -30,182 +38,371 @@
   --r-pill: 999px;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  /* Used by anything that opens or closes over the page. Decelerating, no
-     overshoot — a card popping open should settle, not bounce. */
+  /* Anything that opens or closes over the page. Decelerating, no overshoot. */
   --ease-pop: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* One elevation system: offset plus soft blur, tinted by the ink. */
-  --lift-1: 0 1px 2px color-mix(in srgb, var(--color-text) 10%, transparent),
-            0 2px 8px -2px color-mix(in srgb, var(--color-text) 14%, transparent);
-  --lift-2: 0 2px 4px color-mix(in srgb, var(--color-text) 10%, transparent),
-            0 12px 28px -12px color-mix(in srgb, var(--color-text) 26%, transparent);
-  --lift-3: 0 4px 8px color-mix(in srgb, var(--color-text) 12%, transparent),
-            0 28px 56px -20px color-mix(in srgb, var(--color-text) 34%, transparent);
+  /* One elevation system: an offset plus a soft blur, tinted by the ink. */
+  --lift-1: 0 1px 2px color-mix(in srgb, var(--color-text) 8%, transparent),
+            0 2px 8px -2px color-mix(in srgb, var(--color-text) 12%, transparent);
+  --lift-2: 0 2px 4px color-mix(in srgb, var(--color-text) 8%, transparent),
+            0 12px 28px -12px color-mix(in srgb, var(--color-text) 22%, transparent);
+  --lift-3: 0 4px 8px color-mix(in srgb, var(--color-text) 10%, transparent),
+            0 28px 56px -20px color-mix(in srgb, var(--color-text) 30%, transparent);
 
-  --accent-gradient: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  /* A hairline around a card, so a surface one step off the ground still has
+     an edge. No lit top edge and no shaded bottom edge: that was the glass. */
+  --edge: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 8%, transparent);
 
   /* Secondary text: 70% ink over the ground. Verified >=4.5:1 in every theme. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
-
-  /* ── Glass ──────────────────────────────────────────────────
-     A real pane, not a tinted rectangle: a translucent fill that lets the
-     ambient layer through, a blur behind it, a bright hairline along the top
-     edge where light catches, a darker hairline underneath, and a wash of
-     gloss over the upper half. The four pieces together are what make it
-     read as glass rather than as low-opacity paint. */
-  --glass-fill: color-mix(in srgb, var(--color-surface) 86%, transparent);
-  --glass-fill-strong: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  --glass-blur: saturate(160%) blur(18px);
-  --glass-line: color-mix(in srgb, var(--color-text) 12%, transparent);
-  --glass-top: color-mix(in srgb, #fff 20%, transparent);
-  --glass-under: color-mix(in srgb, var(--color-text) 8%, transparent);
-  --glass-edge:
-    inset 0 1px 0 var(--glass-top),
-    inset 0 -1px 0 var(--glass-under),
-    inset 0 0 0 1px var(--glass-line);
-  /* Matte finish: no specular sweep. The panes still read as glass from the
-     translucent fill, the blur and the hairline edges — what they no longer
-     have is a shine across the top. Kept as a gradient rather than removed so
-     the surfaces that paint it as a background layer stay valid CSS, and so
-     one value here is all it takes to put the sheen back. */
-  --glass-gloss: linear-gradient(to bottom, transparent, transparent);
-
-  /* ── Ambient (the Aero layer) ───────────────────────────────
-     Three soft blooms and a faint vertical sky, painted once behind the whole
-     app. This is what the glass has to refract; without it the panes would
-     blur a flat colour and look like nothing. Strengths are deliberately low
-     so text contrast over the ground is unaffected. */
-  --aero-orb-1: color-mix(in srgb, var(--color-accent) 16%, transparent);
-  --aero-orb-2: color-mix(in srgb, var(--color-accent-2) 13%, transparent);
-  --aero-sky: color-mix(in srgb, var(--color-surface) 30%, transparent);
 }
 
 [data-theme='paper'] {
   color-scheme: light;
-  --color-bg: #ece7dd;
-  --color-surface: #e4ddd0;
-  --color-text: #1a1714;
-  --color-accent: #c33d22;
-  --color-accent-2: #b35a18;
-  --color-accent-700: #a8341f;
+  --color-bg: #fcf5ea;
+  --color-surface: #f2e7d5;
+  --color-text: #281d0b;
+  --color-accent: #c74726;
+  --color-accent-700: #b73715;
   --color-on-accent: #ffffff;
-  --color-signal: #b3241c;
-  --color-divider: rgba(26, 23, 20, 0.18);
+  --color-pass: #c74726;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(40, 29, 11, 0.16);
 }
 
 [data-theme='sorbet'] {
   color-scheme: light;
-  --color-bg: #fdf0ea;
-  --color-surface: #f8e2d8;
-  --color-text: #2a1414;
-  --color-accent: #cf1e4e;
-  --color-accent-2: #cc4a22;
-  --color-accent-700: #b8143f;
+  --color-bg: #fef3f1;
+  --color-surface: #fce2dd;
+  --color-text: #2e1915;
+  --color-accent: #cb3c60;
+  --color-accent-700: #ba2a52;
   --color-on-accent: #ffffff;
-  --color-signal: #b8143f;
-  --color-divider: rgba(42, 20, 20, 0.16);
+  --color-pass: #cb3c60;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(46, 25, 21, 0.16);
 }
 
 [data-theme='mint'] {
   color-scheme: light;
-  --color-bg: #edf5f0;
-  --color-surface: #dcece3;
-  --color-text: #10201a;
-  --color-accent: #0a7a5f;
-  --color-accent-2: #2b7a1f;
-  --color-accent-700: #0a6641;
+  --color-bg: #ecf9f3;
+  --color-surface: #d9efe4;
+  --color-text: #11241c;
+  --color-accent: #008064;
+  --color-accent-700: #007359;
   --color-on-accent: #ffffff;
-  --color-signal: #ad2118;
-  --color-divider: rgba(16, 32, 26, 0.16);
+  --color-pass: #008064;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(17, 36, 28, 0.16);
 }
 
 [data-theme='lagoon'] {
   color-scheme: light;
-  --color-bg: #ecf3f9;
-  --color-surface: #d9e7f3;
-  --color-text: #0f1f2b;
-  --color-accent: #0a5e9e;
-  --color-accent-2: #0e7f93;
-  --color-accent-700: #085184;
+  --color-bg: #edf8fe;
+  --color-surface: #d8ecf8;
+  --color-text: #0e222d;
+  --color-accent: #1777b8;
+  --color-accent-700: #0068a5;
   --color-on-accent: #ffffff;
-  --color-signal: #b3241c;
-  --color-divider: rgba(15, 31, 43, 0.16);
+  --color-pass: #1777b8;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(14, 34, 45, 0.16);
 }
 
 [data-theme='lilac'] {
   color-scheme: light;
-  --color-bg: #f4f0fb;
-  --color-surface: #e7dff7;
-  --color-text: #1b1630;
-  --color-accent: #5b34c4;
-  --color-accent-2: #8a2fb0;
-  --color-accent-700: #4f2cb0;
+  --color-bg: #f6f4ff;
+  --color-surface: #e9e5fb;
+  --color-text: #201c2e;
+  --color-accent: #7760cc;
+  --color-accent-700: #6951bb;
   --color-on-accent: #ffffff;
-  --color-signal: #b3241c;
-  --color-divider: rgba(27, 22, 48, 0.16);
+  --color-pass: #7760cc;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(32, 28, 46, 0.16);
 }
 
 [data-theme='sand'] {
   color-scheme: light;
-  --color-bg: #f6f1e5;
-  --color-surface: #ece0c9;
-  --color-text: #221a10;
-  --color-accent: #8f4a0c;
-  --color-accent-2: #9e6410;
-  --color-accent-700: #7d400a;
+  --color-bg: #fef5e6;
+  --color-surface: #f6e6cd;
+  --color-text: #271e0e;
+  --color-accent: #a4622a;
+  --color-accent-700: #945418;
   --color-on-accent: #ffffff;
-  --color-signal: #a82a16;
-  --color-divider: rgba(34, 26, 16, 0.18);
+  --color-pass: #a4622a;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(39, 30, 14, 0.16);
+}
+
+[data-theme='linen'] {
+  color-scheme: light;
+  --color-bg: #f9f5f0;
+  --color-surface: #eee7df;
+  --color-text: #221f1a;
+  --color-accent: #77706b;
+  --color-accent-700: #6a635e;
+  --color-on-accent: #ffffff;
+  --color-pass: #77706b;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(34, 31, 26, 0.16);
+}
+
+[data-theme='slate'] {
+  color-scheme: light;
+  --color-bg: #f2f6fb;
+  --color-surface: #e2e9f2;
+  --color-text: #192028;
+  --color-accent: #5e738f;
+  --color-accent-700: #516681;
+  --color-on-accent: #ffffff;
+  --color-pass: #5e738f;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(25, 32, 40, 0.16);
+}
+
+[data-theme='sage'] {
+  color-scheme: light;
+  --color-bg: #f2f8ed;
+  --color-surface: #e3edda;
+  --color-text: #1b2215;
+  --color-accent: #617a3f;
+  --color-accent-700: #546d32;
+  --color-on-accent: #ffffff;
+  --color-pass: #617a3f;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(27, 34, 21, 0.16);
+}
+
+[data-theme='clover'] {
+  color-scheme: light;
+  --color-bg: #edfaef;
+  --color-surface: #d9efdd;
+  --color-text: #132416;
+  --color-accent: #14833e;
+  --color-accent-700: #037434;
+  --color-on-accent: #ffffff;
+  --color-pass: #14833e;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(19, 36, 22, 0.16);
+}
+
+[data-theme='harbor'] {
+  color-scheme: light;
+  --color-bg: #eaf9fc;
+  --color-surface: #d5eef3;
+  --color-text: #0e2327;
+  --color-accent: #017e88;
+  --color-accent-700: #026f78;
+  --color-on-accent: #ffffff;
+  --color-pass: #017e88;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(14, 35, 39, 0.16);
+}
+
+[data-theme='cobalt'] {
+  color-scheme: light;
+  --color-bg: #f2f6fe;
+  --color-surface: #e1e9f9;
+  --color-text: #171f30;
+  --color-accent: #486bd7;
+  --color-accent-700: #3a5cc6;
+  --color-on-accent: #ffffff;
+  --color-pass: #486bd7;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(23, 31, 48, 0.16);
+}
+
+[data-theme='orchid'] {
+  color-scheme: light;
+  --color-bg: #fdf2fc;
+  --color-surface: #f5e2f2;
+  --color-text: #291927;
+  --color-accent: #a94ea3;
+  --color-accent-700: #993f94;
+  --color-on-accent: #ffffff;
+  --color-pass: #a94ea3;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(41, 25, 39, 0.16);
+}
+
+[data-theme='rose'] {
+  color-scheme: light;
+  --color-bg: #fff2f3;
+  --color-surface: #f8e2e5;
+  --color-text: #2a1a1c;
+  --color-accent: #9f5d72;
+  --color-accent-700: #915065;
+  --color-on-accent: #ffffff;
+  --color-pass: #9f5d72;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(42, 26, 28, 0.16);
+}
+
+[data-theme='clay'] {
+  color-scheme: light;
+  --color-bg: #fff3ec;
+  --color-surface: #f8e4d8;
+  --color-text: #291c13;
+  --color-accent: #a16249;
+  --color-accent-700: #91533b;
+  --color-on-accent: #ffffff;
+  --color-pass: #a16249;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(41, 28, 19, 0.16);
+}
+
+[data-theme='marigold'] {
+  color-scheme: light;
+  --color-bg: #fef5e0;
+  --color-surface: #f6e8c2;
+  --color-text: #251f0d;
+  --color-accent: #986900;
+  --color-accent-700: #855c04;
+  --color-on-accent: #ffffff;
+  --color-pass: #986900;
+  --color-on-pass: #ffffff;
+  --color-signal: #b43933;
+  --color-divider: rgba(37, 31, 13, 0.16);
 }
 
 [data-theme='graphite'] {
   color-scheme: dark;
-  --color-bg: #15161c;
-  --color-surface: #1f2128;
-  --color-text: #f3f2f0;
-  --color-accent: #ff3f63;
-  --color-accent-2: #ff8a4c;
-  --color-accent-700: #ff96a8;
-  --color-on-accent: #1a0407;
-  --color-signal: #ff8b8b;
-  --color-divider: rgba(243, 242, 240, 0.16);
+  --color-bg: #1c1d20;
+  --color-surface: #282a2d;
+  --color-text: #e2e6ee;
+  --color-accent: #dc8c85;
+  --color-accent-700: #d5908a;
+  --color-on-accent: #201210;
+  --color-pass: #613835;
+  --color-on-pass: #f5e3e1;
+  --color-signal: #e88f85;
+  --color-divider: rgba(226, 230, 238, 0.14);
 }
 
 [data-theme='midnight'] {
   color-scheme: dark;
-  --color-bg: #0d1124;
-  --color-surface: #181e39;
-  --color-text: #eef1fb;
-  --color-accent: #5b82ff;
-  --color-accent-2: #9a6bff;
-  --color-accent-700: #aec2ff;
-  --color-on-accent: #05081a;
-  --color-signal: #ff9494;
-  --color-divider: rgba(238, 241, 251, 0.16);
+  --color-bg: #181d29;
+  --color-surface: #242a37;
+  --color-text: #e2e6ef;
+  --color-accent: #91a1de;
+  --color-accent-700: #94a2d5;
+  --color-on-accent: #121521;
+  --color-pass: #3b4362;
+  --color-on-pass: #e3e7f6;
+  --color-signal: #e88f85;
+  --color-divider: rgba(226, 230, 239, 0.14);
 }
 
 [data-theme='forest'] {
   color-scheme: dark;
-  --color-bg: #0f1813;
-  --color-surface: #18251e;
-  --color-text: #eaf3ed;
-  --color-accent: #1fbe77;
-  --color-accent-2: #7ad96a;
-  --color-accent-700: #74e0a8;
-  --color-on-accent: #03120a;
-  --color-signal: #ff9090;
-  --color-divider: rgba(234, 243, 237, 0.16);
+  --color-bg: #152119;
+  --color-surface: #212e25;
+  --color-text: #e0e9e3;
+  --color-accent: #75b68c;
+  --color-accent-700: #7eb390;
+  --color-on-accent: #0c1911;
+  --color-pass: #2c4e38;
+  --color-on-pass: #deece2;
+  --color-signal: #e88f85;
+  --color-divider: rgba(224, 233, 227, 0.14);
 }
 
 [data-theme='ember'] {
   color-scheme: dark;
-  --color-bg: #17100e;
-  --color-surface: #241813;
-  --color-text: #f7eee9;
-  --color-accent: #ff6a3d;
-  --color-accent-2: #ffb13a;
-  --color-accent-700: #ffa98c;
-  --color-on-accent: #180602;
-  --color-signal: #ff9a8a;
-  --color-divider: rgba(247, 238, 233, 0.18);
+  --color-bg: #261a16;
+  --color-surface: #342721;
+  --color-text: #eee4e0;
+  --color-accent: #d59466;
+  --color-accent-700: #cf9771;
+  --color-on-accent: #1f130b;
+  --color-pass: #5e3c24;
+  --color-on-pass: #f3e5dc;
+  --color-signal: #e88f85;
+  --color-divider: rgba(238, 228, 224, 0.14);
+}
+
+[data-theme='dusk'] {
+  color-scheme: dark;
+  --color-bg: #221a25;
+  --color-surface: #2f2633;
+  --color-text: #e9e4ec;
+  --color-accent: #cb8eb6;
+  --color-accent-700: #c692b4;
+  --color-on-accent: #1e121a;
+  --color-pass: #59394e;
+  --color-on-pass: #f2e3ec;
+  --color-signal: #e88f85;
+  --color-divider: rgba(233, 228, 236, 0.14);
+}
+
+[data-theme='ocean'] {
+  color-scheme: dark;
+  --color-bg: #131f25;
+  --color-surface: #1e2d32;
+  --color-text: #dee8ec;
+  --color-accent: #63b4b8;
+  --color-accent-700: #6fb2b5;
+  --color-on-accent: #07191a;
+  --color-pass: #214d4f;
+  --color-on-pass: #d9eced;
+  --color-signal: #e88f85;
+  --color-divider: rgba(222, 232, 236, 0.14);
+}
+
+[data-theme='cocoa'] {
+  color-scheme: dark;
+  --color-bg: #251b17;
+  --color-surface: #332723;
+  --color-text: #eee4e0;
+  --color-accent: #d19097;
+  --color-accent-700: #cb9399;
+  --color-on-accent: #201113;
+  --color-pass: #5c3a3e;
+  --color-on-pass: #f5e3e4;
+  --color-signal: #e88f85;
+  --color-divider: rgba(238, 228, 224, 0.14);
+}
+
+[data-theme='ink'] {
+  color-scheme: dark;
+  --color-bg: #1c1d1f;
+  --color-surface: #292a2c;
+  --color-text: #e2e6ee;
+  --color-accent: #94a8b6;
+  --color-accent-700: #97a7b3;
+  --color-on-accent: #0b1820;
+  --color-pass: #3d474e;
+  --color-on-pass: #dceaf4;
+  --color-signal: #e88f85;
+  --color-divider: rgba(226, 230, 238, 0.14);
+}
+
+[data-theme='moss'] {
+  color-scheme: dark;
+  --color-bg: #1c1f14;
+  --color-surface: #292c20;
+  --color-text: #e5e7df;
+  --color-accent: #9fad6b;
+  --color-accent-700: #a0ac74;
+  --color-on-accent: #15180a;
+  --color-pass: #424927;
+  --color-on-pass: #e6eadb;
+  --color-signal: #e88f85;
+  --color-divider: rgba(229, 231, 223, 0.14);
 }

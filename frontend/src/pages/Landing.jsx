@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import Aurora from '../components/Aurora';
 import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from '../api/client';
+import Modal from '../components/Modal';
 import './landing.css';
 
 const TASKS = [
@@ -82,14 +82,6 @@ export default function Landing() {
     setPassword('');
   }, []);
 
-  useEffect(() => {
-    if (!authOpen) return undefined;
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') closeAuth();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [authOpen, closeAuth]);
 
   const switchTab = (tab) => {
     setAuthTab(tab);
@@ -132,8 +124,6 @@ export default function Landing() {
 
   return (
     <div className="mordi-page" data-theme={theme}>
-      <Aurora />
-      <div className="mordi-noise" aria-hidden="true" />
 
       <nav className="mordi-nav">
         <button
@@ -226,137 +216,126 @@ export default function Landing() {
       </footer>
 
       {authOpen && (
-        <div
-          className="mordi-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeAuth();
-          }}
+        <Modal
+          title={authTab === 'signin' ? 'Sign in' : 'Create your account'}
+          onClose={closeAuth}
         >
-          <div
-            className="mordi-slip"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="mordi-slip-title"
-          >
-            <div className="mordi-slip__head">
-              <span className="mordi-slip__label" id="mordi-slip-title">
-                Mordi account
-              </span>
+          {/* The same sliding segmented control the goal form uses, so the
+              public site and the app switch between two options the same way. */}
+          <div className="auth-switch">
+            <div className="app-segments" role="group" aria-label="Account">
+              <span
+                className="app-segments__thumb"
+                style={{ '--n': 2, '--i': authTab === 'signin' ? 0 : 1 }}
+                aria-hidden="true"
+              />
               <button
                 type="button"
-                className="mordi-slip__close"
-                onClick={closeAuth}
-                aria-label="Close"
-              >
-                Close &times;
-              </button>
-            </div>
-
-            <div className="mordi-slip__tabs">
-              <button
-                type="button"
-                className={'mordi-slip__tab' + (authTab === 'signin' ? ' active' : '')}
+                className="app-segment"
+                aria-pressed={authTab === 'signin'}
                 onClick={() => switchTab('signin')}
               >
                 Sign in
               </button>
               <button
                 type="button"
-                className={'mordi-slip__tab' + (authTab === 'register' ? ' active' : '')}
+                className="app-segment"
+                aria-pressed={authTab === 'register'}
                 onClick={() => switchTab('register')}
               >
-                Sign up
+                Create account
               </button>
             </div>
-
-            <div className="mordi-slip__body">
-              {error && <p className="mordi-slip__error">{error}</p>}
-
-              {authTab === 'signin' ? (
-                <form onSubmit={handleSignIn}>
-                  <div className="mordi-field">
-                    <label htmlFor="signin-email">Email</label>
-                    <input
-                      id="signin-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="mordi-field">
-                    <label htmlFor="signin-password">Password</label>
-                    <input
-                      id="signin-password"
-                      type="password"
-                      placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary mordi-slip__submit"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Signing in…' : 'Sign in'}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleRegister}>
-                  <div className="mordi-field">
-                    <label htmlFor="register-name">Full name</label>
-                    <input
-                      id="register-name"
-                      type="text"
-                      placeholder="Ada Lovelace"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="mordi-field">
-                    <label htmlFor="register-email">Email</label>
-                    <input
-                      id="register-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="mordi-field">
-                    <label htmlFor="register-password">Password</label>
-                    <input
-                      id="register-password"
-                      type="password"
-                      placeholder="At least 8 characters"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary mordi-slip__submit"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Creating account…' : 'Sign up'}
-                  </button>
-                </form>
-              )}
-            </div>
-
-            <div className="mordi-slip__foot">
-              {authTab === 'signin'
-                ? 'New here? Switch to "Sign up" above.'
-                : 'Already have an account? Switch to "Sign in" above.'}
-            </div>
           </div>
-        </div>
+
+          {authTab === 'signin' ? (
+            <form className="app-form" onSubmit={handleSignIn}>
+              {error && (
+                <p className="app-form__error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="app-field">
+                <label htmlFor="signin-email">Email</label>
+                <input
+                  id="signin-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="app-field">
+                <label htmlFor="signin-password">Password</label>
+                <input
+                  id="signin-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="app-form__actions">
+                <button type="submit" className="app-btn app-btn--block" disabled={submitting}>
+                  {submitting ? 'Signing in…' : 'Sign in'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form className="app-form" onSubmit={handleRegister}>
+              {error && (
+                <p className="app-form__error" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="app-field">
+                <label htmlFor="register-name">Name</label>
+                <input
+                  id="register-name"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Ada Lovelace"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="app-field">
+                <label htmlFor="register-email">Email</label>
+                <input
+                  id="register-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="app-field">
+                <label htmlFor="register-password">Password</label>
+                <input
+                  id="register-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                />
+                <p className="app-field__hint">At least 8 characters.</p>
+              </div>
+              <div className="app-form__actions">
+                <button type="submit" className="app-btn app-btn--block" disabled={submitting}>
+                  {submitting ? 'Creating account…' : 'Create account'}
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal>
       )}
     </div>
   );

@@ -53,13 +53,12 @@ const CHECKS = [
   ['accent text on surface', '--color-accent-700', '--color-surface', 4.5],
   ['signal on ground', '--color-signal', '--color-bg', 4.5],
   ['signal on surface', '--color-signal', '--color-surface', 4.5],
-  ['on-accent over stop 1', '--color-on-accent', '--color-accent', 4.5],
-  ['on-accent over stop 2', '--color-on-accent', '--color-accent-2', 4.5],
-  // Chip outlines are decoration, so 3:1 applies; their text sits on the raw
-  // gradient (covered above) because a tinted chip field measured 3.6:1.
-  ['chip outline over stop 1', 'chip1', '--color-accent', 1.3],
-  ['chip outline over stop 2', 'chip2', '--color-accent-2', 1.3],
-  // Non-text: the accent fill has to be discernible against the ground it sits on.
+  ['on-accent on accent', '--color-on-accent', '--color-accent', 4.5],
+  ['on-pass on pass', '--color-on-pass', '--color-pass', 4.5],
+  // Day-chip outlines on the week card are decoration, so a low floor applies;
+  // their text sits on the raw pass field, covered above.
+  ['chip outline on pass', 'chip', '--color-pass', 1.3],
+  // Non-text: an accent fill has to be discernible against the ground.
   ['accent fill vs ground', '--color-accent', '--color-bg', 3],
   ['divider vs ground', '--color-divider', '--color-bg', 1.35],
 ];
@@ -70,28 +69,22 @@ const rows = [];
 for (const theme of themes) {
   const bg = parseColor(theme.tokens['--color-bg']);
   const resolve = (token) => {
-    if (token === 'chip1') return chip('--color-accent');
-    if (token === 'chip2') return chip('--color-accent-2');
+    if (token === 'chip') {
+      // The chip outline: 32% of the on-pass ink over the pass field.
+      const pass = parseColor(theme.tokens['--color-pass']);
+      const ink = parseColor(theme.tokens['--color-on-pass']);
+      return pass.map((c, i) => Math.round(ink[i] * 0.32 + c * 0.68));
+    }
     if (token === 'muted') {
-      // Mirrors --color-text-muted in index.css: 70% text mixed with the ground.
+      // Mirrors --color-text-muted: 70% text mixed with the ground.
       const text = parseColor(theme.tokens['--color-text']);
       return text.map((c, i) => Math.round(c * 0.7 + bg[i] * 0.3));
     }
     return parseColor(theme.tokens[token]);
   };
 
-  const chip = (stopToken) => {
-    const stop = parseColor(theme.tokens[stopToken]);
-    const ink = parseColor(theme.tokens['--color-on-accent']);
-    // The chip outline: 32% of the on-accent ink over the gradient stop.
-    return stop.map((c, i) => Math.round(ink[i] * 0.32 + c * 0.68));
-  };
-
   for (const [label, fgToken, bgToken, min] of CHECKS) {
-    const backdrop =
-      bgToken === 'chip1' || bgToken === 'chip2'
-        ? over(parseColor(theme.tokens[bgToken === 'chip1' ? '--color-accent' : '--color-accent-2']), bg)
-        : over(parseColor(theme.tokens[bgToken]), bg);
+    const backdrop = over(parseColor(theme.tokens[bgToken]), bg);
     const ratio = contrast(over(resolve(fgToken), backdrop), backdrop);
     const pass = ratio >= min;
     if (!pass) failures += 1;
@@ -105,8 +98,8 @@ const light = themes.filter((t) => t.scheme === 'light').length;
 console.log(rows.filter((r) => r.startsWith('FAIL')).join('\n') || 'All contrast checks pass.');
 console.log(`\n${themes.length} themes (${light} light, ${themes.length - light} dark), ${rows.length} checks, ${failures} failing.`);
 
-if (themes.length !== 10) {
-  console.error(`Expected 10 themes, found ${themes.length}.`);
+if (themes.length !== 25) {
+  console.error(`Expected 25 themes, found ${themes.length}.`);
   process.exit(1);
 }
 process.exit(failures === 0 ? 0 : 1);

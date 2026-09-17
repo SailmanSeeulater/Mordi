@@ -1,0 +1,132 @@
+/* Activity: a year of logging as a grid of days. */
+
+.activity {
+  --cell: 12px;
+  --cell-gap: 3px;
+}
+
+/* A year is wider than a phone. It scrolls sideways, opens on the latest
+   weeks, and draws no scrollbar. */
+.activity__scroller {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding: 0 18px 4px;
+}
+.activity__scroller::-webkit-scrollbar { display: none; }
+
+/* Only when there is more year than fits: a grab cursor promises movement. */
+.activity__scroller--draggable,
+.activity__scroller--draggable .activity__grid {
+  cursor: grab;
+}
+.activity__scroller--dragging,
+.activity__scroller--dragging .activity__grid {
+  cursor: grabbing;
+  user-select: none;
+}
+/* While dragging, a day under the pointer is not a hover target. */
+.activity__scroller--dragging .activity__cell:hover {
+  box-shadow: none;
+}
+
+.activity__grid {
+  display: grid;
+  grid-template-columns: auto max-content;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    ".        months"
+    "weekdays cells";
+  column-gap: 8px;
+  row-gap: 4px;
+  width: max-content;
+  cursor: pointer;
+}
+
+.activity__months,
+.activity__cells {
+  display: grid;
+  grid-template-columns: repeat(var(--weeks), var(--cell));
+  column-gap: var(--cell-gap);
+}
+
+.activity__months {
+  grid-area: months;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+.activity__months span {
+  /* A label may be wider than one column; it overflows into the next ones
+     rather than widening its own. */
+  white-space: nowrap;
+  overflow: visible;
+  width: 0;
+}
+
+.activity__weekdays {
+  grid-area: weekdays;
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  row-gap: var(--cell-gap);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--color-text-muted);
+}
+
+.activity__cells {
+  grid-area: cells;
+  grid-template-rows: repeat(7, var(--cell));
+  row-gap: var(--cell-gap);
+}
+
+.activity__cell {
+  display: block;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+}
+
+/* Four steps of the accent, mixed into the surface rather than faded to
+   transparent, so every square is a solid matte color. */
+.activity__cell[data-level='1'] { background: color-mix(in srgb, var(--color-accent) 30%, var(--color-surface)); }
+.activity__cell[data-level='2'] { background: color-mix(in srgb, var(--color-accent) 54%, var(--color-surface)); }
+.activity__cell[data-level='3'] { background: color-mix(in srgb, var(--color-accent) 78%, var(--color-surface)); }
+.activity__cell[data-level='4'] { background: var(--color-accent); }
+
+.activity__cell--future {
+  background: none;
+}
+
+.activity__cell--today {
+  box-shadow: 0 0 0 1.5px var(--color-text);
+}
+
+.activity__grid:hover .activity__cell:not(.activity__cell--future):hover {
+  box-shadow: 0 0 0 1.5px var(--color-accent-700);
+}
+
+.activity__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 18px 14px;
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.activity__legend span:first-child { margin-right: 4px; }
+.activity__legend span:last-child { margin-left: 4px; }
+
+@media (max-width: 560px) {
+  .activity {
+    --cell: 11px;
+    --cell-gap: 3px;
+  }
+  .activity__scroller { padding: 0 14px 4px; }
+  .activity__legend { padding: 8px 14px 12px; }
+}
