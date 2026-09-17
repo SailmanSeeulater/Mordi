@@ -1,0 +1,6 @@
+# target/ is built inside the image; a host build would be the wrong
+# architecture and could shadow it.
+target
+.git
+.env
+*.log

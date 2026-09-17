@@ -1,7 +1,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+# The lockfile alone decides this layer, so packages are only installed again
+# when a dependency actually changes. npm ci, not install: it installs exactly
+# what the lockfile says and never rewrites it mid-build.
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 ARG VITE_GOOGLE_MAPS_API_KEY
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
