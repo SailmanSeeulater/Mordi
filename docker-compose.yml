@@ -18,6 +18,13 @@ services:
     restart: always
 
   backend:
+    # Both, deliberately. On the VPS the tag is pulled from GHCR, already built
+    # by CI; locally `docker compose build` builds it and tags it with the same
+    # name. Without `image:` a `pull` skips the service and `up -d` keeps
+    # whatever is already running, so a deploy reports success and changes
+    # nothing. MORDI_TAG pins a deploy to one commit, so a rollback is
+    # `MORDI_TAG=<sha> docker-compose up -d` with no rebuild.
+    image: ghcr.io/sailmanseeulater/mordi-backend:${MORDI_TAG:-latest}
     build: ./backend
     container_name: mordi-backend
     ports:
@@ -38,6 +45,7 @@ services:
     restart: always
 
   frontend:
+    image: ghcr.io/sailmanseeulater/mordi-frontend:${MORDI_TAG:-latest}
     build:
       context: ./frontend
       args:
