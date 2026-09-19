@@ -4,7 +4,7 @@ import './app.css';
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export default function Modal({ title, onClose, children }) {
+export default function Modal({ title, onClose, children, size }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const onCloseRef = useRef(onClose);
@@ -67,7 +67,7 @@ export default function Modal({ title, onClose, children }) {
     >
       <div
         ref={dialogRef}
-        className="app-dialog"
+        className={`app-dialog${size === 'wide' ? ' app-dialog--wide' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

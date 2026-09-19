@@ -9,4 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findByUserAndActive(User user, boolean active);
+
+    /** Current goals: not deleted, not archived. What the dashboard shows. */
+    List<Goal> findByUserAndActiveTrueAndArchivedAtIsNull(User user);
+
+    /** History: archived but not deleted, most recently archived first. */
+    List<Goal> findByUserAndActiveTrueAndArchivedAtIsNotNullOrderByArchivedAtDesc(User user);
 }

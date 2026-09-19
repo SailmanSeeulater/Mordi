@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
 
-const format = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+const format = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+  second: '2-digit',
+});
 
 /**
- * The time, beside the weather on the week card.
+ * The time, beside the weather on the week card, to the second.
  *
- * It ticks once a minute, on the minute: a timer that runs every second would
- * redraw the card sixty times to change one digit, and a plain 60-second
- * interval started at an arbitrary moment would show the old minute for up to
- * a minute after it changed. So each tick schedules the next for the start of
- * the following minute.
+ * Each tick is scheduled for the start of the next second rather than on a
+ * plain one-second interval: an interval started at an arbitrary moment shows
+ * each second up to a second late, and drifts further every time the browser
+ * throttles it. Re-aiming at the boundary on every tick keeps the digit
+ * turning over with the system clock.
  *
  * The format comes from the browser's locale, so it is 12- or 24-hour wherever
- * that is the everyday convention. It is not a live region: announcing every
- * minute would be noise.
+ * that is the everyday convention. The digits are tabular (see .wx--clock), so
+ * the chip does not twitch in width every second. It is not a live region:
+ * announcing every second would be noise.
  */
 export default function ClockChip() {
   const [now, setNow] = useState(() => new Date());
@@ -21,12 +26,11 @@ export default function ClockChip() {
   useEffect(() => {
     let timer;
     const schedule = () => {
-      const current = new Date();
-      const untilNextMinute = 60_000 - (current.getSeconds() * 1000 + current.getMilliseconds());
+      const untilNextSecond = 1000 - new Date().getMilliseconds();
       timer = setTimeout(() => {
         setNow(new Date());
         schedule();
-      }, untilNextMinute + 20);
+      }, untilNextSecond + 5);
     };
     schedule();
     return () => clearTimeout(timer);

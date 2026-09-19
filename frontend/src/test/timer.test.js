@@ -7,7 +7,9 @@ import {
   elapsedMs,
   formatClock,
   formatDuration,
+  pauseSession,
   readSession,
+  resumeSession,
   startSession,
   stopSession,
 } from '../lib/timer';
@@ -20,6 +22,8 @@ describe('a session', () => {
       status: 'running',
       name: 'Deep work',
       startedAt: T0,
+      resumedAt: T0,
+      accumulatedMs: 0,
     });
   });
 
@@ -34,6 +38,31 @@ describe('a session', () => {
     const stopped = stopSession(startSession('Read', T0), T0 + 60_000);
     expect(stopped.status).toBe('stopped');
     expect(elapsedMs(stopped, T0 + 999_999_999)).toBe(60_000);
+  });
+
+  it('stops counting while paused, and picks up where it left off', () => {
+    const paused = pauseSession(startSession('Read', T0), T0 + 60_000);
+    expect(paused.status).toBe('paused');
+    // A long interruption does not count.
+    expect(elapsedMs(paused, T0 + 3_600_000)).toBe(60_000);
+    const resumed = resumeSession(paused, T0 + 3_600_000);
+    expect(elapsedMs(resumed, T0 + 3_600_000 + 30_000)).toBe(90_000);
+  });
+
+  it('finishes from running or from paused, keeping only time on the clock', () => {
+    const fromRunning = stopSession(startSession('Read', T0), T0 + 5_000);
+    expect(elapsedMs(fromRunning, T0 + 99_999)).toBe(5_000);
+    const paused = pauseSession(startSession('Read', T0), T0 + 7_000);
+    const fromPaused = stopSession(paused, T0 + 500_000);
+    expect(fromPaused.status).toBe('stopped');
+    expect(elapsedMs(fromPaused, T0 + 999_999)).toBe(7_000);
+  });
+
+  it('ignores pause and resume in the wrong state', () => {
+    expect(pauseSession(IDLE, T0)).toBe(IDLE);
+    expect(resumeSession(IDLE, T0)).toBe(IDLE);
+    const running = startSession('Read', T0);
+    expect(resumeSession(running, T0 + 1)).toBe(running);
   });
 
   it('ignores a stop on anything that is not running', () => {
@@ -66,8 +95,21 @@ describe('durationSeconds', () => {
 
 describe('readSession', () => {
   it('restores a running session', () => {
-    const raw = JSON.stringify({ status: 'running', name: 'Deep work', startedAt: T0 });
-    expect(readSession(raw)).toEqual({ status: 'running', name: 'Deep work', startedAt: T0 });
+    const raw = JSON.stringify(startSession('Deep work', T0));
+    expect(readSession(raw)).toEqual(startSession('Deep work', T0));
+  });
+
+  it('upgrades a session stored before pausing existed, keeping its time', () => {
+    // A timer left running across the update must not vanish or reset.
+    const oldRunning = JSON.stringify({ status: 'running', name: 'Deep work', startedAt: T0 });
+    expect(elapsedMs(readSession(oldRunning), T0 + 42_000)).toBe(42_000);
+    const oldStopped = JSON.stringify({ status: 'stopped', name: 'Read', startedAt: T0, stoppedAt: T0 + 9_000 });
+    expect(elapsedMs(readSession(oldStopped), T0 + 99_999)).toBe(9_000);
+  });
+
+  it('restores a paused session', () => {
+    const raw = JSON.stringify(pauseSession(startSession('Read', T0), T0 + 4_000));
+    expect(readSession(raw)).toEqual({ status: 'paused', name: 'Read', startedAt: T0, accumulatedMs: 4_000 });
   });
 
   it('restores a stopped session awaiting save', () => {

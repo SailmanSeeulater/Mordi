@@ -3,6 +3,19 @@ import { DEFAULT_THEME, THEMES, THEME_STORAGE_KEY, ThemeContext } from './theme-
 
 const isKnown = (id) => THEMES.some((t) => t.id === id);
 
+/**
+ * Lets the colours ease across for the length of a switch (see
+ * html.theme-easing in index.css). Repeated switches restart the window
+ * rather than stacking timers.
+ */
+let easingTimer;
+function easeThemeChange() {
+  const html = document.documentElement;
+  html.classList.add('theme-easing');
+  clearTimeout(easingTimer);
+  easingTimer = setTimeout(() => html.classList.remove('theme-easing'), 600);
+}
+
 function readStoredTheme() {
   try {
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -18,6 +31,7 @@ export function ThemeProvider({ children }) {
 
   const setTheme = useCallback((id) => {
     if (!isKnown(id)) return;
+    easeThemeChange();
     setThemeState(id);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, id);
@@ -27,6 +41,7 @@ export function ThemeProvider({ children }) {
   }, []);
 
   const cycleTheme = useCallback(() => {
+    easeThemeChange();
     setThemeState((current) => {
       const next = THEMES[(THEMES.findIndex((t) => t.id === current) + 1) % THEMES.length].id;
       try {

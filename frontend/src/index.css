@@ -62,6 +62,30 @@ body {
   min-height: 100svh;
 }
 
+/* Changing colour combination: every colour eases across instead of
+   snapping. The class is only on <html> for the length of the switch, so
+   hover, focus and press feedback stay instant the rest of the time. */
+html.theme-easing *,
+html.theme-easing *::before,
+html.theme-easing *::after {
+  transition:
+    background-color 520ms var(--ease-out),
+    color 520ms var(--ease-out),
+    border-color 520ms var(--ease-out),
+    outline-color 520ms var(--ease-out),
+    text-decoration-color 520ms var(--ease-out),
+    fill 520ms var(--ease-out),
+    stroke 520ms var(--ease-out),
+    box-shadow 520ms var(--ease-out) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.theme-easing *,
+  html.theme-easing *::before,
+  html.theme-easing *::after {
+    transition: none !important;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;

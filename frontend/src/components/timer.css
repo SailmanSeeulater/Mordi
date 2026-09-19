@@ -1,4 +1,13 @@
-/* Time logger: name it, start it, stop it, keep it or not. */
+/* Timer: the Clock app's timer, in Mordi's matte materials.
+   One large number, a ring, and two round buttons that keep their places. */
+
+.timer {
+  --go: #2f9e55;
+  --pause: #d9861a;
+  --stop: var(--color-signal);
+  padding-bottom: 18px;
+  border-top: 1px solid var(--color-divider);
+}
 
 .timer__live {
   display: inline-flex;
@@ -6,16 +15,17 @@
   gap: 6px;
   font-family: var(--font-mono);
   font-size: var(--t-micro);
-  color: var(--color-accent-700);
+  color: color-mix(in oklab, var(--go) 55%, var(--color-text));
+}
+.timer__live--paused {
+  color: color-mix(in oklab, var(--pause) 55%, var(--color-text));
 }
 
-/* The one moving thing on the card while a timer runs: a slow opacity pulse,
-   so a running timer is noticeable from across the page without a spinner. */
 .timer__dot {
   width: 7px;
   height: 7px;
   border-radius: var(--r-pill);
-  background: var(--color-accent);
+  background: var(--go);
   animation: timer-pulse 1.6s var(--ease-out) infinite;
 }
 @keyframes timer-pulse {
@@ -23,88 +33,191 @@
   50% { opacity: 0.35; }
 }
 
-.timer__start {
+/* The Clock app's "Label" row: a quiet inset row, label left, value right. */
+.timer__label-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 18px 18px;
+  gap: 12px;
+  margin: 0 18px 6px;
+  padding: 0 14px;
+  min-height: 44px;
+  border-radius: var(--r-control);
+  background: var(--color-bg);
 }
-
-.timer__input {
+.timer__label-row label {
+  font-size: var(--t-body);
+  color: var(--color-text);
+}
+.timer__label-row input {
   flex: 1;
   min-width: 0;
   min-height: 44px;
-  padding: 10px 12px;
-  border: 1.5px solid var(--color-divider);
-  border-radius: var(--r-control);
-  background: var(--color-bg);
+  border: 0;
+  background: transparent;
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: var(--t-body);
+  text-align: right;
 }
-.timer__input::placeholder {
+.timer__label-row input::placeholder {
   color: var(--color-text-muted);
   opacity: 1;
 }
-.timer__input:focus {
-  border-color: var(--color-accent-700);
+.timer__label-row input:focus-visible {
+  outline: none;
+}
+.timer__label-row:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-700);
 }
 
-.timer__session {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 14px 20px;
-  padding: 0 18px 18px;
-}
-
-.timer__readout {
+/* Buttons flank the face, in the corners' spirit: quiet on the left,
+   forward on the right. */
+.timer__stage {
   display: grid;
-  gap: 2px;
-  min-width: 0;
+  grid-template-columns: auto minmax(0, 200px) auto;
+  align-items: end;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 18px 0;
 }
 
-.timer__name {
-  margin: 0;
-  font-size: var(--t-h3);
-  font-weight: 600;
-  overflow-wrap: anywhere;
+.clock-face {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+}
+.clock-face__ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.clock-face__track {
+  fill: none;
+  stroke: var(--color-divider);
+  stroke-width: 5;
+}
+.clock-face__fill {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 250ms linear;
+}
+.clock-face--paused .clock-face__fill {
+  stroke: var(--pause);
+}
+.clock-face--idle .clock-face__fill {
+  stroke: transparent;
+}
+.clock-face__hand {
+  transform-origin: 100px 100px;
+  transition: transform 250ms linear;
+  fill: var(--color-accent);
+}
+.clock-face--paused .clock-face__hand {
+  fill: var(--pause);
 }
 
-/* Monospaced and tabular, so the digits stay put as they change. */
-.timer__clock {
+.clock-face__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 0 22px;
+  text-align: center;
+}
+.clock-face__digits {
   margin: 0;
   font-family: var(--font-mono);
-  font-size: clamp(34px, 6vw, 44px);
-  font-weight: 500;
-  line-height: 1.05;
+  font-size: 38px;
+  font-weight: 400;
   letter-spacing: -0.02em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: var(--color-text);
 }
-
-.timer__meta {
+.clock-face--idle .clock-face__digits {
+  color: var(--color-text-muted);
+}
+.clock-face__label {
   margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.clock-face__meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
   color: var(--color-text-muted);
 }
 
-.timer__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* Round buttons: tinted fill, label in the tone, and a hairline ring set a
+   gap away from the fill, the Clock app's double circle. */
+.round-btn {
+  --tone: var(--color-text);
+  width: 66px;
+  height: 66px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in oklab, var(--tone) 16%, var(--color-surface));
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 3.5px color-mix(in oklab, var(--tone) 30%, var(--color-surface));
+  /* 50/50 with the ink: the amber Pause label measured 4.2:1 at 60% on the
+     light themes; at 50% every tone clears 4.5:1 on all twenty-five. */
+  color: color-mix(in oklab, var(--tone) 50%, var(--color-text));
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.round-btn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--tone) 24%, var(--color-surface));
+}
+.round-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.round-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.round-btn--go { --tone: var(--go); }
+.round-btn--pause { --tone: var(--pause); }
+.round-btn--stop { --tone: var(--stop); }
+.round-btn--quiet {
+  --tone: var(--color-text);
+  color: var(--color-text);
+  background: color-mix(in oklab, var(--color-text) 9%, var(--color-surface));
 }
 
 .timer__error {
-  margin: 0 18px 16px;
-}
-
-@media (max-width: 560px) {
-  .timer__session { align-items: stretch; }
-  .timer__actions { width: 100%; }
-  .timer__actions .app-btn { flex: 1; }
+  margin: 12px 18px 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timer__dot { animation: none; }
+  .clock-face__hand,
+  .clock-face__fill {
+    transition: none;
+  }
+  .timer__dot {
+    animation: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .round-btn {
+    width: 58px;
+    height: 58px;
+    font-size: 13px;
+  }
 }

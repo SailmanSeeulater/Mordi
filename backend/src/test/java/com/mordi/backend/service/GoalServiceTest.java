@@ -4,6 +4,7 @@ import com.mordi.backend.dto.GoalRequest;
 import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
+import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,13 +35,16 @@ class GoalServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BehaviorRepository behaviorRepository;
+
     private GoalService goalService;
     private User me;
     private User someoneElse;
 
     @BeforeEach
     void setUp() {
-        goalService = new GoalService(goalRepository, userRepository);
+        goalService = new GoalService(goalRepository, userRepository, behaviorRepository);
         me = user(ME);
         someoneElse = user("other@mordi.com");
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
@@ -181,6 +185,85 @@ class GoalServiceTest {
 
             assertThatThrownBy(() -> goalService.deactivateGoal(ME, 99L))
                 .isInstanceOf(GoalNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class Archive {
+
+        @Test
+        void archivingStampsTheGoalAndKeepsItActive() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(me)));
+
+            Goal archived = goalService.archiveGoal(ME, 10L);
+
+            assertThat(archived.getArchivedAt()).isNotNull();
+            // Still active: its entries must keep resolving to it.
+            assertThat(archived.isActive()).isTrue();
+        }
+
+        @Test
+        void archivingTwiceKeepsTheFirstDate() {
+            Goal goal = existingGoal(me);
+            java.time.LocalDateTime first = java.time.LocalDateTime.of(2026, 1, 2, 3, 4);
+            goal.setArchivedAt(first);
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            assertThat(goalService.archiveGoal(ME, 10L).getArchivedAt()).isEqualTo(first);
+        }
+
+        @Test
+        void restoringClearsTheDate() {
+            Goal goal = existingGoal(me);
+            goal.setArchivedAt(java.time.LocalDateTime.now());
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            assertThat(goalService.restoreGoal(ME, 10L).getArchivedAt()).isNull();
+        }
+
+        @Test
+        void refusesAnotherUsersGoalAsNotFound() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(someoneElse)));
+
+            assertThatThrownBy(() -> goalService.archiveGoal(ME, 10L))
+                .isInstanceOf(GoalNotFoundException.class);
+            assertThatThrownBy(() -> goalService.restoreGoal(ME, 10L))
+                .isInstanceOf(GoalNotFoundException.class);
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void historyCarriesEachGoalsTotals() {
+            Goal logged = existingGoal(me);
+            logged.setArchivedAt(java.time.LocalDateTime.now());
+            Goal empty = existingGoal(me);
+            empty.setId(11L);
+            empty.setArchivedAt(java.time.LocalDateTime.now());
+            when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNotNullOrderByArchivedAtDesc(me))
+                .thenReturn(java.util.List.of(logged, empty));
+            java.time.LocalDate first = java.time.LocalDate.of(2026, 3, 1);
+            java.time.LocalDate last = java.time.LocalDate.of(2026, 6, 30);
+            when(behaviorRepository.summarizeByGoal(eq(me), any()))
+                .thenReturn(java.util.List.<Object[]>of(new Object[] {10L, 42L, 40L, first, last}));
+
+            var history = goalService.getArchivedGoals(ME);
+
+            assertThat(history).hasSize(2);
+            assertThat(history.get(0).entries()).isEqualTo(42);
+            assertThat(history.get(0).completed()).isEqualTo(40);
+            assertThat(history.get(0).firstLog()).isEqualTo(first);
+            assertThat(history.get(0).lastLog()).isEqualTo(last);
+            // A goal archived before anything was logged still appears, at zero.
+            assertThat(history.get(1).entries()).isZero();
+            assertThat(history.get(1).firstLog()).isNull();
+        }
+
+        @Test
+        void dashboardListExcludesArchivedGoals() {
+            goalService.getActiveGoals(ME);
+
+            verify(goalRepository).findByUserAndActiveTrueAndArchivedAtIsNull(me);
+            verify(goalRepository, never()).findByUserAndActive(any(), anyBoolean());
         }
     }
 }

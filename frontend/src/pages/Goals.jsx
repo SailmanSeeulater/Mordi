@@ -62,7 +62,7 @@ export default function Goals() {
     setArchiving(true);
     setArchiveError('');
     try {
-      await client.delete(`/api/goals/${active.id}`);
+      await client.post(`/api/goals/${active.id}/archive`);
       setArchiving(false);
       handleSaved();
     } catch {
@@ -237,8 +237,8 @@ export default function Goals() {
           <p className="goals__confirm">
             Archive &ldquo;{active.title}&rdquo;?
             <span>
-              It stops appearing on your dashboard. Entries you already logged against it stay as
-              they are.
+              It moves to History with everything you logged against it, and leaves your
+              dashboard. You can restore it from History at any time.
             </span>
           </p>
           <div className="app-form">
@@ -253,7 +253,7 @@ export default function Goals() {
               </button>
               <button
                 type="button"
-                className="app-btn app-btn--danger"
+                className="app-btn"
                 onClick={archiveGoal}
                 disabled={archiving}
               >

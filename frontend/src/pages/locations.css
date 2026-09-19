@@ -96,3 +96,257 @@ li:last-child > .loc__place { border-bottom: 0; }
   .loc__map { height: clamp(280px, 50vh, 460px); }
   .loc__history { max-height: none; }
 }
+
+/* Search, dropped pin and trip planning. */
+.loc__search {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 12px;
+}
+.loc__search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+.loc__search input:focus { border-color: var(--color-accent-700); outline: none; }
+
+.loc__pin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 20px 16px;
+  padding: 10px 14px;
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+}
+
+.loc__side {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  min-width: 0;
+}
+
+/* Directions, after Google Maps: A over B on a rail, a swap button, the four
+   travel modes each carrying its own time, and the answer in one line. */
+.trip {
+  display: grid;
+  gap: 12px;
+  padding: 0 18px 18px;
+}
+.trip__ends {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.trip__rail {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  height: 100%;
+  padding: 16px 0;
+}
+.trip__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-pill);
+}
+.trip__dot--a {
+  border: 2.5px solid var(--color-text-muted);
+  background: var(--color-surface);
+}
+.trip__dot--b { background: var(--color-accent); }
+.trip__line {
+  width: 0;
+  flex: 1;
+  min-height: 22px;
+  border-left: 2px dotted var(--color-divider);
+}
+.trip__fields { display: grid; gap: 8px; min-width: 0; }
+.trip__end {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+.trip__placeholder {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1.5px dashed var(--color-divider);
+  border-radius: var(--r-control);
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+.trip__pick {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.trip__pick:hover { color: var(--color-text); }
+.trip__pick--on {
+  border-color: var(--color-accent-700);
+  background: color-mix(in oklab, var(--color-accent) 12%, var(--color-surface));
+  color: var(--color-accent-700);
+}
+.trip__picking {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+  font-size: var(--t-small);
+  color: var(--color-text);
+}
+
+.trip__modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.trip__mode {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 64px;
+  padding: 8px 4px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.trip__mode:hover { color: var(--color-text); }
+.trip__mode[aria-checked='true'] {
+  border-color: var(--color-accent-700);
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+  color: var(--color-accent-700);
+}
+.trip__mode-name { font-size: 12px; font-weight: 600; }
+.trip__mode-time {
+  min-height: 1.2em;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.trip__when {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trip__leave-mode { width: 200px; }
+.trip__time {
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+.trip__hint {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
+.trip__result {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+}
+.trip__eta {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+.trip__eta strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--color-accent-700);
+}
+.trip__eta span {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+.trip__arrive {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-text);
+}
+.trip__routes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid var(--color-divider);
+}
+.trip__route {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.trip__route:hover { background: var(--color-surface); }
+.trip__route[aria-pressed='true'] { background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface)); }
+.trip__route strong { font-weight: 600; }
+.trip__route span {
+  overflow: hidden;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loc__map--picking { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.loc__pin-text { display: grid; flex: 1; min-width: 180px; gap: 2px; font-size: 13.5px; }
+.loc__pin-text span { color: var(--color-text-muted); }
+.loc__pin-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.loc__info-go {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}

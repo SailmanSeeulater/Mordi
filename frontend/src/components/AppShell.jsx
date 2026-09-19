@@ -41,6 +41,19 @@ const IconReport = () => (
     <path d="M5 20v-7M12 20V5M19 20v-4" />
   </svg>
 );
+const IconCalendar = () => (
+  <svg {...svgProps}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+    <path d="M3.5 10h17M8 3v4M16 3v4" />
+  </svg>
+);
+const IconHistory = () => (
+  <svg {...svgProps}>
+    <path d="M3.5 12a8.5 8.5 0 102.5-6" />
+    <path d="M3 3.5V8h4.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
 const IconSettings = () => (
   <svg {...svgProps}>
     <circle cx="12" cy="12" r="3.2" />
@@ -50,7 +63,9 @@ const IconSettings = () => (
 
 const NAV = [
   { to: '/dashboard', label: 'Today', Icon: IconDashboard },
+  { to: '/calendar', label: 'Calendar', Icon: IconCalendar },
   { to: '/goals', label: 'Goals', Icon: IconGoals },
+  { to: '/history', label: 'History', Icon: IconHistory },
   { to: '/locations', label: 'Places', Icon: IconPlaces },
   { to: '/reports', label: 'Report', Icon: IconReport },
   { to: '/settings', label: 'Settings', Icon: IconSettings },

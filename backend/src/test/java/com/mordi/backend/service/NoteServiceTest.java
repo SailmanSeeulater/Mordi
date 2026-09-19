@@ -140,10 +140,10 @@ class NoteServiceTest {
 
         @Test
         void clampsAnOverlongTitleAndBodyRatherThanFailing() {
-            Note note = noteService.createNote(ME, request("t".repeat(400), "b".repeat(5000)));
+            Note note = noteService.createNote(ME, request("t".repeat(400), "b".repeat(25_000)));
 
             assertThat(note.getTitle()).hasSize(120);
-            assertThat(note.getBody()).hasSize(2000);
+            assertThat(note.getBody()).hasSize(20_000);
         }
 
         @Test

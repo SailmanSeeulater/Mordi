@@ -111,4 +111,44 @@ describe('AuthProvider', () => {
 
     expect(screen.getByTestId('who')).toHaveTextContent('signed out');
   });
+
+  it('signs back in from a live refresh cookie when nothing is stored', async () => {
+    // Local storage cleared, cookie still valid: go straight in, no sign-in page.
+    client.defaults.adapter = (config) => {
+      calls.push(config.url);
+      return Promise.resolve({
+        status: 200, statusText: '', headers: {}, config,
+        data: { token: 'fresh', email: 'me@mordi.com', name: 'Me' },
+      });
+    };
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    expect(await screen.findByText('me@mordi.com')).toBeInTheDocument();
+    expect(calls).toEqual(['/api/auth/refresh']);
+  });
+
+  it('does not sign back in after the person logged out on purpose', async () => {
+    signedIn();
+    const { unmount } = render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await act(async () => {
+      screen.getByText('Log out').click();
+    });
+    unmount();
+    calls = [];
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    expect(screen.getByTestId('who')).toHaveTextContent('signed out');
+    expect(calls).not.toContain('/api/auth/refresh');
+  });
 });

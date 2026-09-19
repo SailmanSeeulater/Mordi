@@ -84,3 +84,268 @@
   font-size: var(--t-small);
   color: var(--color-text-muted);
 }
+
+/* ── Markdown: the reading view ─────────────── */
+
+.md {
+  font-size: var(--t-body);
+  line-height: 1.6;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+.md p, .md ul, .md ol, .md blockquote, .md pre, .md table { margin: 0 0 0.9em; }
+/* More space above a heading than below it, so it belongs to what follows. */
+.md h3, .md h4, .md h5, .md h6 {
+  margin: 1.5em 0 0.45em;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.md h3 { font-size: 1.55em; }
+.md h4 { font-size: 1.25em; }
+.md h5 { font-size: 1.05em; }
+.md h6 {
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.md strong { font-weight: 700; }
+.md ul, .md ol { padding-left: 1.3em; }
+.md li { padding-left: 0.2em; }
+.md li + li { margin-top: 0.25em; }
+.md li::marker { color: var(--color-accent-700); }
+.md ol li::marker { font-family: var(--font-mono); font-size: 0.85em; }
+.md li.task-list-item { list-style: none; margin-left: -1.3em; padding-left: 0; }
+.md li.task-list-item input {
+  appearance: none;
+  width: 1em;
+  height: 1em;
+  margin: 0 0.55em 0 0;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 35%, transparent);
+  border-radius: 4px;
+  vertical-align: -0.12em;
+  background: var(--color-surface);
+}
+.md li.task-list-item input:checked {
+  border-color: var(--color-accent);
+  background: var(--color-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 80% no-repeat;
+}
+.md li.task-list-item:has(input:checked) { color: var(--color-text-muted); text-decoration: line-through; text-decoration-color: var(--color-divider); }
+.md blockquote {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.md code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+}
+.md pre {
+  padding: 12px 14px;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  overflow-x: auto;
+}
+.md pre code { padding: 0; background: none; font-size: 0.82em; }
+.md a { color: var(--color-accent-700); text-underline-offset: 3px; }
+.md hr { border: 0; border-top: 1px solid var(--color-divider); margin: 1.6em 0; }
+.md table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 0.94em; }
+.md th {
+  padding: 6px 14px 6px 0;
+  border-bottom: 1.5px solid var(--color-divider);
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.md td {
+  padding: 7px 14px 7px 0;
+  border-bottom: 1px solid var(--color-divider);
+  font-variant-numeric: tabular-nums;
+}
+
+/* [[Wikilinks]], in Obsidian's manner: link-coloured, no underline until
+   hovered. A link to a note that does not exist yet is dimmer. */
+.md-wikilink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-accent-700);
+  cursor: pointer;
+  text-decoration: none;
+}
+.md-wikilink:hover { text-decoration: underline; }
+.md-wikilink--missing { opacity: 0.6; }
+
+.md-tag {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in oklab, var(--color-accent) 9%, var(--color-surface));
+  color: color-mix(in oklab, var(--color-accent-700) 82%, var(--color-text));
+  font: inherit;
+  font-size: 0.86em;
+  text-decoration: none;
+}
+
+/* ── Editor and reader ─────────────────────── */
+
+/* The framed editor: one bordered box holding the mode switch, the
+   formatting buttons and the text. Focus rings the frame, never the inner
+   textarea, so nothing spills over the toolbar. */
+.note-editor__frame {
+  display: grid;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  overflow: hidden;
+}
+.note-editor__frame:focus-within {
+  border-color: var(--color-accent-700);
+}
+.note-editor__frame:has(textarea:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+.note-editor__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+.note-editor__modes { width: 190px; }
+.note-editor__marks { display: flex; gap: 2px; }
+.note-editor__mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color 140ms var(--ease-out), color 140ms var(--ease-out);
+}
+.note-editor__mark:hover { background: var(--color-bg); color: var(--color-text); }
+textarea.note-editor__source {
+  display: block;
+  width: 100%;
+  min-height: 300px;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.65;
+  resize: vertical;
+  tab-size: 2;
+}
+textarea.note-editor__source:focus,
+textarea.note-editor__source:focus-visible { outline: none; }
+.note-editor__source::placeholder { color: var(--color-text-muted); opacity: 1; }
+.note-editor__preview {
+  min-height: 300px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.note-editor__hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+.note-editor__hint code { font-family: var(--font-mono); font-size: 0.9em; }
+.note-editor__count {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The reading view: set like a page, not like a form. */
+.note-reader {
+  display: grid;
+  gap: 16px;
+  padding: 0 26px 22px;
+}
+.note-reader__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.note-reader__meta .md-tag { font-family: var(--font-body); font-size: 12.5px; }
+.note-reader__page {
+  padding: 22px 26px;
+  border-radius: var(--r-panel);
+  background: var(--color-bg);
+  box-shadow: var(--edge);
+}
+.note-reader__page .md {
+  max-width: 64ch;
+  font-size: 16.5px;
+  line-height: 1.68;
+}
+.note-reader__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.note-reader__backlinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.note-reader__backlink {
+  padding: 5px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--r-chip);
+  background: var(--color-surface);
+  color: var(--color-accent-700);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.note-reader__backlink:hover { background: var(--color-bg); }
+
+@media (max-width: 560px) {
+  .note-reader { padding: 0 16px 18px; }
+  .note-reader__page { padding: 16px 16px; }
+  .note-editor__modes { width: 100%; }
+}

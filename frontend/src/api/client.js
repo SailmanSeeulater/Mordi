@@ -63,6 +63,26 @@ function refreshSession() {
   return refreshing;
 }
 
+/**
+ * Whether this browser still holds a live session, for a load with nothing in
+ * local storage. The refresh cookie is httpOnly, so script cannot look for it;
+ * the only way to know is to try it. Resolves to the user, or null.
+ *
+ * Shares the single in-flight refresh with the interceptor, so a page that
+ * also fires requests on mount cannot present the same cookie twice.
+ */
+export function restoreSession() {
+  return refreshSession()
+    .then(() => {
+      try {
+        return JSON.parse(localStorage.getItem("user") ?? "null");
+      } catch {
+        return null;
+      }
+    })
+    .catch(() => null);
+}
+
 client.interceptors.response.use(
   (response) => response,
   async (error) => {

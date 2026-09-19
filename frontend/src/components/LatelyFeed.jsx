@@ -235,7 +235,7 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
               <Groups groups={groups} todayIso={todayIso} />
             </ul>
             {overflowing && !reduced && (
-              <ul ref={secondRef} className="lately__copy" aria-hidden="true" inert="">
+              <ul ref={secondRef} className="lately__copy" aria-hidden="true" inert>
                 <Groups groups={groups} todayIso={todayIso} />
               </ul>
             )}

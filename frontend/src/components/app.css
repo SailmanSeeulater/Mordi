@@ -650,6 +650,9 @@
   animation: app-rise 240ms var(--ease-pop);
 }
 .app-dialog:focus { outline: none; }
+/* Long-form content (a note being read or written) gets a reading measure
+   rather than the form width. */
+.app-dialog--wide { max-width: 720px; }
 
 @keyframes app-rise {
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
@@ -1022,6 +1025,11 @@
   .theme-switch__more { min-width: 44px; }
   .app-iconbtn--sm { width: 44px; height: 44px; }
   .theme-switch__more { width: 44px; }
+  /* Measured at 32px (weather chip) and 16px (footer links) on a phone. */
+  .wx--btn { min-height: 44px; }
+  .settings__links a { display: inline-flex; align-items: center; min-height: 44px; }
+  .cal__nav .app-iconbtn,
+  .note-editor__mark { min-width: 44px; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -9,7 +9,8 @@ export default defineConfig({
     // /api/... has to be forwarded to the local backend. Without this every
     // call 404s and the dashboard shows its error state.
     proxy: {
-      '/api': 'http://localhost:8080',
+      // MORDI_API points it elsewhere, for when 8080 is taken by something else.
+      '/api': process.env.MORDI_API ?? 'http://localhost:8080',
     },
   },
   test: {
