@@ -98,7 +98,7 @@ class NoteServiceTest {
 
         @Test
         void refusesIfTheCountIsSomehowAlreadyOverTheLimit() {
-            when(noteRepository.countByUser(me)).thenReturn(99L);
+            when(noteRepository.countByUser(me)).thenReturn((long) NoteService.MAX_NOTES + 50);
 
             assertThatThrownBy(() -> noteService.createNote(ME, request(null, "One more")))
                 .isInstanceOf(NoteLimitReachedException.class);

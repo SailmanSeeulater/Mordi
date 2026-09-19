@@ -3,6 +3,7 @@ package com.mordi.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -55,9 +56,18 @@ public class Behavior {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // The moment it was logged, as an instant, so the browser can show the
+    // time of day in the person's own zone. A timer session sets it to when
+    // the session began.
+    @Column(name = "logged_at")
+    private Instant loggedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (loggedAt == null) {
+            loggedAt = Instant.now();
+        }
     }
 
 }

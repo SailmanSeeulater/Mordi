@@ -8,5 +8,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
+
+    /** Everyone who has reminders switched on. */
+    java.util.List<User> findByReminderHourIsNotNull();
     boolean existsByEmail(String email);
 }

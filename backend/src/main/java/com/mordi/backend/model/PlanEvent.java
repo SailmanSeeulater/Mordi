@@ -45,6 +45,14 @@ public class PlanEvent {
     @Column(name = "place_name")
     private String placeName;
 
+    // Whether it happened: "done", "skipped", or null for not yet answered.
+    @Column(length = 10)
+    private String outcome;
+
+    // The entry logged when it was marked done, so undoing removes exactly it.
+    @Column(name = "behavior_id")
+    private Long behaviorId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

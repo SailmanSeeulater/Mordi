@@ -20,6 +20,7 @@ import org.mockito.quality.Strictness;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,13 +32,14 @@ class PlanEventServiceTest {
 
     @Mock private PlanEventRepository repository;
     @Mock private UserRepository userRepository;
+    @Mock private BehaviorService behaviorService;
 
     private PlanEventService service;
     private User me;
 
     @BeforeEach
     void setUp() {
-        service = new PlanEventService(repository, userRepository);
+        service = new PlanEventService(repository, userRepository, behaviorService);
         me = new User();
         me.setEmail(ME);
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
@@ -170,6 +172,57 @@ class PlanEventServiceTest {
         var tooMany = java.util.Collections.nCopies(501, request("x", NINE, NINE.plusHours(1)));
         assertThatThrownBy(() -> service.importEvents(ME, tooMany))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void doneLogsAnEntryNamedAndTimedLikeTheEvent() {
+        PlanEvent event = service.createEvent(ME, request("Deep work", NINE, NINE.plusMinutes(90)));
+        when(repository.findByIdAndUser(5L, me)).thenReturn(Optional.of(event));
+        com.mordi.backend.model.Behavior logged = new com.mordi.backend.model.Behavior();
+        logged.setId(77L);
+        when(behaviorService.logBehavior(eq(ME), any())).thenReturn(logged);
+        com.mordi.backend.dto.EventOutcomeRequest done = new com.mordi.backend.dto.EventOutcomeRequest();
+        done.setOutcome("done");
+        done.setGoalId(3L);
+
+        PlanEvent answered = service.setOutcome(ME, 5L, done);
+
+        org.mockito.ArgumentCaptor<com.mordi.backend.dto.BehaviorRequest> entry =
+            org.mockito.ArgumentCaptor.forClass(com.mordi.backend.dto.BehaviorRequest.class);
+        verify(behaviorService).logBehavior(eq(ME), entry.capture());
+        assertThat(entry.getValue().getNote()).isEqualTo("Deep work");
+        assertThat(entry.getValue().getLogDate()).isEqualTo(NINE.toLocalDate());
+        assertThat(entry.getValue().getDurationSeconds()).isEqualTo(90 * 60);
+        assertThat(entry.getValue().getGoalId()).isEqualTo(3L);
+        assertThat(answered.getOutcome()).isEqualTo("done");
+        assertThat(answered.getBehaviorId()).isEqualTo(77L);
+    }
+
+    @Test
+    void answeringAgainOrClearingRemovesTheLoggedEntry() {
+        PlanEvent event = service.createEvent(ME, request("Gym", NINE, NINE.plusHours(1)));
+        event.setOutcome("done");
+        event.setBehaviorId(77L);
+        when(repository.findByIdAndUser(5L, me)).thenReturn(Optional.of(event));
+        com.mordi.backend.dto.EventOutcomeRequest skipped = new com.mordi.backend.dto.EventOutcomeRequest();
+        skipped.setOutcome("skipped");
+
+        PlanEvent answered = service.setOutcome(ME, 5L, skipped);
+
+        verify(behaviorService).deleteBehavior(ME, 77L);
+        verify(behaviorService, never()).logBehavior(any(), any());
+        assertThat(answered.getOutcome()).isEqualTo("skipped");
+        assertThat(answered.getBehaviorId()).isNull();
+
+        assertThat(service.clearOutcome(ME, 5L).getOutcome()).isNull();
+    }
+
+    @Test
+    void refusesAnUnknownOutcome() {
+        when(repository.findByIdAndUser(5L, me)).thenReturn(Optional.of(new PlanEvent()));
+        com.mordi.backend.dto.EventOutcomeRequest maybe = new com.mordi.backend.dto.EventOutcomeRequest();
+        maybe.setOutcome("maybe");
+        assertThatThrownBy(() -> service.setOutcome(ME, 5L, maybe)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
