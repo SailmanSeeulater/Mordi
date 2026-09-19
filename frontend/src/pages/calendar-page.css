@@ -11,44 +11,44 @@
 .ev--violet { --ev: #7c62c9; }
 .ev--slate { --ev: #64748b; }
 
-.cal {
+.planner {
   display: grid;
   gap: 12px;
 }
 
-.cal__bar {
+.planner__bar {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
-.cal__nav { display: flex; gap: 2px; }
-.cal__nav .app-iconbtn { font-size: 20px; line-height: 1; }
-.cal__title {
+.planner__nav { display: flex; gap: 2px; }
+.planner__nav .app-iconbtn { font-size: 20px; line-height: 1; }
+.planner__title {
   margin: 0;
   font-size: var(--t-h3);
   font-weight: 600;
 }
-.cal__month {
+.planner__month {
   font-family: var(--font-mono);
   font-size: var(--t-micro);
   color: var(--color-text-muted);
 }
-.cal__views { width: 150px; }
+.planner__views { width: 150px; }
 
-.cal__panel {
+.planner__panel {
   --gutter: 56px;
   overflow: hidden;
   padding: 0;
 }
 
-.cal__head,
-.cal__allday {
+.planner__head,
+.planner__allday {
   display: grid;
   grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
   border-bottom: 1px solid var(--color-divider);
 }
-.cal__day-head {
+.planner__day-head {
   display: grid;
   justify-items: center;
   gap: 2px;
@@ -59,13 +59,13 @@
   font: inherit;
   cursor: pointer;
 }
-.cal__day-head span {
+.planner__day-head span {
   font-family: var(--font-mono);
   font-size: var(--t-micro);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.cal__day-head strong {
+.planner__day-head strong {
   display: grid;
   place-items: center;
   width: 34px;
@@ -75,13 +75,13 @@
   font-weight: 600;
   color: var(--color-text);
 }
-.cal__day-head--today span { color: var(--color-accent-700); }
-.cal__day-head--today strong {
+.planner__day-head--today span { color: var(--color-accent-700); }
+.planner__day-head--today strong {
   background: var(--color-accent);
   color: var(--color-on-accent);
 }
 
-.cal__gutter--label {
+.planner__gutter--label {
   align-self: center;
   padding-right: 8px;
   text-align: right;
@@ -89,7 +89,7 @@
   font-size: 10px;
   color: var(--color-text-muted);
 }
-.cal__allday-cell {
+.planner__allday-cell {
   display: grid;
   align-content: start;
   gap: 3px;
@@ -97,7 +97,7 @@
   padding: 4px 3px;
   border-left: 1px solid var(--color-divider);
 }
-.cal__chip {
+.planner__chip {
   overflow: hidden;
   padding: 3px 7px;
   border: 0;
@@ -114,19 +114,19 @@
 }
 
 /* The hours scroll; the head and all-day row stay put above them. */
-.cal__scroller {
+.planner__scroller {
   height: min(68vh, 760px);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
-.cal__grid {
+.planner__grid {
   position: relative;
   display: grid;
   grid-template-columns: var(--gutter) minmax(0, 1fr);
 }
-.cal__hours { position: relative; }
-.cal__hours span {
+.planner__hours { position: relative; }
+.planner__hours span {
   position: absolute;
   right: 8px;
   transform: translateY(-50%);
@@ -136,7 +136,7 @@
   white-space: nowrap;
 }
 
-.cal__cols {
+.planner__cols {
   position: relative;
   display: grid;
   grid-template-columns: repeat(var(--days), minmax(0, 1fr));
@@ -144,17 +144,17 @@
   background-image: linear-gradient(to bottom, var(--color-divider) 1px, transparent 1px);
   background-size: 100% 48px;
 }
-.cal__col {
+.planner__col {
   position: relative;
   border-left: 1px solid var(--color-divider);
   touch-action: pan-y;
   cursor: crosshair;
 }
-.cal__col--today {
+.planner__col--today {
   background: color-mix(in oklab, var(--color-accent) 5%, transparent);
 }
 
-.cal__pending {
+.planner__pending {
   position: absolute;
   left: 2px;
   right: 2px;
@@ -164,7 +164,7 @@
   pointer-events: none;
 }
 
-.cal__event {
+.planner__event {
   position: absolute;
   display: grid;
   overflow: hidden;
@@ -175,12 +175,12 @@
   cursor: grab;
   transition: box-shadow 120ms var(--ease-out);
 }
-.cal__event--held {
+.planner__event--held {
   cursor: grabbing;
   z-index: 3;
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ev) 45%, var(--color-surface)), var(--lift-2);
 }
-.cal__event-body {
+.planner__event-body {
   display: grid;
   align-content: start;
   gap: 1px;
@@ -193,21 +193,81 @@
   text-align: left;
   cursor: inherit;
 }
-.cal__event-body strong {
+.planner__event-body strong {
+  /* Up to two lines of title before it gives way, broken between words. */
+  display: -webkit-box;
   overflow: hidden;
   font-size: 12.5px;
   font-weight: 600;
   line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+/* Times and places: one line each, clipped rather than wrapped. */
+.planner__event-body > span:not(.planner__event-line),
+.planner__event-line > span {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+/* A shared column is too narrow to wrap words into: one clipped line. */
+.planner__event--narrow .planner__event-body { padding-left: 4px; padding-right: 3px; }
+.planner__event--narrow .planner__event-body strong {
+  display: block;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cal__event-body span {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  opacity: 0.9;
+
+/* Brief events pad tighter, so from about 45 minutes the title and the time
+   each still get a line. */
+.planner__event--short .planner__event-body { padding-top: 2px; padding-bottom: 2px; }
+
+/* One line: title and start side by side. In a column of its own the time
+   comes first and never gives way; in a shared one the title keeps what
+   little room there is. */
+.planner__event-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
 }
-.cal__event--short .cal__event-body { padding-top: 1px; }
-.cal__resize {
+.planner__event-line strong {
+  display: block;
+  min-width: 0;
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.planner__event-line > span { flex: 0 0 auto; }
+.planner__event--narrow .planner__event-line > span {
+  min-width: 0;
+  flex: 0 1000 auto;
+  text-overflow: clip;
+}
+
+/* Hover or keyboard focus opens a cramped event out to the whole column and
+   to the height its text needs, over its neighbours, so nothing has to be
+   guessed from an ellipsis. Not while dragging: the preview must stay put. */
+.planner__event:not(.planner__event--held):hover,
+.planner__event:not(.planner__event--held):focus-within {
+  z-index: 4;
+  left: 2px !important;
+  width: calc(100% - 4px) !important;
+  height: auto !important;
+  min-height: var(--h);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ev) 55%, var(--color-surface)), var(--lift-2);
+}
+.planner__event:not(.planner__event--held):hover .planner__event-body strong,
+.planner__event:not(.planner__event--held):focus-within .planner__event-body strong {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-line-clamp: 4;
+}
+.planner__resize {
   position: absolute;
   left: 0;
   right: 0;
@@ -216,7 +276,7 @@
   cursor: ns-resize;
 }
 
-.cal__now {
+.planner__now {
   position: absolute;
   left: -1px;
   right: 0;
@@ -225,7 +285,7 @@
   pointer-events: none;
   z-index: 2;
 }
-.cal__now::before {
+.planner__now::before {
   content: '';
   position: absolute;
   left: -5px;
@@ -236,7 +296,7 @@
   background: var(--color-signal);
 }
 
-.cal__hint {
+.planner__hint {
   margin: 0;
   font-size: var(--t-small);
   color: var(--color-text-muted);
@@ -314,8 +374,8 @@
 .plan-today__item--past { opacity: 0.55; }
 
 @media (max-width: 720px) {
-  .cal__panel { --gutter: 46px; }
-  .cal__scroller { height: 64vh; }
+  .planner__panel { --gutter: 46px; }
+  .planner__scroller { height: 64vh; }
 }
 
 /* ── Month ─────────────────────────────────── */
@@ -449,8 +509,8 @@
 
 /* ── Import ────────────────────────────────── */
 
-.cal__import { gap: 6px; }
-.cal__notice {
+.planner__import { gap: 6px; }
+.planner__notice {
   display: flex;
   align-items: center;
   justify-content: space-between;
