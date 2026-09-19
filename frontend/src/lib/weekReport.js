@@ -5,9 +5,10 @@ import { addDays, parseIsoDate, startOfWeek, toIsoDate, weekSummary } from '../p
  * events. Pure: no React, no clock (`today` is passed in), so every number on
  * the page can be tested.
  *
- * It only derives what the records carry. Entries have dates, not times of
- * day (the server stores times without a zone), so nothing here pretends to
- * know when in the day something happened.
+ * It only derives what the records carry. Times of day come from loggedAt,
+ * an absolute instant rendered in the reader's zone; entries logged before
+ * that existed carry a backfilled one, and any without are simply left out
+ * of the hour grid rather than guessed at.
  */
 
 export const MOODS = ['great', 'good', 'neutral', 'bad', 'terrible'];
@@ -122,6 +123,22 @@ export function buildWeekReport({ goals, behaviors, events = [], weekStart, toda
   const to = addDays(from, 7);
   const plannedSeconds = events.reduce((s, e) => s + overlapSeconds(e, from, to), 0);
 
+  // When in the day things get logged: weekday (Mon=0) by hour, local time.
+  const hours = Array.from({ length: 7 }, () => Array(24).fill(0));
+  let timed = 0;
+  for (const b of week) {
+    if (!b.loggedAt) continue;
+    const at = new Date(b.loggedAt);
+    if (Number.isNaN(at.getTime())) continue;
+    hours[(at.getDay() + 6) % 7][at.getHours()] += 1;
+    timed += 1;
+  }
+
+  // Planned blocks and what became of them.
+  const endedTimed = events.filter((e) => !e.allDay && new Date(e.endsAt) <= today);
+  const planDone = events.filter((e) => e.outcome === 'done').length;
+  const planSkipped = events.filter((e) => e.outcome === 'skipped').length;
+
   // Longest run of consecutive days with something done, inside the week.
   let run = 0;
   let longestRun = 0;
@@ -159,7 +176,12 @@ export function buildWeekReport({ goals, behaviors, events = [], weekStart, toda
       events: events.length,
       timedEvents: events.filter((e) => !e.allDay).length,
       plannedSeconds,
+      ended: endedTimed.length,
+      done: planDone,
+      skipped: planSkipped,
     },
+    hours,
+    timedEntries: timed,
     goalsOnTarget: summary.rows.filter((r) => r.done >= r.target).length,
     goalsTotal: summary.rows.length,
   };

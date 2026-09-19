@@ -483,3 +483,37 @@
 }
 .import__title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .import__rest { padding: 2px 12px; font-size: var(--t-small); color: var(--color-text-muted); }
+
+/* Did it happen? */
+.plan-today__item { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+.plan-today__answer { display: inline-flex; align-items: center; gap: 6px; }
+.plan-today__btn {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--r-chip);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  cursor: pointer;
+}
+.plan-today__btn:hover { background: var(--color-bg); }
+.plan-today__btn--done {
+  border-color: transparent;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.plan-today__btn--done:hover { background: var(--color-accent-700); }
+.plan-today__state {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.plan-today__state--done { color: var(--color-accent-700); font-weight: 600; }
+@media (pointer: coarse) { .plan-today__btn { min-height: 44px; min-width: 44px; } }
+@media (max-width: 480px) {
+  .plan-today__item { grid-template-columns: minmax(0, 1fr) auto; }
+  .plan-today__time { grid-column: 1 / -1; }
+}

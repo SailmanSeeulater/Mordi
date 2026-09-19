@@ -51,9 +51,12 @@ export default function useNotes() {
 
   const save = useCallback(
     async (note, body) => {
-      if (note) await client.put(`/api/notes/${note.id}`, body);
-      else await client.post('/api/notes', body);
+      const res = note
+        ? await client.put(`/api/notes/${note.id}`, body)
+        : await client.post('/api/notes', body);
       reload();
+      // The saved note, so a caller can select one it just created.
+      return res?.data ?? null;
     },
     [reload],
   );

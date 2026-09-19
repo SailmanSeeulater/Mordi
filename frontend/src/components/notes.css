@@ -349,3 +349,7 @@ textarea.note-editor__source:focus-visible { outline: none; }
   .note-reader__page { padding: 16px 16px; }
   .note-editor__modes { width: 100%; }
 }
+
+.notes__all { margin: 0; padding: 0 18px 16px; font-size: var(--t-small); }
+.notes__all a { color: var(--color-accent-700); font-weight: 600; text-decoration: none; }
+.notes__all a:hover { text-decoration: underline; text-underline-offset: 3px; }

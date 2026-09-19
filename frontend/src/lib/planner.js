@@ -145,3 +145,16 @@ export function formatRange(event) {
 export function formatTime(date) {
   return timeFormat.format(date);
 }
+
+/** The goal an event most likely counts toward, by title. */
+export function matchGoal(event, goals) {
+  const title = event.title.trim().toLowerCase();
+  return (
+    goals.find((g) => g.title.trim().toLowerCase() === title) ??
+    goals.find((g) => {
+      const t = g.title.trim().toLowerCase();
+      return t.length > 2 && (title.includes(t) || t.includes(title));
+    }) ??
+    null
+  );
+}

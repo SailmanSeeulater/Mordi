@@ -263,37 +263,8 @@
   font-weight: 600;
 }
 
-/* ── The goal deck ─────────────────────────── */
-
-/* The container never changes size. Its height is the collapsed stack, and
-   opening the deck translates the passes downward inside a layer that is
-   allowed to overflow, so the feed below it does not move. */
-.deck {
-  --pass-h: 104px;
-  --deck-gap: 10px;
-  position: relative;
-}
-
 /* Dims everything behind the open deck. Fixed, so it covers the whole page,
    and inert: dismissal lives in the component's own listeners. */
-.deck__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  background: color-mix(in srgb, var(--color-text) 7%, transparent);
-  animation: deck-scrim 200ms var(--ease-pop);
-}
-@keyframes deck-scrim {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.deck__layer {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 2;
-}
 
 /* Open, the layer is a panel floating over the page, and its position and
    height are set inline from a measurement — see GoalDeck. It prefers to grow
@@ -301,211 +272,33 @@
    screen, but it is clamped to the viewport so it cannot walk off the top
    either. Above the top bar, because a popover that is half hidden behind the
    chrome is worse than one that covers it. */
-.deck--open .deck__layer {
-  z-index: 31;
-  padding: 0 3px 8px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* No scrollbar: it would sit inside the floating panel and cut across the
-     passes. The fade below is the affordance instead. */
-  scrollbar-width: none;
-}
-.deck--open .deck__layer::-webkit-scrollbar { display: none; }
 
 /* Only a deck taller than the cap gets the fade: with the scrollbar gone it
    is the only thing saying there is more below, and on a deck that fits it
    would be a gradient over the first card for no reason. The class is set
    from a measurement, not guessed from the number of goals, because the cap
    is a share of the viewport height. */
-.deck--open .deck__layer--clipped {
-  /* Both edges, not just one. The panel grows upward but its content still
-     flows downward, so which end is hiding passes depends on where you have
-     scrolled to; a fade on one edge would be wrong half the time. */
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 24px,
-    #000 calc(100% - 24px),
-    transparent 100%
-  );
-}
-.deck__spacer { height: var(--open-h, 0px); }
-
-.deck__card {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: var(--pass-h);
-  transform: translate3d(0, var(--y, 0px), 0) scale(var(--s, 1));
-  transform-origin: 50% 0;
-  /* Only transform moves, so neither opening nor closing touches layout. */
-  transition: transform 420ms var(--ease-pop);
-  /* Both directions run top card first, so the deck reads as one hand being
-     spread and then gathered from the same end. */
-  transition-delay: calc(var(--i, 0) * 26ms);
-}
-.deck--open .deck__card {
-  transition-delay: calc(var(--i, 0) * 30ms);
-}
 
 /* Collapsed, the deck is one object: one target, one hover. */
-.deck__grip {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border: 0;
-  padding: 0;
-  background: none;
-  border-radius: var(--r-pass);
-  cursor: pointer;
-}
+
 /* The grip sits after the layer in the DOM, so this has to look forwards
    from the layer rather than backwards from the grip. */
-.deck__layer:has(~ .deck__grip:hover) .deck__card {
-  transform: translate3d(0, calc(var(--y, 0px) - 3px), 0) scale(var(--s, 1));
-}
-
-.deck__hint {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 2px 4px 8px;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
 
 /* Switching combination re-deals the deck in the new colours. The keyed
    remount re-runs this once; it starts from a visible state, so nothing
    fades in. */
-.deck__card {
-  animation: deck-deal 340ms var(--ease-pop) backwards;
-  animation-delay: calc(var(--i, 0) * 40ms);
-}
-@keyframes deck-deal {
-  from { transform: translate3d(0, calc(var(--y, 0px) + 16px), 0) scale(calc(var(--s, 1) * 0.985)); }
-  to { transform: translate3d(0, var(--y, 0px), 0) scale(var(--s, 1)); }
-}
-
-/* ── A goal pass ───────────────────────────── */
 
 /* A matte card: the surface color, a hairline edge, one shadow. Every pass is
    opaque, collapsed or open, because an open deck floats over the week card
    and anything translucent lets that color through the text. */
-.goal-pass {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "title action"
-    "meta  dots";
-  align-items: center;
-  gap: 6px 14px;
-  height: 100%;
-  padding: 13px 15px;
-  border-radius: var(--r-pass);
-  background: var(--color-surface);
-  box-shadow: var(--edge), var(--lift-2);
-  overflow: hidden;
-}
 
 /* The title sits on the same line as its mark. */
-.goal-pass__title {
-  grid-area: title;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
 
 /* The pass's own tile, the way a Wallet pass carries its issuer's mark. */
-.goal-pass__mark {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-chip);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.goal-pass__name {
-  min-width: 0;
-  font-size: var(--t-h3);
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.005em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.goal-pass__meta {
-  grid-area: meta;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 3px 10px;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
 
 /* Category reads as an icon plus its name. */
-.goal-pass__cat {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--color-accent-700);
-}
-
-.goal-pass__count {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.goal-pass__place {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  max-width: 16ch;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.goal-pass__action {
-  grid-area: action;
-  justify-self: end;
-}
 
 /* The week's dots sit under the Log button, on the right. */
-.goal-pass__week {
-  grid-area: dots;
-  justify-self: end;
-  display: grid;
-  grid-template-columns: repeat(7, 9px);
-  gap: 5px;
-}
 
 .week-dot {
   width: 9px;
@@ -521,7 +314,6 @@
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 48%, transparent);
 }
 .week-dot--today { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 48%, transparent); }
-
 
 /* ── First run ─────────────────────────────── */
 
@@ -662,21 +454,13 @@
     justify-content: flex-end;
     padding: 14px 16px 0;
   }
-  .deck { --pass-h: 116px; }
-  .goal-pass { padding: 12px 13px; }
-  .goal-pass__week { grid-template-columns: repeat(7, 8px); gap: 4px; }
+  
+  
+  
 }
 
 /* Reduced motion: the deck still opens and closes, it just arrives rather
    than travelling, and nothing is dealt in. */
-@media (prefers-reduced-motion: reduce) {
-  .deck__card {
-    animation: none;
-    transition-duration: 1ms;
-    transition-delay: 0ms;
-  }
-  .deck__scrim { animation: none; }
-}
 
 /* ── Rearranging ───────────────────────────── */
 
@@ -773,53 +557,60 @@
 
 /* The grip on an open pass. Collapsed passes have none: there is nothing to
    reorder when only one card is readable. */
-.goal-pass__grip {
-  position: absolute;
-  top: 50%;
-  left: 2px;
-  translate: 0 -50%;
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 46px;
-  border: 0;
-  border-radius: var(--r-chip);
-  background: none;
-  color: color-mix(in srgb, var(--color-text) 40%, transparent);
-  cursor: grab;
-  touch-action: none;
-}
-.goal-pass__grip:hover {
-  background: color-mix(in srgb, var(--color-text) 8%, transparent);
-  color: var(--color-text);
-}
 
 /* The pass moves over to clear the grip, only when there is one. */
-.goal-pass:has(.goal-pass__grip) {
-  padding-left: 26px;
-}
 
 /* The slot a release would drop into. Nothing moves until then: reordering
    live pulls items out from under the pointer, which makes the drag oscillate
    between two positions. */
-.deck__card--over .goal-pass {
-  box-shadow:
-    var(--edge),
-    var(--lift-2),
-    0 0 0 2px var(--color-accent-700);
-}
-
-.deck__card--held {
-  z-index: 99 !important;
-}
-.deck__card--held .goal-pass {
-  box-shadow: var(--edge), var(--lift-3);
-  cursor: grabbing;
-}
-.deck__card--held .goal-pass__grip {
-  cursor: grabbing;
-  color: var(--color-accent-700);
-}
 
 /* Reduced motion: a held item still needs to look held, so the lift stays;
    it is a state, not an animation. */
+
+/* ── Last week, reviewed ───────────────────── */
+.review-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+}
+.review-card__title { margin: 0 0 2px; font-size: var(--t-h3); font-weight: 600; }
+.review-card__text p { margin: 0; font-size: var(--t-small); color: var(--color-text-muted); }
+.review-card__actions { display: flex; gap: 8px; }
+
+/* ── One-tap rings ─────────────────────────── */
+.ring-item--busy .ring-item__ring { animation: ring-busy 900ms var(--ease-out) infinite; }
+@keyframes ring-busy { 50% { opacity: 0.55; } }
+.ring-item--today .ring-item__label::after {
+  content: ' \2713';
+  color: var(--color-accent-700);
+}
+@media (prefers-reduced-motion: reduce) { .ring-item--busy .ring-item__ring { animation: none; } }
+
+/* ── First run: starter goals ──────────────── */
+.onboard__starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 6px;
+  padding: 0;
+  list-style: none;
+}
+.onboard__starter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.onboard__starter:hover { border-color: var(--color-accent-700); }
+.onboard__starter small { font-family: var(--font-mono); font-size: var(--t-micro); color: var(--color-text-muted); }

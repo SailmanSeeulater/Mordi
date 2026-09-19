@@ -86,3 +86,5 @@
   font-weight: 600;
   text-underline-offset: 3px;
 }
+
+.settings__reminder-hour { min-width: 140px; }

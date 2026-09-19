@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useState } from 'react';
 import useNotes from '../hooks/useNotes';
+import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import NoteForm from './NoteForm';
 
@@ -43,7 +44,7 @@ const editedFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: '
  * [[Links]] open the note they name; one to a note that does not exist yet
  * offers to write it. The dialog's own Close is the only close.
  */
-function NoteReader({ note, notes, onOpen, onCreate, onEdit }) {
+export function NoteReader({ note, notes, onOpen, onCreate, onEdit }) {
   const tags = tagsOf(note);
   const linkedFrom = backlinks(notes, note);
   const edited = note.updatedAt ?? note.createdAt;
@@ -116,6 +117,12 @@ export default function NotesPanel() {
     setEditing('new');
   };
   const full = notes.length >= limit;
+  // The dashboard shows a handful: pinned first, then the latest. The rest
+  // live on the Notes page, with search and tags.
+  const SHOWN = 5;
+  const shown = [...notes]
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
+    .slice(0, SHOWN);
 
   const handleSave = async (body) => {
     await save(editing === 'new' ? null : editing, body);
@@ -140,7 +147,7 @@ export default function NotesPanel() {
         </h2>
         <div className="app-panel__spacer" />
         <span className="app-panel__meta">
-          {notes.length} / {limit}
+          {notes.length} {notes.length === 1 ? 'note' : 'notes'}
         </span>
         <button
           type="button"
@@ -173,7 +180,7 @@ export default function NotesPanel() {
 
       {loadState === 'ready' && notes.length > 0 && (
         <ul className="app-list notes">
-          {notes.map((note) => {
+          {shown.map((note) => {
             const rest = noteExcerpt(note);
             return (
               <li className={`note${note.pinned ? ' note--pinned' : ''}`} key={note.id}>
@@ -211,6 +218,15 @@ export default function NotesPanel() {
             );
           })}
         </ul>
+      )}
+
+      {loadState === 'ready' && notes.length > 0 && (
+        <p className="notes__all">
+          <Link to="/notes">
+            {notes.length > SHOWN ? `All ${notes.length} notes` : 'Open notes'}
+            {' →'}
+          </Link>
+        </p>
       )}
 
       {full && loadState === 'ready' && (

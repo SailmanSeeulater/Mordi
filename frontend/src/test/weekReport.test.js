@@ -73,7 +73,40 @@ describe('buildWeekReport', () => {
       today,
     });
     expect(withPlan.places).toEqual([{ name: 'Park', count: 2 }]);
-    expect(withPlan.plan).toEqual({ events: 3, timedEvents: 2, plannedSeconds: 5400 + 3600 });
+    expect(withPlan.plan).toMatchObject({ events: 3, timedEvents: 2, plannedSeconds: 5400 + 3600 });
+  });
+
+  it('counts planned blocks that happened and were skipped', () => {
+    const r2 = buildWeekReport({
+      goals: [run],
+      behaviors,
+      events: [
+        { startsAt: '2026-09-14T07:00:00', endsAt: '2026-09-14T08:00:00', allDay: false, outcome: 'done' },
+        { startsAt: '2026-09-15T07:00:00', endsAt: '2026-09-15T08:00:00', allDay: false, outcome: 'skipped' },
+        { startsAt: '2026-09-16T07:00:00', endsAt: '2026-09-16T08:00:00', allDay: false },
+      ],
+      weekStart,
+      today,
+    });
+    expect(r2.plan).toMatchObject({ ended: 3, done: 1, skipped: 1 });
+  });
+
+  it('places logged moments on a weekday-by-hour grid in local time', () => {
+    const at = (y, m, d, h) => new Date(y, m, d, h, 15).toISOString();
+    const r3 = buildWeekReport({
+      goals: [run],
+      behaviors: [
+        e(20, run, '2026-09-14', { loggedAt: at(2026, 8, 14, 7) }),
+        e(21, run, '2026-09-14', { loggedAt: at(2026, 8, 14, 7) }),
+        e(22, run, '2026-09-18', { loggedAt: at(2026, 8, 18, 21) }),
+        e(23, run, '2026-09-19'), // no time: left out, not guessed
+      ],
+      weekStart,
+      today,
+    });
+    expect(r3.hours[0][7]).toBe(2); // Monday, 7am
+    expect(r3.hours[4][21]).toBe(1); // Friday, 9pm
+    expect(r3.timedEntries).toBe(3);
   });
 
   it('writes a headline that compares with last week only when it can', () => {
