@@ -1,6 +1,10 @@
 package com.mordi.backend.service;
 
+import com.mordi.backend.dto.BehaviorRequest;
+import com.mordi.backend.dto.EventOutcomeRequest;
 import com.mordi.backend.dto.PlanEventRequest;
+import com.mordi.backend.exception.BehaviorNotFoundException;
+import com.mordi.backend.model.Behavior;
 import com.mordi.backend.exception.PlanEventNotFoundException;
 import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.model.User;
@@ -40,6 +44,7 @@ public class PlanEventService {
 
     private final PlanEventRepository repository;
     private final UserRepository userRepository;
+    private final BehaviorService behaviorService;
 
     /** Events overlapping the days start..end, both inclusive. */
     public List<PlanEvent> getEvents(String email, LocalDate start, LocalDate end) {
@@ -96,6 +101,61 @@ public class PlanEventService {
         }
         repository.saveAll(events);
         return Map.of("imported", events.size(), "skipped", skipped);
+    }
+
+    /**
+     * Answers "did it happen?". Done logs an ordinary entry for it, through
+     * the same rules as any other entry: named after the event, dated the day
+     * it started, with the event's length as its duration when it was timed.
+     * Answering again replaces the earlier answer, entry included.
+     */
+    @Transactional
+    public PlanEvent setOutcome(String email, Long id, EventOutcomeRequest request) {
+        PlanEvent event = findOwned(email, id);
+        String outcome = request == null ? null : request.getOutcome();
+        if (!"done".equals(outcome) && !"skipped".equals(outcome)) {
+            throw new IllegalArgumentException("Outcome must be done or skipped");
+        }
+        removeLinkedEntry(email, event);
+        if ("done".equals(outcome)) {
+            BehaviorRequest entry = new BehaviorRequest();
+            entry.setNote(event.getTitle());
+            entry.setCompleted(true);
+            entry.setLogDate(event.getStartsAt().toLocalDate());
+            entry.setGoalId(request.getGoalId());
+            entry.setMood(request.getMood());
+            entry.setPlaceName(event.getPlaceName());
+            if (!event.isAllDay()) {
+                long seconds = Duration.between(event.getStartsAt(), event.getEndsAt()).getSeconds();
+                if (seconds > 0 && seconds <= BehaviorService.MAX_DURATION_SECONDS) {
+                    entry.setDurationSeconds((int) seconds);
+                }
+            }
+            Behavior logged = behaviorService.logBehavior(email, entry);
+            event.setBehaviorId(logged.getId());
+        }
+        event.setOutcome(outcome);
+        return repository.save(event);
+    }
+
+    /** Takes the answer back, removing the entry it logged if there was one. */
+    @Transactional
+    public PlanEvent clearOutcome(String email, Long id) {
+        PlanEvent event = findOwned(email, id);
+        removeLinkedEntry(email, event);
+        event.setOutcome(null);
+        return repository.save(event);
+    }
+
+    private void removeLinkedEntry(String email, PlanEvent event) {
+        if (event.getBehaviorId() != null) {
+            try {
+                behaviorService.deleteBehavior(email, event.getBehaviorId());
+            } catch (BehaviorNotFoundException gone) {
+                // Already deleted by hand: nothing left to undo.
+            }
+            event.setBehaviorId(null);
+        }
     }
 
     public void deleteEvent(String email, Long id) {

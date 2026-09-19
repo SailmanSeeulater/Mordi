@@ -320,9 +320,67 @@ function TimeBlock({ report }) {
             <strong>{hoursMinutes(tracked)}</strong>
           </div>
           <p className="wk-plan__note">
-            {report.plan.timedEvents} timed {report.plan.timedEvents === 1 ? 'event' : 'events'} on the calendar this week.
+            {report.plan.timedEvents} timed {report.plan.timedEvents === 1 ? 'event' : 'events'} on the calendar this week
+            {report.plan.ended > 0 &&
+              `; of those that ended, ${report.plan.done} happened, ${report.plan.skipped} ${report.plan.skipped === 1 ? 'was' : 'were'} skipped and ${Math.max(0, report.plan.ended - report.plan.done - report.plan.skipped)} ${report.plan.ended - report.plan.done - report.plan.skipped === 1 ? 'is' : 'are'} unanswered`}
+            .
           </p>
         </div>
+      )}
+    </section>
+  );
+}
+
+/* ── When you log ───────────────────────────────────────────── */
+
+const HOUR_LABELS = { 0: '12a', 6: '6a', 12: '12p', 18: '6p' };
+
+/**
+ * Weekday by hour of day, darker the more was logged in that hour. Shows the
+ * week's rhythm: mornings or evenings, weekdays or weekends. Only entries with
+ * a recorded time are counted; with fewer than three it says so rather than
+ * drawing an empty grid.
+ */
+function WhenBlock({ report }) {
+  const max = Math.max(1, ...report.hours.flat());
+  const busiestHour = report.hours
+    .flatMap((row, d) => row.map((n, h) => ({ n, h, d })))
+    .sort((a, b) => b.n - a.n)[0];
+  const hourName = (h) => new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).format(new Date(2000, 0, 1, h));
+  return (
+    <section className="wk-block wk-block--wide" aria-labelledby="wk-when-title">
+      <header className="wk-block__head">
+        <h3 id="wk-when-title">When you logged</h3>
+        <p>
+          {report.timedEntries >= 3 && busiestHour?.n
+            ? `Most often around ${hourName(busiestHour.h)}`
+            : 'Needs a few more entries with a time'}
+        </p>
+      </header>
+      {report.timedEntries >= 3 ? (
+        <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
+          <span />
+          {Array.from({ length: 24 }, (_, h) => (
+            <span key={`h${h}`} className="wk-hours__label">
+              {HOUR_LABELS[h] ?? ''}
+            </span>
+          ))}
+          {report.hours.map((row, d) => (
+            <div key={d} className="wk-hours__row">
+              <span className="wk-hours__day">{dayShort.format(report.perDay[d].date)}</span>
+              {row.map((n, h) => (
+                <span
+                  key={h}
+                  className="wk-hours__cell"
+                  style={{ '--a': n ? 0.25 + 0.75 * (n / max) : 0 }}
+                  title={n ? `${dayShort.format(report.perDay[d].date)} ${hourName(h)}: ${n}` : undefined}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="wk-empty">Times are recorded for entries logged from now on, and for timer sessions from when they began.</p>
       )}
     </section>
   );
@@ -500,16 +558,21 @@ export default function ReportWeek() {
             <TimeBlock report={report} />
             <PlacesBlock report={report} />
           </div>
+          <WhenBlock report={report} />
 
           <section className="wk-block wk-block--wide wk-written" aria-labelledby="wk-written-title">
             <header className="wk-block__head">
               <h3 id="wk-written-title">Written up</h3>
-              <p>{data.written ? 'Saved with this week’s numbers when it was written' : 'Not written up yet'}</p>
+              <p>{data.written ? 'Saved with this week’s numbers when it was written' : isCurrentOrFuture ? 'In progress' : 'Not written up yet'}</p>
             </header>
             {data.written?.summary && <p className="wk-written__text">{data.written.summary}</p>}
-            <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={write} disabled={writing}>
-              {writing ? 'Writing…' : data.written ? 'Write it up again' : 'Write up this week'}
-            </button>
+            {isCurrentOrFuture ? (
+              <p className="wk-written__text">This week is still going. It writes itself up once it ends.</p>
+            ) : (
+              <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={write} disabled={writing}>
+                {writing ? 'Writing…' : data.written ? 'Write it up again' : 'Write up this week'}
+              </button>
+            )}
             {writeError && (
               <p className="app-form__error" role="alert">
                 {writeError}

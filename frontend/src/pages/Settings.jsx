@@ -7,6 +7,7 @@ import { THEMES } from '../context/theme-context-value';
 import client from '../api/client';
 import AppShell from '../components/AppShell';
 import ThemeGrid from '../components/ThemeGrid';
+import RemindersSettings from '../components/RemindersSettings';
 import { toIsoDate } from './dashboardData';
 import './settings.css';
 
@@ -87,6 +88,8 @@ export default function Settings() {
             browser only — so another device keeps its own.
           </p>
         </section>
+
+        <RemindersSettings />
 
         <section className="app-panel" aria-labelledby="set-account">
           <div className="app-panel__head">

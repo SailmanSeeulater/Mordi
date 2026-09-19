@@ -5,6 +5,7 @@ import AppShell from '../components/AppShell';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
 import { addDays, formatWeekRange, startOfWeek, toIsoDate } from './dashboardData';
+import { ensureLastWeekReport } from '../lib/autoReview';
 import {
   normaliseReport,
   reportWeekLabel,
@@ -160,8 +161,6 @@ export default function Reports() {
   const [rows, setRows] = useState([]);
   const [loadState, setLoadState] = useState('loading');
   const [reloadKey, setReloadKey] = useState(0);
-  const [busy, setBusy] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -197,19 +196,26 @@ export default function Reports() {
   const thisWeek = startOfWeek(today);
   const lastWeek = addDays(thisWeek, -7);
 
-  const generate = async (weekStart, key) => {
-    setBusy(key);
-    setError('');
-    try {
-      await client.post('/api/reports/generate', null, {
-        params: { week: toIsoDate(weekStart) },
-      });
-      reload();
-    } catch {
-      setError("Couldn't write that report. Check your connection and try again.");
-    }
-    setBusy('');
-  };
+  // Last week writes itself up the first time it is looked at after it
+  // ends, if anything was logged in it. Then the list reloads to include it.
+  const lastWeekIso = toIsoDate(lastWeek);
+  const hasLastWeek = rows.some((r) => r.weekStart === lastWeekIso);
+  useEffect(() => {
+    if (loadState !== 'ready' || hasLastWeek) return undefined;
+    let live = true;
+    client
+      .get('/api/behaviors/range', { params: { start: lastWeekIso, end: toIsoDate(addDays(lastWeek, 6)) } })
+      .then((res) => ensureLastWeekReport(today, Array.isArray(res.data) && res.data.length > 0))
+      .then((made) => {
+        if (live && made) reload();
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+    // lastWeek is derived from today, which lastWeekIso already stands for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadState, hasLastWeek, lastWeekIso]);
 
   return (
     <AppShell title="Weekly report">
@@ -232,36 +238,17 @@ export default function Reports() {
         <>
           <section className="rep-make app-glass" aria-labelledby="rep-make-title">
             <h2 className="rep-make__title" id="rep-make-title">
-              Write up a week
+              Every week writes itself up
             </h2>
             <p className="rep-make__body">
-              A report counts the days you logged against the target each goal was given, and
-              keeps one write-up per week. Running it again on a week you have already written
-              up replaces that write-up with current numbers.
+              Once a week ends, Mordi writes it up the next time you open it: what you logged
+              against the target each goal was given. Open any week to see it taken apart.
             </p>
             <div className="rep-make__actions">
-              <button
-                type="button"
-                className="app-btn"
-                onClick={() => generate(thisWeek, 'this')}
-                disabled={busy !== ''}
-              >
-                {busy === 'this' ? 'Writing…' : `This week · ${formatWeekRange(thisWeek)}`}
-              </button>
-              <button
-                type="button"
-                className="app-btn app-btn--ghost"
-                onClick={() => generate(lastWeek, 'last')}
-                disabled={busy !== ''}
-              >
-                {busy === 'last' ? 'Writing…' : `Last week · ${formatWeekRange(lastWeek)}`}
-              </button>
+              <Link to={`/reports/${toIsoDate(thisWeek)}`} className="app-btn">
+                This week so far &middot; {formatWeekRange(thisWeek)}
+              </Link>
             </div>
-            {error && (
-              <p className="app-form__error" role="alert">
-                {error}
-              </p>
-            )}
           </section>
 
           {reports.length === 0 ? (

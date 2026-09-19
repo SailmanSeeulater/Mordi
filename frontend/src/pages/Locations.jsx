@@ -142,22 +142,25 @@ export default function Locations() {
     return isLoaded ? { ...buildMapOptions(), draggableCursor: picking ? "crosshair" : undefined } : null;
   }, [isLoaded, theme, picking]);
 
+  // Saved fixes, and every named place entries were logged from. The second
+  // is optional: an older server without it still shows the saved places.
+  const [entryPlaces, setEntryPlaces] = useState([]);
   useEffect(() => {
     let cancelled = false;
-    client
-      .get("/api/locations")
-      .then((res) => {
+    Promise.allSettled([client.get("/api/locations"), client.get("/api/behaviors/places")]).then(
+      ([saved, logged]) => {
         if (cancelled) return;
-        if (!Array.isArray(res.data)) {
+        if (saved.status !== "fulfilled" || !Array.isArray(saved.value.data)) {
           setLoadState("error");
           return;
         }
-        setLocations(res.data);
+        setLocations(saved.value.data);
+        setEntryPlaces(
+          logged.status === "fulfilled" && Array.isArray(logged.value.data) ? logged.value.data : [],
+        );
         setLoadState("ready");
-      })
-      .catch(() => {
-        if (!cancelled) setLoadState("error");
-      });
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -165,10 +168,65 @@ export default function Locations() {
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
-  const places = useMemo(
-    () => [...locations].sort((a, b) => (b.recordedAt ?? "").localeCompare(a.recordedAt ?? "")),
-    [locations],
-  );
+  /*
+   * One list of places, not two. Every entry logged with a fix also saved a
+   * location, so the raw list repeats a place once per visit; here each place
+   * appears once, with how often and how recently it came up, whether it was
+   * saved by hand or only ever named on an entry.
+   */
+  const places = useMemo(() => {
+    const byKey = new Map();
+    const keyOf = (name, lat, lng) =>
+      name ? name.trim().toLowerCase() : `${lat?.toFixed(3)},${lng?.toFixed(3)}`;
+    for (const loc of locations) {
+      const key = keyOf(loc.placeName, loc.latitude, loc.longitude);
+      const cur = byKey.get(key);
+      const day = (loc.recordedAt ?? "").slice(0, 10);
+      if (!cur) {
+        byKey.set(key, {
+          id: `p:${key}`,
+          placeName: loc.placeName,
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+          recordedAt: loc.recordedAt,
+          lastDay: day,
+          visits: 1,
+          saved: true,
+        });
+      } else {
+        cur.visits += 1;
+        if (day > cur.lastDay) {
+          cur.lastDay = day;
+          cur.recordedAt = loc.recordedAt;
+          cur.latitude = loc.latitude;
+          cur.longitude = loc.longitude;
+        }
+      }
+    }
+    for (const ep of entryPlaces) {
+      const key = keyOf(ep.placeName);
+      const cur = byKey.get(key);
+      if (cur) {
+        cur.visits = Math.max(cur.visits, ep.visits);
+        if ((ep.lastVisit ?? "") > cur.lastDay) cur.lastDay = ep.lastVisit;
+      } else {
+        byKey.set(key, {
+          id: `p:${key}`,
+          placeName: ep.placeName,
+          latitude: ep.latitude,
+          longitude: ep.longitude,
+          recordedAt: ep.lastVisit ? `${ep.lastVisit}T00:00:00` : null,
+          lastDay: ep.lastVisit ?? "",
+          visits: ep.visits,
+          saved: false,
+        });
+      }
+    }
+    return [...byKey.values()].sort(
+      (a, b) => b.visits - a.visits || String(b.lastDay).localeCompare(String(a.lastDay)),
+    );
+  }, [locations, entryPlaces]);
+  const mapped = useMemo(() => places.filter((p) => p.latitude != null && p.longitude != null), [places]);
   const selected = places.find((p) => p.id === selectedId) ?? null;
 
   /*
@@ -189,10 +247,10 @@ export default function Locations() {
 
   // Once the saved places arrive, glide to the latest one.
   useEffect(() => {
-    if (framedFirst.current || !isLoaded || !mapRef.current || !places[0]) return;
+    if (framedFirst.current || !isLoaded || !mapRef.current || !mapped[0]) return;
     framedFirst.current = true;
-    glideTo({ lat: places[0].latitude, lng: places[0].longitude });
-  }, [isLoaded, places, glideTo]);
+    glideTo({ lat: mapped[0].latitude, lng: mapped[0].longitude });
+  }, [isLoaded, mapped, glideTo]);
 
   // Frame the whole trip once it is planned, as a maps app does.
   useEffect(() => {
@@ -289,7 +347,7 @@ export default function Locations() {
       });
       setStatus({ tone: "info", text: `Saved ${pin.label}.` });
       setPin(null);
-      setSelectedId(res.data?.id ?? null);
+      setSelectedId(res.data?.placeName ? `p:${res.data.placeName.trim().toLowerCase()}` : null);
       reload();
     } catch {
       setStatus({ tone: "error", text: "Couldn't save this place. Check your connection and try again." });
@@ -331,7 +389,7 @@ export default function Locations() {
       const placeName = await reverseGeocode(latitude, longitude);
       const res = await client.post("/api/locations", { latitude, longitude, placeName });
       setStatus({ tone: "info", text: `Saved ${placeName}.` });
-      setSelectedId(res.data?.id ?? null);
+      setSelectedId(res.data?.placeName ? `p:${res.data.placeName.trim().toLowerCase()}` : null);
       glideTo({ lat: latitude, lng: longitude });
       reload();
     } catch {
@@ -343,7 +401,7 @@ export default function Locations() {
 
   const selectPlace = (loc) => {
     setSelectedId(loc.id);
-    glideTo({ lat: loc.latitude, lng: loc.longitude });
+    if (loc.latitude != null && loc.longitude != null) glideTo({ lat: loc.latitude, lng: loc.longitude });
   };
 
   const accent = readToken("--color-accent", "#d2452a");
@@ -370,7 +428,9 @@ export default function Locations() {
               Map
             </h2>
             {loadState === "ready" && (
-              <span className="app-panel__meta">{places.length} saved</span>
+              <span className="app-panel__meta">
+                {places.length} {places.length === 1 ? "place" : "places"}
+              </span>
             )}
             <div className="app-panel__spacer" />
             <button type="button" className="app-btn" onClick={captureLocation} disabled={capturing}>
@@ -421,7 +481,7 @@ export default function Locations() {
                   mapRef.current = null;
                 }}
               >
-                {places.map((loc) => (
+                {mapped.map((loc) => (
                   <MarkerF
                     key={loc.id}
                     position={{ lat: loc.latitude, lng: loc.longitude }}
@@ -450,7 +510,7 @@ export default function Locations() {
                 )}
                 {endMarker("A", route?.origin ?? trip.a?.position)}
                 {endMarker("B", route?.destination ?? trip.b?.position)}
-                {selected && (
+                {selected && selected.latitude != null && (
                   <InfoWindowF
                     position={{ lat: selected.latitude, lng: selected.longitude }}
                     onCloseClick={() => setSelectedId(null)}
@@ -525,7 +585,7 @@ export default function Locations() {
                 onSwap={swap}
                 picking={picking}
                 onPick={setPicking}
-                places={places}
+                places={mapped}
                 pin={pin}
                 route={route}
                 onRoute={setRoute}
@@ -539,7 +599,7 @@ export default function Locations() {
           <section className="app-panel loc__history" aria-labelledby="loc-history-title">
             <div className="app-panel__head">
               <h2 id="loc-history-title" className="app-panel__title">
-                Saved places
+                Your places
               </h2>
             </div>
 
@@ -567,7 +627,7 @@ export default function Locations() {
 
             {loadState === "ready" && places.length === 0 && (
               <p className="app-empty">
-                No places saved yet. Save your location, or drop a pin and save it.
+                No places yet. Save your location, drop a pin, or add a place when you log.
               </p>
             )}
 
@@ -586,7 +646,8 @@ export default function Locations() {
                         <span className="loc__place-date">{formatDay(loc.recordedAt)}</span>
                       </span>
                       <span className="loc__coords">
-                        {loc.latitude.toFixed(4)}, {loc.longitude.toFixed(4)}
+                        {loc.visits} {loc.visits === 1 ? "visit" : "visits"}
+                        {loc.latitude == null && " \u00b7 no map position"}
                       </span>
                     </button>
                   </li>

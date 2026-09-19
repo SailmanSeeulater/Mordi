@@ -24,4 +24,12 @@ public interface BehaviorRepository extends JpaRepository<Behavior, Long> {
         + "min(b.logDate), max(b.logDate) "
         + "from Behavior b where b.user = :user and b.goal.id in :goalIds group by b.goal.id")
     List<Object[]> summarizeByGoal(@Param("user") User user, @Param("goalIds") Collection<Long> goalIds);
+
+    /** One row per named place: [placeName, visits, last log date, avg latitude, avg longitude]. */
+    @Query("select b.placeName, count(b), max(b.logDate), avg(b.latitude), avg(b.longitude) "
+        + "from Behavior b where b.user = :user and b.placeName is not null "
+        + "group by b.placeName order by count(b) desc")
+    List<Object[]> summarizePlaces(@Param("user") User user);
+
+    java.util.Optional<Behavior> findByIdAndUser(Long id, User user);
 }

@@ -17,6 +17,7 @@ const ReportWeek = lazy(() => import("./pages/ReportWeek"));
 const Locations = lazy(() => import("./pages/Locations"));
 const History = lazy(() => import("./pages/History"));
 const Calendar = lazy(() => import("./pages/Calendar"));
+const Notes = lazy(() => import("./pages/Notes"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -96,6 +97,14 @@ function App() {
             element={
               <PrivateRoute>
                 <ReportWeek />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/notes"
+            element={
+              <PrivateRoute>
+                <Notes />
               </PrivateRoute>
             }
           />

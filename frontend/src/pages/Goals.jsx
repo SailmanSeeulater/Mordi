@@ -7,7 +7,8 @@ import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
 import { CATEGORY_ICONS } from '../lib/categories';
-import { targetLabel, weekSummary } from './dashboardData';
+import { targetLabel, toIsoDate, weekSummary } from './dashboardData';
+import { formatAverage, suggestTarget } from '../lib/targets';
 import './goals.css';
 
 const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
@@ -29,6 +30,72 @@ const IconPin = () => (
     <circle cx="12" cy="10" r="2.6" />
   </svg>
 );
+
+const dismissKey = (goalId, weekIso) => `mordi-suggest-${goalId}-${weekIso}`;
+
+function wasDismissed(goalId, weekIso) {
+  try {
+    return localStorage.getItem(dismissKey(goalId, weekIso)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A target suggestion under a goal, when the last four weeks disagree with
+ * it. Offered, never applied: the person set the target and decides whether
+ * to change it. Dismissing it quiets it until next week.
+ */
+function Suggestion({ goal, behaviors, today, weekIso, onApply, onArchive }) {
+  const [hidden, setHidden] = useState(() => wasDismissed(goal.id, weekIso));
+  const [busy, setBusy] = useState(false);
+  const s = useMemo(() => suggestTarget(goal, behaviors, today), [goal, behaviors, today]);
+  if (!s || hidden) return null;
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(dismissKey(goal.id, weekIso), '1');
+    } catch {
+      // It comes back on the next visit; nothing lost.
+    }
+    setHidden(true);
+  };
+
+  const apply = async () => {
+    setBusy(true);
+    try {
+      await onApply(goal, s.to);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const perWeek = (n) => (n === 7 ? 'every day' : `${n}\u00d7 a week`);
+  const text =
+    s.kind === 'idle'
+      ? `Nothing logged for this in the last ${s.weeks} weeks.`
+      : `You've averaged ${formatAverage(s.average)} days a week for ${s.weeks} weeks, against a target of ${s.target}.`;
+
+  return (
+    <div className={`goal-suggest goal-suggest--${s.kind}`}>
+      <p>{text}</p>
+      <div className="goal-suggest__actions">
+        {s.kind === 'idle' ? (
+          <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={() => onArchive(goal)}>
+            Archive it
+          </button>
+        ) : (
+          <button type="button" className="app-btn app-btn--sm" onClick={apply} disabled={busy}>
+            {busy ? 'Saving\u2026' : `Set to ${perWeek(s.to)}`}
+          </button>
+        )}
+        <button type="button" className="app-btn app-btn--ghost app-btn--sm" onClick={dismiss}>
+          Not now
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Goals() {
   useDocumentTitle('Goals');
@@ -69,6 +136,14 @@ export default function Goals() {
       setArchiving(false);
       setArchiveError("Couldn't archive that goal. Check your connection and try again.");
     }
+  };
+
+  const applyTarget = async (goal, to) => {
+    await client.put(`/api/goals/${goal.id}`, {
+      targetPerWeek: to,
+      frequency: to === 7 ? 'daily' : 'weekly',
+    });
+    reload();
   };
 
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
@@ -214,6 +289,18 @@ export default function Goals() {
                     />
                   ))}
                 </div>
+
+                <Suggestion
+                  goal={row.goal}
+                  behaviors={behaviors}
+                  today={today}
+                  weekIso={toIsoDate(weekStart)}
+                  onApply={applyTarget}
+                  onArchive={(goal) => {
+                    setActive(goal);
+                    setModal('archive');
+                  }}
+                />
               </article>
             );
           })}

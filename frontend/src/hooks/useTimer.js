@@ -115,6 +115,9 @@ export default function useTimer() {
         completed: true,
         logDate: toIsoDate(new Date(session.startedAt)),
         durationSeconds: durationSeconds(session, Date.now()),
+        // When the work began, so the time of day on the entry is the start
+        // of the session rather than the moment Save was pressed.
+        loggedAt: new Date(session.startedAt).toISOString(),
       });
       setSession(IDLE);
       return true;

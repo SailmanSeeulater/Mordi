@@ -43,6 +43,10 @@
   align-items: center;
   gap: 2px;
   padding: 14px 8px 18px;
+  /* Eight sections: on a short window the rail scrolls rather than clipping
+     Settings off the bottom. */
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .app-rail__mark {
@@ -961,6 +965,9 @@
     font-weight: 600;
   }
   .app-tabbar__link[aria-current='page'] { color: var(--color-accent-700); }
+  /* Eight tabs share a phone's width: each may shrink below its label, which
+     then clips rather than pushing the bar wider than the screen. */
+  .app-tabbar__link { min-width: 0; overflow: hidden; white-space: nowrap; }
 
   .app-whoami__name { display: none; }
   .theme-switch__name { display: none; }
@@ -988,6 +995,8 @@
    scrolled sideways. Log out moves to Settings, where the Session section
    already has it, and the rest tighten. */
 @media (max-width: 560px) {
+  .app-tabbar { gap: 0; padding-left: 4px; padding-right: 4px; }
+  .app-tabbar__link { font-size: 9.5px; letter-spacing: -0.01em; }
   .app-topbar {
     gap: 6px;
     padding: 10px 12px;

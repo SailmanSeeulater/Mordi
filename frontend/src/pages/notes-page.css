@@ -1,0 +1,111 @@
+/* Notes: a list to search on the left, the note on the right. */
+.vault {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.vault__side {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 16px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 84px;
+}
+.vault__side::-webkit-scrollbar { display: none; }
+.vault__search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+.vault__search input:focus { border-color: var(--color-accent-700); outline: none; }
+.vault__tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.vault__tag { cursor: pointer; }
+.vault__tag span { font-family: var(--font-mono); font-size: 0.85em; opacity: 0.75; }
+.vault__tag[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.vault__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.vault__item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vault__item:hover { background: var(--color-bg); }
+.vault__item[aria-current='true'] {
+  background: color-mix(in oklab, var(--color-accent) 12%, var(--color-surface));
+}
+.vault__item-top { display: flex; align-items: center; gap: 8px; }
+.vault__item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vault__pin {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--color-accent);
+}
+.vault__item-body {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.vault__item-date {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+
+.vault__pane { padding: 0 0 8px; min-height: 60vh; }
+.vault__pane-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px 0;
+}
+.vault__back { display: none; }
+.vault__title {
+  margin: 8px 26px 12px;
+  font-size: var(--t-h2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.vault__pane .app-form { padding: 0 26px 22px; }
+
+/* A phone shows the list or the note, never both. */
+@media (max-width: 860px) {
+  .vault { grid-template-columns: minmax(0, 1fr); }
+  .vault__side { position: static; max-height: none; }
+  .vault--pane .vault__side { display: none; }
+  .vault:not(.vault--pane) .vault__pane { display: none; }
+  .vault__back { display: inline-flex; }
+  .vault__title { margin: 8px 16px 12px; }
+  .vault__pane .app-form { padding: 0 16px 18px; }
+}

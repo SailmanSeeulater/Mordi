@@ -143,3 +143,10 @@
   }
   .lately__viewport--overflow { height: 320px; }
 }
+
+.lately__time {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}

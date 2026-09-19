@@ -15,8 +15,10 @@ import {
   allDayOn,
   atMinutes,
   daysFrom,
+  compactRange,
   formatRange,
   layoutDay,
+  shortTime,
   parseLocal,
   sameDay,
   snapMinutes,
@@ -66,6 +68,9 @@ function useNow() {
  * a drag never sends a request per pixel. For keyboard users, "New event" and
  * each event (a button) open the same form with every field editable.
  */
+// The shortest an event is drawn: one line of 12.5px text plus padding.
+const EVENT_MIN_PX = 20;
+
 export default function Calendar() {
   useDocumentTitle('Calendar');
   const narrow = useNarrow();
@@ -266,12 +271,12 @@ export default function Calendar() {
         </button>
       }
     >
-      <div className="cal">
-        <div className="cal__bar">
+      <div className="planner">
+        <div className="planner__bar">
           <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={() => setAnchor(startOfDay(new Date()))}>
             Today
           </button>
-          <div className="cal__nav">
+          <div className="planner__nav">
             <button type="button" className="app-iconbtn" onClick={() => step(-1)} aria-label={`Previous ${effectiveView}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                 <path d="M15 5l-7 7 7 7" />
@@ -283,8 +288,8 @@ export default function Calendar() {
               </svg>
             </button>
           </div>
-          <h2 className="cal__title">{title}</h2>
-          {effectiveView !== 'month' && <span className="cal__month">{monthYear.format(days[0])}</span>}
+          <h2 className="planner__title">{title}</h2>
+          {effectiveView !== 'month' && <span className="planner__month">{monthYear.format(days[0])}</span>}
           <div className="app-panel__spacer" />
           <input
             ref={fileInput}
@@ -297,7 +302,7 @@ export default function Calendar() {
           />
           <button
             type="button"
-            className="app-btn app-btn--quiet app-btn--sm cal__import"
+            className="app-btn app-btn--quiet app-btn--sm planner__import"
             onClick={() => fileInput.current?.click()}
             title="Import events from Google Calendar, Apple Calendar or Outlook (.ics)"
           >
@@ -309,7 +314,7 @@ export default function Calendar() {
           {(() => {
             const views = narrow ? ['day', 'month'] : ['day', 'week', 'month'];
             return (
-              <div className="app-segments cal__views" role="group" aria-label="View" style={{ width: views.length * 72 }}>
+              <div className="app-segments planner__views" role="group" aria-label="View" style={{ width: views.length * 72 }}>
                 <span
                   className="app-segments__thumb"
                   style={{ '--n': views.length, '--i': Math.max(0, views.indexOf(effectiveView)) }}
@@ -326,7 +331,7 @@ export default function Calendar() {
         </div>
 
         {notice && (
-          <p className="cal__notice" role="status">
+          <p className="planner__notice" role="status">
             {notice}
             <button type="button" className="app-linkbtn" onClick={() => setNotice('')}>
               Dismiss
@@ -349,7 +354,7 @@ export default function Calendar() {
         )}
 
         {effectiveView === 'month' ? (
-          <div className="app-panel cal__panel">
+          <div className="app-panel planner__panel">
             <MonthGrid
               days={days}
               month={monthStart.getMonth()}
@@ -369,14 +374,14 @@ export default function Calendar() {
             />
           </div>
         ) : (
-        <div className="app-panel cal__panel" style={{ '--days': count }}>
-          <div className="cal__head">
-            <span className="cal__gutter" />
+        <div className="app-panel planner__panel" style={{ '--days': count }}>
+          <div className="planner__head">
+            <span className="planner__gutter" />
             {days.map((d) => (
               <button
                 key={d.toISOString()}
                 type="button"
-                className={`cal__day-head${sameDay(d, now) ? ' cal__day-head--today' : ''}`}
+                className={`planner__day-head${sameDay(d, now) ? ' planner__day-head--today' : ''}`}
                 onClick={() => {
                   setAnchor(d);
                   setView('day');
@@ -390,15 +395,15 @@ export default function Calendar() {
           </div>
 
           {hasAllDay && (
-            <div className="cal__allday">
-              <span className="cal__gutter cal__gutter--label">All day</span>
+            <div className="planner__allday">
+              <span className="planner__gutter planner__gutter--label">All day</span>
               {days.map((d) => (
-                <div key={d.toISOString()} className="cal__allday-cell">
+                <div key={d.toISOString()} className="planner__allday-cell">
                   {allDayOn(shown, d).map((ev) => (
                     <button
                       key={ev.id}
                       type="button"
-                      className={`cal__chip ev--${ev.color ?? 'accent'}`}
+                      className={`planner__chip ev--${ev.color ?? 'accent'}`}
                       onClick={() => setEditor({ event: ev })}
                     >
                       {ev.title}
@@ -409,9 +414,9 @@ export default function Calendar() {
             </div>
           )}
 
-          <div className="cal__scroller" ref={scroller}>
-            <div className="cal__grid" style={{ height: minutesToPx(DAY_MINUTES) }}>
-              <div className="cal__hours" aria-hidden="true">
+          <div className="planner__scroller" ref={scroller}>
+            <div className="planner__grid" style={{ height: minutesToPx(DAY_MINUTES) }}>
+              <div className="planner__hours" aria-hidden="true">
                 {HOURS.map((h) => (
                   <span key={h} style={{ top: minutesToPx(h * 60) }}>
                     {h === 0 ? '' : hourLabel.format(new Date(2000, 0, 1, h))}
@@ -419,14 +424,14 @@ export default function Calendar() {
                 ))}
               </div>
 
-              <div className="cal__cols" ref={columns}>
+              <div className="planner__cols" ref={columns}>
                 {days.map((d, dayIndex) => {
                   const items = layoutDay(shown, d);
                   const isToday = sameDay(d, now);
                   return (
                     <div
                       key={d.toISOString()}
-                      className={`cal__col${isToday ? ' cal__col--today' : ''}`}
+                      className={`planner__col${isToday ? ' planner__col--today' : ''}`}
                       onPointerDown={(e) => onColumnDown(e, dayIndex)}
                       onPointerMove={onColumnMove}
                       onPointerUp={onColumnUp}
@@ -434,7 +439,7 @@ export default function Calendar() {
                     >
                       {pending?.dayIndex === dayIndex && (
                         <div
-                          className="cal__pending"
+                          className="planner__pending"
                           style={{
                             top: minutesToPx(Math.min(pending.a, pending.b)),
                             height: minutesToPx(Math.abs(pending.b - pending.a)),
@@ -444,14 +449,25 @@ export default function Calendar() {
 
                       {items.map(({ event, top, bottom, column, columns: n }) => {
                         const held = drag?.event.id === event.id && drag.moved;
-                        const short = bottom - top < 45;
+                        // Never shorter than one line of text, however brief
+                        // the event, so a 15-minute standup still says what
+                        // and when (it may overlap the next slot, as in
+                        // Google Calendar).
+                        const px = Math.max(minutesToPx(bottom - top) - 2, EVENT_MIN_PX);
+                        // Room for one line only: title and start side by side.
+                        const short = px < 32;
+                        // The full range needs its own line and the width of
+                        // an unshared column; otherwise just the start.
+                        const fullRange = n === 1 && px >= 46;
+                        const label = `${event.title}, ${formatRange(event)}${event.placeName ? `, ${event.placeName}` : ''}`;
                         return (
                           <div
                             key={event.id}
-                            className={`cal__event ev--${event.color ?? 'accent'}${held ? ' cal__event--held' : ''}${short ? ' cal__event--short' : ''}`}
+                            className={`planner__event ev--${event.color ?? 'accent'}${held ? ' planner__event--held' : ''}${px < 40 ? ' planner__event--short' : ''}${n > 1 ? ' planner__event--narrow' : ''}`}
                             style={{
                               top: minutesToPx(top),
-                              height: minutesToPx(bottom - top) - 2,
+                              height: px,
+                              '--h': `${px}px`,
                               left: `calc(${(column / n) * 100}% + 2px)`,
                               width: `calc(${100 / n}% - 4px)`,
                             }}
@@ -462,19 +478,40 @@ export default function Calendar() {
                           >
                             <button
                               type="button"
-                              className="cal__event-body"
+                              className="planner__event-body"
+                              title={label}
+                              aria-label={label}
                               onClick={(e) => {
                                 // Pointer clicks are handled on release above;
                                 // this is the keyboard path.
                                 if (e.detail === 0) setEditor({ event });
                               }}
                             >
-                              <strong>{event.title}</strong>
-                              {!short && <span>{formatRange(event)}</span>}
-                              {!short && event.placeName && <span className="app-trunc">{event.placeName}</span>}
+                              {short ? (
+                                // One line: in a column of its own the start
+                                // leads, so the time survives even at a
+                                // quarter of an hour; shared, the title does.
+                                <span className="planner__event-line" aria-hidden="true">
+                                  {n === 1 && <span>{shortTime(parseLocal(event.startsAt))}</span>}
+                                  <strong>{event.title}</strong>
+                                  {n > 1 && <span>{shortTime(parseLocal(event.startsAt))}</span>}
+                                </span>
+                              ) : (
+                                <>
+                                  <strong aria-hidden="true">{event.title}</strong>
+                                  <span aria-hidden="true">
+                                    {fullRange ? compactRange(event) : shortTime(parseLocal(event.startsAt))}
+                                  </span>
+                                  {event.placeName && px >= 62 && (
+                                    <span className="app-trunc" aria-hidden="true">
+                                      {event.placeName}
+                                    </span>
+                                  )}
+                                </>
+                              )}
                             </button>
                             <span
-                              className="cal__resize"
+                              className="planner__resize"
                               aria-hidden="true"
                               onPointerDown={(e) => onEventDown(e, event, 'resize')}
                             />
@@ -483,7 +520,7 @@ export default function Calendar() {
                       })}
 
                       {isToday && (
-                        <div className="cal__now" style={{ top: minutesToPx(now.getHours() * 60 + now.getMinutes()) }} aria-hidden="true" />
+                        <div className="planner__now" style={{ top: minutesToPx(now.getHours() * 60 + now.getMinutes()) }} aria-hidden="true" />
                       )}
                     </div>
                   );
@@ -495,7 +532,7 @@ export default function Calendar() {
         )}
 
         {loadState === 'ready' && events.length === 0 && effectiveView !== 'month' && (
-          <p className="cal__hint">Press and drag on the grid to block out time, or use New event.</p>
+          <p className="planner__hint">Press and drag on the grid to block out time, or use New event.</p>
         )}
       </div>
 
