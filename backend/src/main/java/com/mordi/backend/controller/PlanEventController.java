@@ -1,5 +1,6 @@
 package com.mordi.backend.controller;
 
+import com.mordi.backend.dto.EventOutcomeRequest;
 import com.mordi.backend.dto.PlanEventRequest;
 import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.service.PlanEventService;
@@ -49,6 +50,22 @@ public class PlanEventController {
             @PathVariable Long id,
             @RequestBody PlanEventRequest request) {
         return ResponseEntity.ok(service.updateEvent(email, id, request));
+    }
+
+    /** "Did it happen?" — done (logs an entry) or skipped. */
+    @PutMapping("/{id}/outcome")
+    public ResponseEntity<PlanEvent> setOutcome(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id,
+            @RequestBody EventOutcomeRequest request) {
+        return ResponseEntity.ok(service.setOutcome(email, id, request));
+    }
+
+    @DeleteMapping("/{id}/outcome")
+    public ResponseEntity<PlanEvent> clearOutcome(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(service.clearOutcome(email, id));
     }
 
     @DeleteMapping("/{id}")

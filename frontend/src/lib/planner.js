@@ -145,3 +145,35 @@ export function formatRange(event) {
 export function formatTime(date) {
   return timeFormat.format(date);
 }
+
+const hourOnly = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
+
+/** "10 AM", or "9:30 AM" when the minutes matter: the start, compactly. */
+export function shortTime(date) {
+  return date.getMinutes() === 0 ? hourOnly.format(date) : timeFormat.format(date);
+}
+
+/**
+ * The range as a calendar block has room for it: "2 – 3 PM",
+ * "9:30 – 11:30 AM". The locale decides what the two ends share.
+ */
+export function compactRange(event) {
+  if (event.allDay) return 'All day';
+  const start = parseLocal(event.startsAt);
+  const end = parseLocal(event.endsAt);
+  const fmt = start.getMinutes() === 0 && end.getMinutes() === 0 ? hourOnly : timeFormat;
+  return fmt.formatRange ? fmt.formatRange(start, end) : formatRange(event);
+}
+
+/** The goal an event most likely counts toward, by title. */
+export function matchGoal(event, goals) {
+  const title = event.title.trim().toLowerCase();
+  return (
+    goals.find((g) => g.title.trim().toLowerCase() === title) ??
+    goals.find((g) => {
+      const t = g.title.trim().toLowerCase();
+      return t.length > 2 && (title.includes(t) || t.includes(title));
+    }) ??
+    null
+  );
+}

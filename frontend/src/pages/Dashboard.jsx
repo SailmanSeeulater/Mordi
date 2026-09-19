@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import client from '../api/client';
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import { useTheme } from '../context/useTheme';
 import useToday from '../hooks/useToday';
 import useWeekData from '../hooks/useWeekData';
 import useSortOrder from '../hooks/useSortOrder';
@@ -18,13 +18,14 @@ import ActivityHeatmap from '../components/ActivityHeatmap';
 import TodoList from '../components/TodoList';
 import LatelyFeed from '../components/LatelyFeed';
 import PlanToday from '../components/PlanToday';
-import { CATEGORY_ICONS } from '../lib/categories';
+import UndoToast from '../components/UndoToast';
+import WeekReviewCard from '../components/WeekReviewCard';
 import {
+  addDays,
   currentStreak,
   formatWeekRange,
   parseIsoDate,
   recentEntries,
-  targetLabel,
   toIsoDate,
   weekDays,
   weekSummary,
@@ -35,23 +36,20 @@ const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 
-const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 
 /**
- * One goal's ring.
+ * One goal's ring. A tap logs it done today: logging is the one thing this
+ * page is for, so it takes one action, with an Undo right after in case the
+ * tap was a slip. Once today is logged the ring shows a tick, and a second
+ * tap opens the full form instead, for adding a note or another entry.
  *
- * It is draggable where it sits rather than behind a mode, because that is
- * what a row of movable tiles implies. A press only becomes a drag after
- * useDragSort's threshold, so tapping still opens the log form, and
- * `touch-action: pan-y` leaves the page free to scroll vertically under a
- * finger while horizontal movement comes to us.
+ * It is draggable where it sits. A press only becomes a drag after
+ * useDragSort's threshold, so a tap is still a tap, and `touch-action: pan-y`
+ * leaves the page free to scroll vertically under a finger.
  */
-function GoalRing({ row, onClick, order, held, over, dragProps, onNudge }) {
+function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, loggedToday }) {
   const percent = Math.min(row.done / row.target, 1) * 100;
   const empty = row.done === 0;
   return (
@@ -60,7 +58,9 @@ function GoalRing({ row, onClick, order, held, over, dragProps, onNudge }) {
       className={
         'ring-item' +
         (held ? ' ring-item--held' : '') +
-        (over ? ' ring-item--over' : '')
+        (over ? ' ring-item--over' : '') +
+        (busy ? ' ring-item--busy' : '') +
+        (loggedToday ? ' ring-item--today' : '')
       }
       onClick={onClick}
       data-sort-id={row.id}
@@ -88,8 +88,11 @@ function GoalRing({ row, onClick, order, held, over, dragProps, onNudge }) {
       </span>
       <span className="ring-item__label">{row.goal.title}</span>
       <span className="app-sr">
-        {row.done} of {row.target} logged this week. Log an entry for this goal. Use the left
-        and right arrow keys to move it.
+        {row.done} of {row.target} logged this week.{' '}
+        {loggedToday
+          ? 'Done today. Opens the form to add another entry.'
+          : 'Logs it done today in one tap.'}{' '}
+        Use the left and right arrow keys to move it.
       </span>
     </button>
   );
@@ -108,20 +111,6 @@ const iconProps = {
   focusable: false,
 };
 
-const IconFanOut = () => (
-  <svg {...iconProps}>
-    <rect x="3" y="4" width="18" height="5" rx="1.5" />
-    <rect x="3" y="12" width="18" height="5" rx="1.5" />
-  </svg>
-);
-
-const IconRestack = () => (
-  <svg {...iconProps}>
-    <path d="M12 3l8 4.5-8 4.5-8-4.5L12 3z" />
-    <path d="M4 13l8 4.5 8-4.5" />
-  </svg>
-);
-
 const IconGrip = () => (
   <svg {...iconProps} width="14" height="14" strokeWidth="2.2">
     <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />
@@ -135,280 +124,15 @@ const IconRearrange = () => (
   </svg>
 );
 
-const IconPin = () => (
-  <svg {...iconProps} width="12" height="12" strokeWidth="2">
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z" />
-    <circle cx="12" cy="10" r="2.6" />
-  </svg>
-);
 
-function GoalPass({ row, todayColumn, onLog, grip }) {
-  const left = row.target - row.done;
-  const category = row.goal.category;
-  return (
-    <div className="goal-pass">
-      {grip}
-      <div className="goal-pass__title">
-        <span className="goal-pass__mark" aria-hidden="true">
-          {row.goal.title.trim()[0]?.toUpperCase() ?? 'M'}
-        </span>
-        <span className="goal-pass__name">{row.goal.title}</span>
-      </div>
 
-      <div className="goal-pass__meta">
-        {category && (
-          <span className="goal-pass__cat">
-            {CATEGORY_ICONS[category] ?? null}
-            {capitalize(category)}
-          </span>
-        )}
-        <span>{targetLabel(row.goal)}</span>
-        <span className="goal-pass__count">{left > 0 ? `${left} to go` : 'Target met'}</span>
-        {row.goal.placeName && (
-          <span className="goal-pass__place">
-            <IconPin />
-            <span className="app-trunc">{row.goal.placeName}</span>
-          </span>
-        )}
-        <span className="app-sr">
-          , {row.done} of {row.target} this week
-        </span>
-      </div>
-
-      {onLog && (
-        <div className="goal-pass__action">
-          <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={onLog}>
-            Log
-          </button>
-        </div>
-      )}
-
-      <div className="goal-pass__week" aria-hidden="true">
-        {row.statuses.map((status, i) => (
-          <span
-            key={i}
-            className={
-              'week-dot' +
-              (status === 'done' ? ' week-dot--done' : '') +
-              (status === 'missed' ? ' week-dot--missed' : '') +
-              (i === todayColumn ? ' week-dot--today' : '')
-            }
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * The goal deck.
- *
- * Every pass is rendered once, in one absolutely positioned layer, and opening
- * or closing the deck only changes how far down each pass is translated. The
- * container keeps its collapsed height at all times, so the page below never
- * moves: the deck opens over what follows it rather than pushing it down.
- * Because the movement is a transition on transform, closing is the same
- * motion played backwards, staggered from the top card instead of the bottom.
- */
-// Collapsed, only three layers of the deck are drawn behind the front pass.
-// A fourth adds nothing at 10px a card and makes the object taller for no
-// information.
-const PEEK = 10;
-const MAX_PEEK = 3;
-
-/** Breathing room between the open panel and the edges of the screen. */
-const PANEL_MARGIN = 14;
-
-function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, onNudge }) {
-  const layers = Math.min(Math.max(rows.length - 1, 0), MAX_PEEK);
-  const collapsedHeight = `calc(var(--pass-h) + ${layers * PEEK}px)`;
-
-  const deckRef = useRef(null);
-  const [panel, setPanel] = useState(null);
-
-  /* Where the open panel goes.
-   *
-   * It prefers to grow upward from the collapsed deck, so it never pushes
-   * past the bottom of the screen. But growing upward without a limit walks
-   * off the top instead, which is worse: the passes are then unreachable,
-   * because the panel is fixed and the page cannot scroll to it. So the
-   * height is capped to the viewport and the top edge is clamped, and if the
-   * deck still does not fit it scrolls inside itself.
-   *
-   * Fixed positioning, measured in viewport coordinates, with page scroll
-   * locked while it is open — the same treatment a dialog gets. Anything
-   * anchored to the page would drift out of view the moment you scrolled.
-   */
-  useLayoutEffect(() => {
-    if (!open) return undefined;
-    const place = () => {
-      const el = deckRef.current;
-      if (!el) return;
-      const box = el.getBoundingClientRect();
-      // The pass height and gap stay declared in CSS, including the phone
-      // override, so they are read back rather than duplicated here.
-      const style = getComputedStyle(el);
-      const passH = parseFloat(style.getPropertyValue('--pass-h')) || 104;
-      const gap = parseFloat(style.getPropertyValue('--deck-gap')) || 10;
-      const full = rows.length * (passH + gap);
-
-      const height = Math.min(full, window.innerHeight - PANEL_MARGIN * 2);
-      const top = Math.min(
-        Math.max(box.bottom - height, PANEL_MARGIN),
-        window.innerHeight - height - PANEL_MARGIN,
-      );
-      setPanel({
-        top,
-        left: box.left,
-        width: box.width,
-        height,
-        full,
-        clipped: full > height + 1,
-      });
-    };
-    // A layout effect, measured and applied before the browser paints, so the
-    // panel never shows for a frame at the wrong size or in last time's
-    // position.
-    place();
-    // The panel is fixed, so it has to be re-placed as the page moves under
-    // it, which keeps it anchored to the deck and inside the viewport. An
-    // earlier version locked body scroll instead; because the body is the
-    // scrolling element here, `overflow: hidden` clamped it to the top and
-    // opening the deck jumped the whole page.
-    window.addEventListener('scroll', place, { passive: true });
-    window.addEventListener('resize', place);
-    return () => {
-      window.removeEventListener('scroll', place);
-      window.removeEventListener('resize', place);
-    };
-  }, [open, rows.length]);
-
-  // Escape closes it, and so does a press anywhere outside it. Both listeners
-  // are attached in an effect, which means they exist only from the render
-  // after the one that opened the deck — the press that opened it can never
-  // also close it. The toggle in the hint row counts as inside, or its own
-  // handler and this one would cancel each other out.
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') onToggle();
-    };
-    const onDown = (e) => {
-      if (!e.target.closest?.('.deck, .deck__hint')) onToggle();
-    };
-    document.addEventListener('keydown', onKey);
-    // A frame later, not immediately. Attaching it in the same tick as the
-    // render that opened the deck let the opening interaction's own trailing
-    // events reach it, so the deck opened and shut again on one press.
-    const armed = requestAnimationFrame(() =>
-      document.addEventListener('pointerdown', onDown),
-    );
-    return () => {
-      cancelAnimationFrame(armed);
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onDown);
-    };
-  }, [open, onToggle]);
-
-  return (
-    <div
-      className={`deck${open ? ' deck--open' : ''}`}
-      ref={deckRef}
-      style={{ height: collapsedHeight }}
-      key={restackKey}
-    >
-      {/* Purely visual: it dims what the open deck floats over. Dismissal is
-          handled by the listeners above, so this takes no pointer events and
-          is not in the tab order. */}
-      {open && <div className="deck__scrim" aria-hidden="true" />}
-
-      <div
-        className={`deck__layer${open && panel?.clipped ? ' deck__layer--clipped' : ''}`}
-        style={
-          open && panel
-            ? {
-                position: 'fixed',
-                top: panel.top,
-                left: panel.left,
-                width: panel.width,
-                height: panel.height,
-                '--open-h': `${panel.full}px`,
-              }
-            : undefined
-        }
-      >
-        {/* Gives the open layer something to scroll. The passes are absolutely
-            positioned, so without it a deck taller than the screen would have
-            its last cards off the bottom with no way to reach them. */}
-        {open && <div className="deck__spacer" aria-hidden="true" />}
-        {rows.map((row, i) => (
-          <div
-            key={row.goal.id}
-            className={
-              'deck__card' +
-              (drag.dragId === String(row.id) ? ' deck__card--held' : '') +
-              (drag.overId === String(row.id) ? ' deck__card--over' : '')
-            }
-            data-sort-id={row.id}
-            style={{
-              '--i': i,
-              // Collapsed, the first pass is the one in front and the rest
-              // peek out below it, each a little narrower — a deck seen
-              // edge-on rather than a column of slivers. Open, they are a
-              // list, so the order flips back.
-              '--y': open
-                ? `calc(${i} * (var(--pass-h) + var(--deck-gap)))`
-                : `${Math.min(i, MAX_PEEK) * PEEK}px`,
-              '--s': open ? 1 : 1 - Math.min(i, MAX_PEEK) * 0.03,
-              zIndex: open ? i + 1 : rows.length - i,
-            }}
-          >
-            <GoalPass
-              row={row}
-              todayColumn={todayColumn}
-              onLog={open ? () => onLog(row.goal.id) : undefined}
-              grip={
-                open ? (
-                  <button
-                    type="button"
-                    className="goal-pass__grip"
-                    {...drag.handleProps(row.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        onNudge(row.id, -1);
-                      }
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        onNudge(row.id, 1);
-                      }
-                    }}
-                    aria-label={`Move ${row.goal.title}. Drag, or use the up and down arrow keys.`}
-                    title="Drag to reorder"
-                  >
-                    <IconGrip />
-                  </button>
-                ) : null
-              }
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Collapsed, the whole deck is one target. Open, each pass carries its
-          own Log button and this is gone. */}
-      {!open && (
-        <button
-          type="button"
-          className="deck__grip"
-          onClick={onToggle}
-          aria-expanded={false}
-          aria-label={`Fan out ${rows.length} goal ${rows.length === 1 ? 'pass' : 'passes'}`}
-        />
-      )}
-    </div>
-  );
-}
+/* One tap from an empty dashboard to a working one. */
+const STARTERS = [
+  { title: 'Morning run', category: 'fitness', target: 3 },
+  { title: 'Read before bed', category: 'sleep', target: 7 },
+  { title: 'Deep work block', category: 'productivity', target: 5 },
+  { title: 'Stretch', category: 'health', target: 3 },
+];
 
 /* The left column's blocks, in their default order. Lately is not here: it
    lives in the other column and is the one thing that stays put. */
@@ -416,7 +140,6 @@ const SECTIONS = [
   { id: 'rings', label: 'Goal rings' },
   { id: 'week', label: 'This week' },
   { id: 'plan', label: "Today's plan" },
-  { id: 'deck', label: 'Goal passes' },
   { id: 'activity', label: 'Activity' },
   { id: 'notes', label: 'Notes' },
 ];
@@ -475,32 +198,16 @@ export default function Dashboard() {
   const today = useToday();
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
 
-  const { theme } = useTheme();
   const [modal, setModal] = useState(null);
   const [logGoalId, setLogGoalId] = useState('');
-  const [fanned, setFanned] = useState(prefersReducedMotion);
-  const toggleFan = useCallback(() => setFanned((isOpen) => !isOpen), []);
 
-  // Changing the combination restacks the deck in the new colors. A keyed
-  // remount rather than a class, so the entrance cannot replay on an
-  // unrelated re-render.
-  const [restackKey, setRestackKey] = useState(0);
-  const firstTheme = useRef(true);
-  useEffect(() => {
-    if (firstTheme.current) {
-      firstTheme.current = false;
-      return;
-    }
-    setRestackKey((k) => k + 1);
-  }, [theme]);
 
   const summary = useMemo(
     () => weekSummary(goals, behaviors, weekStart, today),
     [goals, behaviors, weekStart, today],
   );
 
-  // One saved order drives both the ring rail and the deck, because they are
-  // two views of the same list: dragging a ring moves its pass too.
+  // The rings keep a saved order of their own, dragged into place.
   const rowsWithId = useMemo(
     () => summary.rows.map((row) => ({ ...row, id: String(row.goal.id) })),
     [summary.rows],
@@ -532,6 +239,72 @@ export default function Dashboard() {
     setLogGoalId(goalId);
     setModal('log');
   }, []);
+
+  // An Undo for whatever was just logged: a one-tap log, or a planned block
+  // marked done.
+  const [toast, setToast] = useState(null);
+  const showToast = useCallback((t) => setToast({ ...t, key: Date.now() }), []);
+  const clearToast = useCallback(() => setToast(null), []);
+
+  const loggedToday = useMemo(
+    () => new Set(behaviors.filter((b) => b.completed && b.logDate === todayIso && b.goal).map((b) => b.goal.id)),
+    [behaviors, todayIso],
+  );
+  const [loggingId, setLoggingId] = useState(null);
+
+  const tapRing = async (row) => {
+    if (loggedToday.has(row.goal.id)) {
+      openLog(row.goal.id);
+      return;
+    }
+    setLoggingId(row.goal.id);
+    try {
+      const res = await client.post('/api/behaviors', {
+        goalId: row.goal.id,
+        note: row.goal.title,
+        completed: true,
+        mood: null,
+        logDate: todayIso,
+        placeName: row.goal.placeName ?? null,
+      });
+      handleTimeSaved();
+      showToast({
+        message: `Logged ${row.goal.title} for today`,
+        undo: async () => {
+          await client.delete(`/api/behaviors/${res.data.id}`);
+          handleTimeSaved();
+        },
+      });
+    } catch {
+      showToast({ message: "Couldn't log that. Check your connection and try again.", undoable: false });
+    } finally {
+      setLoggingId(null);
+    }
+  };
+
+  // Whether anything was logged last week, which decides whether there is a
+  // week to write up and review.
+  const lastWeekIso = toIsoDate(addDays(weekStart, -7));
+  const thisWeekIso = toIsoDate(weekStart);
+  const loggedLastWeek = behaviors.some((b) => b.logDate >= lastWeekIso && b.logDate < thisWeekIso);
+
+  const [starting, setStarting] = useState('');
+  const addStarter = async (starter) => {
+    setStarting(starter.title);
+    try {
+      await client.post('/api/goals', {
+        title: starter.title,
+        category: starter.category,
+        targetPerWeek: starter.target,
+        frequency: starter.target === 7 ? 'daily' : 'weekly',
+      });
+      reload();
+    } catch {
+      showToast({ message: "Couldn't add that goal. Check your connection and try again.", undoable: false });
+    } finally {
+      setStarting('');
+    }
+  };
 
   const [calendarDay, setCalendarDay] = useState(null);
   const openCalendar = (iso) => {
@@ -608,15 +381,35 @@ export default function Dashboard() {
             <li>Log an entry when you do it. One line is enough.</li>
             <li>Come back to see the week fill in.</li>
           </ol>
+          <p className="onboard__body">Start from one of these, or write your own:</p>
+          <ul className="onboard__starters">
+            {STARTERS.map((st) => (
+              <li key={st.title}>
+                <button
+                  type="button"
+                  className="onboard__starter"
+                  onClick={() => addStarter(st)}
+                  disabled={starting !== ''}
+                >
+                  {starting === st.title ? 'Adding\u2026' : st.title}
+                  <small>{st.target === 7 ? 'every day' : `${st.target}\u00d7 a week`}</small>
+                </button>
+              </li>
+            ))}
+          </ul>
           <div className="onboard__actions">
             <button type="button" className="app-btn" onClick={() => setModal('goal')}>
-              Add your first goal
+              Write your own goal
             </button>
             <button type="button" className="app-btn app-btn--ghost" onClick={() => openLog()}>
               Just log something
             </button>
           </div>
         </section>
+      )}
+
+      {loadState === 'ready' && goals.length > 0 && (
+        <WeekReviewCard today={today} loggedLastWeek={loggedLastWeek} />
       )}
 
       {loadState === 'ready' && goals.length > 0 && (
@@ -635,7 +428,9 @@ export default function Dashboard() {
                   <GoalRing
                     key={row.id}
                     row={row}
-                    onClick={() => openLog(row.goal.id)}
+                    onClick={() => tapRing(row)}
+                    busy={loggingId === row.goal.id}
+                    loggedToday={loggedToday.has(row.goal.id)}
                     order={goalOrder.indexOf(row.id)}
                     held={goalDrag.dragId === row.id}
                     over={goalDrag.overId === row.id}
@@ -767,49 +562,7 @@ export default function Dashboard() {
               drag={blockDrag}
               onNudge={blockOrder.nudge}
             >
-              <PlanToday today={today} />
-            </Block>
-
-            <Block
-              id="deck"
-              label="Goal passes"
-              order={blockOrder.indexOf('deck')}
-              rearrange={rearrange}
-              drag={blockDrag}
-              onNudge={blockOrder.nudge}
-            >
-            <section aria-labelledby="dash-stack-title">
-              <h2 className="app-sr" id="dash-stack-title">
-                Goal passes
-              </h2>
-              <div className="deck__hint">
-                <span>
-                  {summary.rows.length} {summary.rows.length === 1 ? 'pass' : 'passes'}
-                </span>
-                <span className="app-panel__spacer" />
-                <button
-                  type="button"
-                  className="app-iconbtn"
-                  onClick={toggleFan}
-                  aria-pressed={fanned}
-                  aria-label={fanned ? 'Stack the passes' : 'Fan out the passes'}
-                  title={fanned ? 'Stack the passes' : 'Fan out the passes'}
-                >
-                  {fanned ? <IconRestack /> : <IconFanOut />}
-                </button>
-              </div>
-
-              <GoalDeck
-                rows={goalOrder.ordered}
-                open={fanned}
-                onToggle={toggleFan}
-                todayColumn={todayColumn}
-                onLog={openLog}
-                restackKey={restackKey}
-                drag={goalDrag}
-                onNudge={goalOrder.nudge}
-              />
-            </section>
+              <PlanToday today={today} goals={goals} onChanged={handleTimeSaved} onToast={showToast} />
             </Block>
 
             <Block
@@ -874,6 +627,12 @@ export default function Dashboard() {
           onLogDay={() => openLog()}
         />
       )}
+      <UndoToast
+        key={toast?.key}
+        toast={toast}
+        onUndo={(t) => t.undo?.()}
+        onDone={clearToast}
+      />
     </AppShell>
   );
 }

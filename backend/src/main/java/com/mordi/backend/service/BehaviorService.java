@@ -1,6 +1,8 @@
 package com.mordi.backend.service;
 
 import com.mordi.backend.dto.BehaviorRequest;
+import com.mordi.backend.dto.PlaceSummary;
+import com.mordi.backend.exception.BehaviorNotFoundException;
 import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Behavior;
 import com.mordi.backend.model.Goal;
@@ -12,6 +14,8 @@ import com.mordi.backend.repository.LocationRepository;
 import com.mordi.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -50,6 +54,7 @@ public class BehaviorService {
         behavior.setLatitude(request.getLatitude());
         behavior.setLongitude(request.getLongitude());
         behavior.setDurationSeconds(validDuration(request.getDurationSeconds()));
+        behavior.setLoggedAt(validLoggedAt(request.getLoggedAt()));
 
         Behavior saved = behaviorRepository.save(behavior);
 
@@ -84,6 +89,45 @@ public class BehaviorService {
             throw new IllegalArgumentException("A timed entry must be between 0 seconds and 7 days");
         }
         return seconds;
+    }
+
+    /**
+     * A client-supplied moment is accepted only when it is plausible: not in
+     * the future (allowing for a slow clock) and no older than the longest
+     * session plus a day. Anything else is replaced by now, rather than
+     * rejecting the whole entry over its timestamp.
+     */
+    private Instant validLoggedAt(Instant requested) {
+        Instant now = Instant.now();
+        if (requested == null
+                || requested.isAfter(now.plus(Duration.ofMinutes(5)))
+                || requested.isBefore(now.minusSeconds(MAX_DURATION_SECONDS).minus(Duration.ofDays(1)))) {
+            return now;
+        }
+        return requested;
+    }
+
+    /** Removes one of the person's own entries: the undo for a one-tap log. */
+    public void deleteBehavior(String email, Long id) {
+        User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        Behavior behavior = behaviorRepository.findByIdAndUser(id, user)
+                    .orElseThrow(BehaviorNotFoundException::new);
+        behaviorRepository.delete(behavior);
+    }
+
+    /** Every named place the person has logged from, most visited first. */
+    public List<PlaceSummary> getPlaces(String email) {
+        User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        return behaviorRepository.summarizePlaces(user).stream()
+            .map(row -> new PlaceSummary(
+                (String) row[0],
+                ((Number) row[1]).longValue(),
+                (LocalDate) row[2],
+                row[3] == null ? null : ((Number) row[3]).doubleValue(),
+                row[4] == null ? null : ((Number) row[4]).doubleValue()))
+            .toList();
     }
 
     private String trimToNull(String value) {

@@ -9,6 +9,14 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 const MOOD_TONE = { great: 'up', good: 'up', neutral: 'flat', bad: 'down', terrible: 'down' };
 const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
+const clock = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+
+/** The time of day an entry was logged, in the reader's own zone, if known. */
+function loggedTime(entry) {
+  if (!entry.loggedAt) return null;
+  const d = new Date(entry.loggedAt);
+  return Number.isNaN(d.getTime()) ? null : clock.format(d);
+}
 
 /** Pixels per second. Slow enough to read a line as it passes. */
 const SPEED = 24;
@@ -56,8 +64,13 @@ function Groups({ groups, todayIso }) {
                 </span>
               )}
             </div>
-            {(entry.goal || entry.placeName) && (
+            {(entry.goal || entry.placeName || loggedTime(entry)) && (
               <div className="lately__foot">
+                {loggedTime(entry) && (
+                  <time className="lately__time" dateTime={entry.loggedAt}>
+                    {loggedTime(entry)}
+                  </time>
+                )}
                 {entry.goal && <span className="lately__goal">{entry.goal.title}</span>}
                 {entry.placeName && (
                   <span className="lately__place">

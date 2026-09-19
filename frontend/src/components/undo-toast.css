@@ -1,0 +1,63 @@
+/* A small matte bar at the bottom of the screen, above the phone tab bar. */
+.undo-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px 10px 10px 16px;
+  border-radius: var(--r-control);
+  background: var(--color-text);
+  color: var(--color-bg);
+  box-shadow: var(--lift-3);
+  font-size: var(--t-small);
+  transform: translateX(-50%);
+  animation: undo-in 260ms var(--ease-pop);
+}
+@keyframes undo-in {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.undo-toast__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.undo-toast__undo {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-bg) 18%, transparent);
+  color: var(--color-bg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.undo-toast__undo:hover { background: color-mix(in srgb, var(--color-bg) 28%, transparent); }
+.undo-toast__close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: color-mix(in srgb, var(--color-bg) 75%, transparent);
+  cursor: pointer;
+}
+@media (max-width: 860px) {
+  .undo-toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (pointer: coarse) {
+  .undo-toast__undo, .undo-toast__close { min-height: 44px; min-width: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .undo-toast { animation: none; }
+}

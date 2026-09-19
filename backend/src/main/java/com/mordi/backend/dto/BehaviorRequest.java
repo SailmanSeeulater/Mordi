@@ -14,4 +14,6 @@ public class BehaviorRequest {
     private Double longitude;
     private String placeName;
     private Integer durationSeconds;
+    // Optional: when it happened, if not now (a timer sends its start).
+    private java.time.Instant loggedAt;
 }

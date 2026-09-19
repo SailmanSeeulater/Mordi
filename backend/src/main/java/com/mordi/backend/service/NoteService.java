@@ -23,7 +23,9 @@ import org.springframework.stereotype.Service;
 public class NoteService {
 
     /** Deliberately small. Notes are for a handful of standing reminders. */
-    public static final int MAX_NOTES = 5;
+    // Linked Markdown notes need room to link to each other; five was a toy.
+    // Still a ceiling, so one account cannot fill the table.
+    public static final int MAX_NOTES = 200;
 
     /** Long enough for a paragraph, short enough that it is still a note. */
     // Markdown notes run longer than plain ones: headings, lists, links.

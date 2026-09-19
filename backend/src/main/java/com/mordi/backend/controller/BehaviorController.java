@@ -25,6 +25,22 @@ public class BehaviorController {
                 return ResponseEntity.ok(behaviorService.logBehavior(email, request));
     }
 
+    /** Undo: removes one of the person's own entries. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBehavior(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        behaviorService.deleteBehavior(email, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Every named place logged from, with visit counts and a map position. */
+    @GetMapping("/places")
+    public ResponseEntity<List<com.mordi.backend.dto.PlaceSummary>> getPlaces(
+            @AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(behaviorService.getPlaces(email));
+    }
+
     @GetMapping("/today")
     public ResponseEntity<List<Behavior>> getTodayBehaviors(
             @AuthenticationPrincipal String email) {

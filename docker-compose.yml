@@ -37,6 +37,10 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       MORDI_JWT_SECRET: ${JWT_SECRET}
       MORDI_JWT_EXPIRATION: 900000
+      # Web Push reminders; optional. Without both keys reminders stay off.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:hello@latesailor.dev}
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       SPRING_FLYWAY_BASELINE_VERSION: "1"
     depends_on:
