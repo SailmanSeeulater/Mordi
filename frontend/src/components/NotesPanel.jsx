@@ -1,7 +1,12 @@
-import { useCallback, useState } from 'react';
+import { Suspense, lazy, useCallback, useState } from 'react';
 import useNotes from '../hooks/useNotes';
 import Modal from './Modal';
 import NoteForm from './NoteForm';
+
+// The Markdown renderer is the heaviest thing on the dashboard; it loads the
+// first time a note is opened, not with the page.
+const Markdown = lazy(() => import('./Markdown'));
+import { backlinks, findNote, noteExcerpt, noteHeading, tagsOf } from '../lib/markdown';
 import './notes.css';
 
 const icon = {
@@ -30,26 +35,86 @@ const IconTrash = () => (
   </svg>
 );
 
-/** A note with no title is shown by its first line. */
-function noteHeading(note) {
-  if (note.title) return note.title;
-  const [first] = note.body.split('\n');
-  return first.length > 60 ? `${first.slice(0, 60)}…` : first;
-}
+const editedFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
-/** The body, minus whatever the heading already showed. */
-function noteRest(note) {
-  if (note.title) return note.body;
-  return note.body.split('\n').slice(1).join('\n').trim();
+/**
+ * Obsidian's reading view for one note: the Markdown set as a page to read,
+ * a quiet line of facts above it, and the notes that link here below.
+ * [[Links]] open the note they name; one to a note that does not exist yet
+ * offers to write it. The dialog's own Close is the only close.
+ */
+function NoteReader({ note, notes, onOpen, onCreate, onEdit }) {
+  const tags = tagsOf(note);
+  const linkedFrom = backlinks(notes, note);
+  const edited = note.updatedAt ?? note.createdAt;
+  return (
+    <article className="note-reader">
+      <p className="note-reader__meta">
+        {edited && <span>Edited {editedFormat.format(new Date(edited))}</span>}
+        {note.pinned && <span>Pinned</span>}
+        {tags.map((t) => (
+          <span key={t} className="md-tag">
+            #{t}
+          </span>
+        ))}
+      </p>
+
+      <div className="note-reader__page">
+        <Suspense fallback={<p className="app-empty">Opening the note…</p>}>
+          <Markdown
+            source={note.body}
+            resolve={(name) => findNote(notes, name)}
+            onOpenNote={(name) => {
+              const target = findNote(notes, name);
+              if (target) onOpen(target);
+              else onCreate(name);
+            }}
+          />
+        </Suspense>
+      </div>
+
+      <footer className="note-reader__foot">
+        {linkedFrom.length > 0 ? (
+          <div className="note-reader__backlinks">
+            <span>Linked from</span>
+            {linkedFrom.map((n) => (
+              <button key={n.id} type="button" className="note-reader__backlink" onClick={() => onOpen(n)}>
+                {noteHeading(n)}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span />
+        )}
+        <button type="button" className="app-btn" onClick={onEdit}>
+          Edit note
+        </button>
+      </footer>
+    </article>
+  );
 }
 
 export default function NotesPanel() {
   const { notes, limit, loadState, retry, save, remove, togglePin } = useNotes();
   const [editing, setEditing] = useState(null); // null | 'new' | note
+  const [reading, setReading] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
   const [confirming, setConfirming] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const close = useCallback(() => setEditing(null), []);
+  const close = useCallback(() => {
+    setEditing(null);
+    setNewTitle('');
+  }, []);
+
+  // A [[link]] to a note that does not exist yet: write it, as Obsidian does,
+  // unless the cap is already reached.
+  const createFromLink = (name) => {
+    setReading(null);
+    if (notes.length >= limit) return;
+    setNewTitle(name);
+    setEditing('new');
+  };
   const full = notes.length >= limit;
 
   const handleSave = async (body) => {
@@ -109,14 +174,14 @@ export default function NotesPanel() {
       {loadState === 'ready' && notes.length > 0 && (
         <ul className="app-list notes">
           {notes.map((note) => {
-            const rest = noteRest(note);
+            const rest = noteExcerpt(note);
             return (
               <li className={`note${note.pinned ? ' note--pinned' : ''}`} key={note.id}>
                 <button
                   type="button"
                   className="note__open"
-                  onClick={() => setEditing(note)}
-                  aria-label={`Edit note: ${noteHeading(note)}`}
+                  onClick={() => setReading(note)}
+                  aria-label={`Open note: ${noteHeading(note)}`}
                 >
                   <span className="note__heading">{noteHeading(note)}</span>
                   {rest && <span className="note__body">{rest}</span>}
@@ -153,11 +218,29 @@ export default function NotesPanel() {
       )}
 
       {editing && (
-        <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={close}>
+        <Modal title={editing === 'new' ? 'New note' : 'Edit note'} onClose={close} size="wide">
           <NoteForm
             note={editing === 'new' ? null : editing}
+            notes={notes}
+            initialTitle={newTitle}
             onSave={handleSave}
             onCancel={close}
+          />
+        </Modal>
+      )}
+
+      {reading && (
+        <Modal title={noteHeading(reading)} onClose={() => setReading(null)} size="wide">
+          <NoteReader
+            // Re-read from the live list, so an edit shows when coming back.
+            note={notes.find((n) => n.id === reading.id) ?? reading}
+            notes={notes}
+            onOpen={setReading}
+            onCreate={createFromLink}
+            onEdit={() => {
+              setEditing(notes.find((n) => n.id === reading.id) ?? reading);
+              setReading(null);
+            }}
           />
         </Modal>
       )}

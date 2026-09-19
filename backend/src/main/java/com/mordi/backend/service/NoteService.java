@@ -26,7 +26,8 @@ public class NoteService {
     public static final int MAX_NOTES = 5;
 
     /** Long enough for a paragraph, short enough that it is still a note. */
-    private static final int MAX_BODY = 2000;
+    // Markdown notes run longer than plain ones: headings, lists, links.
+    private static final int MAX_BODY = 20_000;
     private static final int MAX_TITLE = 120;
 
     private final NoteRepository noteRepository;

@@ -42,6 +42,11 @@ public class Goal {
     @Column
     private boolean active = true;
 
+    // Set when the goal is archived: off the dashboard, onto History, with its
+    // entries intact. Null for a current goal.
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

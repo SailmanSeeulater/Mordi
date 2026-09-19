@@ -5,7 +5,9 @@ import {
   IDLE,
   TIMER_KEY,
   durationSeconds,
+  pauseSession,
   readSession,
+  resumeSession,
   startSession,
   stopSession,
 } from '../lib/timer';
@@ -29,7 +31,7 @@ function store(session) {
 }
 
 /**
- * The time logger: idle, running, or stopped and waiting to be saved.
+ * The time logger: idle, running, paused, or stopped and waiting to be saved.
  *
  * The session lives in localStorage, so a timer keeps running across a
  * reload, a move to another page, or the laptop lid. Another open tab picks up
@@ -73,6 +75,18 @@ export default function useTimer() {
     setSession(startSession(name, at));
   }, []);
 
+  const pause = useCallback(() => {
+    const at = Date.now();
+    setNow(at);
+    setSession((current) => pauseSession(current, at));
+  }, []);
+
+  const resume = useCallback(() => {
+    const at = Date.now();
+    setNow(at);
+    setSession((current) => resumeSession(current, at));
+  }, []);
+
   const stop = useCallback(() => {
     const at = Date.now();
     setNow(at);
@@ -112,5 +126,5 @@ export default function useTimer() {
     }
   }, [session]);
 
-  return { session, now, saving, error, start, stop, discard, save };
+  return { session, now, saving, error, start, pause, resume, stop, discard, save };
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import client from '../api/client';
 import AppShell from '../components/AppShell';
 import useDocumentTitle from '../hooks/useDocumentTitle';
@@ -42,11 +43,55 @@ function Delta({ value }) {
   );
 }
 
+/**
+ * Completion for each written-up week, oldest to newest, so the run of weeks
+ * reads left to right. Each bar opens its week.
+ */
+function Trend({ reports }) {
+  const weeks = [...reports].slice(0, 12).reverse();
+  if (weeks.length < 2) return null;
+  return (
+    <section className="app-panel rep-trend" aria-labelledby="rep-trend-title">
+      <div className="app-panel__head">
+        <h2 className="app-panel__title" id="rep-trend-title">
+          Completion by week
+        </h2>
+        <div className="app-panel__spacer" />
+        <span className="app-panel__meta">
+          {weeks.length} weeks
+        </span>
+      </div>
+      <ol className="rep-trend__bars">
+        {weeks.map((r, i) => (
+          <li key={r.id} style={{ '--i': i }}>
+            <Link
+              to={`/reports/${r.weekStart}`}
+              className={`rep-trend__bar${r.legacy ? ' rep-trend__bar--legacy' : ''}`}
+              aria-label={`${reportWeekLabel(r)}: ${r.percent}%. Open this week.`}
+            >
+              <span className="rep-trend__value">{r.percent}%</span>
+              <span className="rep-trend__fill" style={{ height: `${Math.max(3, Math.min(r.percent, 100))}%` }} />
+            </Link>
+            <span className="rep-trend__label" aria-hidden="true">
+              {reportWeekLabel(r).split(' \u2013 ')[0]}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function ReportCard({ report, delta }) {
   return (
     <li className="rep-card app-glass">
       <div className="rep-card__head">
-        <h3 className="rep-card__week">{reportWeekLabel(report)}</h3>
+        <h3 className="rep-card__week">
+          {/* The whole card is the link: its ::after covers the card. */}
+          <Link to={`/reports/${report.weekStart}`} className="rep-card__link">
+            {reportWeekLabel(report)}
+          </Link>
+        </h3>
         <span className="app-panel__spacer" />
         <Delta value={delta} />
       </div>
@@ -98,6 +143,12 @@ function ReportCard({ report, delta }) {
           logged that you ticked off, not the share of what you planned.
         </p>
       )}
+      <span className="rep-card__open" aria-hidden="true">
+        Open the week
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+          <path d="M9 5l7 7-7 7" />
+        </svg>
+      </span>
     </li>
   );
 }
@@ -224,6 +275,8 @@ export default function Reports() {
               </p>
             </section>
           ) : (
+            <>
+            <Trend reports={reports} />
             <section aria-labelledby="rep-list-title">
               <h2 className="app-sr" id="rep-list-title">
                 Past weeks
@@ -234,6 +287,7 @@ export default function Reports() {
                 ))}
               </ul>
             </section>
+            </>
           )}
         </>
       )}

@@ -1,5 +1,6 @@
 package com.mordi.backend.controller;
 
+import com.mordi.backend.dto.ArchivedGoalResponse;
 import com.mordi.backend.dto.GoalRequest;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.service.GoalService;
@@ -27,6 +28,27 @@ public class GoalController {
     public ResponseEntity<List<Goal>> getGoals(
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(goalService.getActiveGoals(email));
+    }
+
+    /** History: goals that were archived, with what each amounted to. */
+    @GetMapping("/archived")
+    public ResponseEntity<List<ArchivedGoalResponse>> getArchivedGoals(
+            @AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(goalService.getArchivedGoals(email));
+    }
+
+    @PostMapping("/{id}/archive")
+    public ResponseEntity<Goal> archiveGoal(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(goalService.archiveGoal(email, id));
+    }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Goal> restoreGoal(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(goalService.restoreGoal(email, id));
     }
 
     @PutMapping("/{id}")

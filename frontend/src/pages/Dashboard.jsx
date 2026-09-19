@@ -17,6 +17,7 @@ import TimeLogger from '../components/TimeLogger';
 import ActivityHeatmap from '../components/ActivityHeatmap';
 import TodoList from '../components/TodoList';
 import LatelyFeed from '../components/LatelyFeed';
+import PlanToday from '../components/PlanToday';
 import { CATEGORY_ICONS } from '../lib/categories';
 import {
   currentStreak,
@@ -414,7 +415,7 @@ function GoalDeck({ rows, open, onToggle, todayColumn, onLog, restackKey, drag, 
 const SECTIONS = [
   { id: 'rings', label: 'Goal rings' },
   { id: 'week', label: 'This week' },
-  { id: 'timer', label: 'Time logger' },
+  { id: 'plan', label: "Today's plan" },
   { id: 'deck', label: 'Goal passes' },
   { id: 'activity', label: 'Activity' },
   { id: 'notes', label: 'Notes' },
@@ -759,14 +760,14 @@ export default function Dashboard() {
             </Block>
 
             <Block
-              id="timer"
-              label="Time logger"
-              order={blockOrder.indexOf('timer')}
+              id="plan"
+              label="Today's plan"
+              order={blockOrder.indexOf('plan')}
               rearrange={rearrange}
               drag={blockDrag}
               onNudge={blockOrder.nudge}
             >
-              <TimeLogger onSaved={handleTimeSaved} />
+              <PlanToday today={today} />
             </Block>
 
             <Block
@@ -837,10 +838,12 @@ export default function Dashboard() {
           </div>
 
           <div className="dash__col">
-            {/* To do and Lately share one card: both are the short, everyday list
-                beside the week, one of things to do and one of things done. */}
+            {/* To do, the timer and Lately share one card, read top to bottom
+                as the day goes: what is left to do, what is being done now,
+                and what is done. */}
             <div className="app-panel side">
               <TodoList />
+              <TimeLogger onSaved={handleTimeSaved} />
               <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries} />
             </div>
           </div>

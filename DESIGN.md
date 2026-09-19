@@ -88,6 +88,13 @@ page. Transform and opacity only.
   collapsed stack; passes travel on transform, staggered from the top card in
   both directions. Reordering marks the drop slot and commits on release.
 - **Segmented control:** one thumb slides between options.
+- **Theme change:** every colour eases across over 520ms. A class on `<html>`
+  (`theme-easing`) carries the transition only for the length of the switch,
+  so hover and press feedback stay instant the rest of the time.
+- **Week report:** bars grow from their baseline and grid cells settle in,
+  staggered, once on arrival. Nothing loops.
+- **Places:** the map is centred once and then moved with `panTo`, so a new
+  pin or a chosen place glides into view rather than cutting to it.
 - **Lately:** a fixed window that drifts upward when there is more than fits.
   Driven by `requestAnimationFrame` on a transform, handed back to native
   scroll the moment it stops, so a paused feed scrolls normally from where it
@@ -107,18 +114,34 @@ and the feed never moves.
 - **Goal rings** — conic progress per goal, dashed when nothing is logged;
   draggable, arrow keys to move.
 - **Goal deck** — matte passes, grip-to-reorder when open.
-- **Time logger** — name an action, start, stop, then save or discard. A
-  running timer is stored as timestamps in localStorage, so it survives a
-  reload or a sleeping tab and stays in step across open tabs. Saved, it becomes
-  an ordinary entry with `durationSeconds`, dated the day it started, and shows
-  in Lately with a duration chip. No discard while running: stop first.
+- **Timer** — the Clock app's timer in Mordi's materials: a ring that fills
+  over an hour with a dot orbiting each minute, large mono digits, and two
+  round buttons that keep their places (quiet action left, forward action
+  right). Start, pause, resume, finish, then save or discard. Lives under To do
+  in the side card. Stored as timestamps (`accumulatedMs`, `resumedAt`), so it
+  survives reloads and sleeping tabs. No discard while on the clock.
 - **Activity** — a year of logging, one square per day, Monday-led weeks. Four
   accent steps mixed into the surface: one to four logs map straight to a step,
   and only a heavier day stretches the scale. Clicking a day opens the calendar.
   Scrolls sideways natively on touch and trackpads, drags with a mouse, and
   takes arrow keys when focused; a drag never counts as a click on a day.
-- **Notes** — up to five, pinned first, pin marked by a filled icon and a faint
-  tint.
+- **Notes** — up to five, pinned first. Markdown with Obsidian's habits:
+  `[[Note]]` links, `#tags`, task lists, tables, backlinks. Opening a note shows
+  a reading view (a page set at 16.5px on a 64ch measure, with a line of facts
+  above and backlinks below); editing is one framed editor with the mode switch
+  and drawn formatting icons inside the frame.
+- **Calendar** — day, week and month. Drag on the hours to block out time, drag
+  an event to move it, drag its edge to resize; all snap to 15 minutes and
+  commit on release. Seven named colours, each mixed against the theme's own
+  surface and ink. Month is a six-week grid, dots on a phone. `.ics` files from
+  Google, Apple or Outlook import after a preview, repeating events expanded.
+- **History** — archived goals with what they amounted to; restore or delete.
+- **Week report** (`/reports/:week`) — a headline sentence on the week-card
+  field, then a goal × day table heatmap, entries per day against last week,
+  the mood mix and mood by day, tracked time against planned time, and places.
+  Every chart has a visually hidden data table.
+- **Directions** — A over B on a rail with a swap button, pick either end on
+  the map, and all four travel modes asked at once so each shows its time.
 - **To do + Lately** — one card: one-line to-dos above (Enter to add, tick,
   clear done), the entry feed below, grouped by day with a gap between days.
 - **Dialogs** — centred on desktop, bottom sheets under 860px, focus trap,

@@ -1,0 +1,485 @@
+/* Calendar: a week of hours, Google Calendar's layout in Mordi's materials. */
+
+/* The palette. Names are stored with each event; the hue is decided here, and
+   every tint is mixed against the theme's own surface and ink, so the same
+   event reads on all twenty-five themes. */
+.ev--accent { --ev: var(--color-accent); }
+.ev--sky { --ev: #3b82c4; }
+.ev--sage { --ev: #4f9a6a; }
+.ev--amber { --ev: #d08a1e; }
+.ev--rose { --ev: #cc4f73; }
+.ev--violet { --ev: #7c62c9; }
+.ev--slate { --ev: #64748b; }
+
+.cal {
+  display: grid;
+  gap: 12px;
+}
+
+.cal__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cal__nav { display: flex; gap: 2px; }
+.cal__nav .app-iconbtn { font-size: 20px; line-height: 1; }
+.cal__title {
+  margin: 0;
+  font-size: var(--t-h3);
+  font-weight: 600;
+}
+.cal__month {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.cal__views { width: 150px; }
+
+.cal__panel {
+  --gutter: 56px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.cal__head,
+.cal__allday {
+  display: grid;
+  grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-divider);
+}
+.cal__day-head {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.cal__day-head span {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cal__day-head strong {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.cal__day-head--today span { color: var(--color-accent-700); }
+.cal__day-head--today strong {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.cal__gutter--label {
+  align-self: center;
+  padding-right: 8px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+.cal__allday-cell {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 3px;
+  border-left: 1px solid var(--color-divider);
+}
+.cal__chip {
+  overflow: hidden;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in oklab, var(--ev) 22%, var(--color-surface));
+  color: color-mix(in oklab, var(--ev) 45%, var(--color-text));
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* The hours scroll; the head and all-day row stay put above them. */
+.cal__scroller {
+  height: min(68vh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.cal__grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+}
+.cal__hours { position: relative; }
+.cal__hours span {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.cal__cols {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--days), minmax(0, 1fr));
+  /* Hour lines, drawn once for the whole grid. */
+  background-image: linear-gradient(to bottom, var(--color-divider) 1px, transparent 1px);
+  background-size: 100% 48px;
+}
+.cal__col {
+  position: relative;
+  border-left: 1px solid var(--color-divider);
+  touch-action: pan-y;
+  cursor: crosshair;
+}
+.cal__col--today {
+  background: color-mix(in oklab, var(--color-accent) 5%, transparent);
+}
+
+.cal__pending {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border-radius: var(--r-chip);
+  background: color-mix(in oklab, var(--color-accent) 28%, transparent);
+  outline: 1.5px dashed var(--color-accent-700);
+  pointer-events: none;
+}
+
+.cal__event {
+  position: absolute;
+  display: grid;
+  overflow: hidden;
+  border-radius: var(--r-chip);
+  background: color-mix(in oklab, var(--ev) 22%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ev) 45%, var(--color-surface));
+  touch-action: none;
+  cursor: grab;
+  transition: box-shadow 120ms var(--ease-out);
+}
+.cal__event--held {
+  cursor: grabbing;
+  z-index: 3;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ev) 45%, var(--color-surface)), var(--lift-2);
+}
+.cal__event-body {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 0;
+  background: none;
+  color: color-mix(in oklab, var(--ev) 40%, var(--color-text));
+  font: inherit;
+  text-align: left;
+  cursor: inherit;
+}
+.cal__event-body strong {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal__event-body span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  opacity: 0.9;
+}
+.cal__event--short .cal__event-body { padding-top: 1px; }
+.cal__resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  cursor: ns-resize;
+}
+
+.cal__now {
+  position: absolute;
+  left: -1px;
+  right: 0;
+  height: 2px;
+  background: var(--color-signal);
+  pointer-events: none;
+  z-index: 2;
+}
+.cal__now::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--color-signal);
+}
+
+.cal__hint {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
+/* The form's pieces. */
+.event-form__when {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0 12px;
+}
+.event-form__pair {
+  display: flex;
+  gap: 6px;
+}
+.event-form__pair input[type='time'] { max-width: 120px; }
+.event-form__colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.event-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--ev);
+  cursor: pointer;
+}
+.event-swatch[aria-checked='true'] {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--ev);
+}
+.event-form__delete { margin-right: auto; color: var(--color-signal); }
+
+/* Today's plan, on the dashboard. */
+.plan-today__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 18px 16px;
+  display: grid;
+  gap: 6px;
+}
+.plan-today__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--ev) 14%, var(--color-surface));
+}
+.plan-today__time::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: var(--r-pill);
+  background: var(--ev);
+  vertical-align: 1px;
+}
+.plan-today__time {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.plan-today__title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.plan-today__item--past { opacity: 0.55; }
+
+@media (max-width: 720px) {
+  .cal__panel { --gutter: 46px; }
+  .cal__scroller { height: 64vh; }
+}
+
+/* ── Month ─────────────────────────────────── */
+
+.month__head,
+.month__body {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.month__head {
+  border-bottom: 1px solid var(--color-divider);
+}
+.month__head span {
+  padding: 10px 8px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.month__day {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 6px 5px 6px;
+  border-right: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  cursor: cell;
+}
+.month__day:nth-child(7n) { border-right: 0; }
+.month__day:nth-last-child(-n + 7) { border-bottom: 0; }
+.month__day--outside { background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+.month__day--outside .month__date { color: var(--color-text-muted); }
+.month__date {
+  align-self: flex-start;
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.month__date:hover { background: var(--color-bg); }
+.month__day--today .month__date {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.month__events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.month__event {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.month__event:hover { background: color-mix(in oklab, var(--ev) 14%, var(--color-surface)); }
+.month__event::before {
+  content: '';
+  flex: 0 0 auto;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background: var(--ev);
+}
+.month__event--allday {
+  background: color-mix(in oklab, var(--ev) 22%, var(--color-surface));
+  color: color-mix(in oklab, var(--ev) 40%, var(--color-text));
+  font-weight: 600;
+}
+.month__event--allday::before { display: none; }
+.month__time {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-text-muted);
+}
+.month__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.month__more {
+  align-self: flex-start;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+.month__more:hover { color: var(--color-text); background: var(--color-bg); }
+.month__dots { display: none; }
+
+/* On a phone the month is a grid of dots: one per event, coloured. */
+@media (max-width: 720px) {
+  .month__day { min-height: 64px; padding: 4px 2px; align-items: center; }
+  .month__events,
+  .month__more { display: none; }
+  .month__dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
+  .month__dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--ev); }
+  .month__date { align-self: center; }
+}
+
+/* ── Import ────────────────────────────────── */
+
+.cal__import { gap: 6px; }
+.cal__notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--color-accent) 10%, var(--color-surface));
+  font-size: var(--t-small);
+}
+.import__lead { margin: 0 0 12px; line-height: 1.5; }
+.import__list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.import__list li:not(.import__rest) {
+  display: grid;
+  gap: 1px;
+  padding: 8px 12px;
+  border-radius: var(--r-control);
+  background: color-mix(in oklab, var(--ev) 14%, var(--color-surface));
+}
+.import__when {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.import__title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import__rest { padding: 2px 12px; font-size: var(--t-small); color: var(--color-text-muted); }
