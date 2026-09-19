@@ -130,9 +130,27 @@ jobs:
             # the log that explains it.
             stamp "check"
             sleep 20
+            docker-compose ps
+
+            # The right version, not merely a running one. A container that
+            # is still on last week's image is running and has not restarted,
+            # so the liveness check below would pass for it. This is what
+            # turned an unchanged site into a green deploy.
+            for pair in "mordi-backend:mordi-backend" "mordi-frontend:mordi-frontend"; do
+              name=${pair%%:*}
+              image=${pair##*:}
+              want="ghcr.io/sailmanseeulater/$image:$MORDI_TAG"
+              have=$(docker inspect -f '{{.Config.Image}}' "$name")
+              if [ "$have" != "$want" ]; then
+                echo "$name is running $have, expected $want"
+                echo "The deploy did not replace it. Check that docker-compose.yml"
+                echo "names this image for the service and that the pull succeeded."
+                exit 1
+              fi
+            done
+
             running=$(docker inspect -f '{{.State.Running}}' mordi-backend)
             restarts=$(docker inspect -f '{{.RestartCount}}' mordi-backend)
-            docker-compose ps
             if [ "$running" != "true" ] || [ "$restarts" != "0" ]; then
               echo "backend is not up (running=$running restarts=$restarts):"
               docker-compose logs --tail=60 backend
