@@ -114,7 +114,7 @@ describe("Register", () => {
       { email: "user@example.com", name: "Test User" },
       "fake-jwt"
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
   });
 
   it("shows a generic error message on failed registration, without leaking backend detail", async () => {

@@ -58,6 +58,26 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    @ExceptionHandler(InviteNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleInviteNotFound(InviteNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(MessageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMessageNotFound(MessageNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(GoalFullException.class)
+    public ResponseEntity<Map<String, Object>> handleGoalFull(GoalFullException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(TooManyMessagesException.class)
+    public ResponseEntity<Map<String, Object>> handleTooManyMessages(TooManyMessagesException ex) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());

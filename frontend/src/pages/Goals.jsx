@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
 import useWeekData from '../hooks/useWeekData';
@@ -6,9 +7,12 @@ import client from '../api/client';
 import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
+import ShareGoalDialog from '../components/ShareGoalDialog';
 import { CATEGORY_ICONS } from '../lib/categories';
 import { targetLabel, toIsoDate, weekSummary } from './dashboardData';
 import { formatAverage, suggestTarget } from '../lib/targets';
+import { togetherApi, togetherLabel } from '../lib/together';
+import { enableModule } from '../lib/modules';
 import './goals.css';
 
 const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
@@ -103,7 +107,7 @@ export default function Goals() {
   const today = useToday();
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
 
-  const [modal, setModal] = useState(null); // 'add' | 'edit' | 'archive'
+  const [modal, setModal] = useState(null); // 'add' | 'edit' | 'archive' | 'share' | 'leave'
   const [active, setActive] = useState(null);
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState('');
@@ -130,11 +134,25 @@ export default function Goals() {
     setArchiveError('');
     try {
       await client.post(`/api/goals/${active.id}/archive`);
+      enableModule('history');
       setArchiving(false);
       handleSaved();
     } catch {
       setArchiving(false);
       setArchiveError("Couldn't archive that goal. Check your connection and try again.");
+    }
+  };
+
+  const leaveGoal = async () => {
+    setArchiving(true);
+    setArchiveError('');
+    try {
+      await togetherApi.leave(active.id);
+      setArchiving(false);
+      handleSaved();
+    } catch {
+      setArchiving(false);
+      setArchiveError("Couldn't leave that goal. Check your connection and try again.");
     }
   };
 
@@ -211,6 +229,9 @@ export default function Goals() {
               </strong>{' '}
               planned entries this week
             </span>
+            <Link className="goals__history" to="/history">
+              Archived goals
+            </Link>
           </p>
 
           {summary.rows.map((row) => {
@@ -234,26 +255,56 @@ export default function Goals() {
                 <h2 className="goal-card__name">{row.goal.title}</h2>
 
                 <div className="goal-card__actions">
-                  <button
-                    type="button"
-                    className="app-btn app-btn--quiet app-btn--sm"
-                    onClick={() => {
-                      setActive(row.goal);
-                      setModal('edit');
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="app-btn app-btn--ghost app-btn--sm"
-                    onClick={() => {
-                      setActive(row.goal);
-                      setModal('archive');
-                    }}
-                  >
-                    Archive
-                  </button>
+                  {row.goal.role === 'member' ? (
+                    <>
+                      <Link className="app-btn app-btn--quiet app-btn--sm" to={`/together/${row.goal.id}`}>
+                        Thread
+                      </Link>
+                      <button
+                        type="button"
+                        className="app-btn app-btn--ghost app-btn--sm"
+                        onClick={() => {
+                          setActive(row.goal);
+                          setModal('leave');
+                        }}
+                      >
+                        Leave
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="app-btn app-btn--quiet app-btn--sm"
+                        onClick={() => {
+                          setActive(row.goal);
+                          setModal('share');
+                        }}
+                      >
+                        Share
+                      </button>
+                      <button
+                        type="button"
+                        className="app-btn app-btn--quiet app-btn--sm"
+                        onClick={() => {
+                          setActive(row.goal);
+                          setModal('edit');
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="app-btn app-btn--ghost app-btn--sm"
+                        onClick={() => {
+                          setActive(row.goal);
+                          setModal('archive');
+                        }}
+                      >
+                        Archive
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="goal-card__meta">
@@ -268,6 +319,12 @@ export default function Goals() {
                   <span>
                     {row.done} of {row.target} this week
                   </span>
+                  {(row.goal.role === 'member' || row.goal.memberCount > 1) && (
+                    <Link className="goal-card__together" to={`/together/${row.goal.id}`}>
+                      {togetherLabel(row.goal)}
+                      {row.goal.unread > 0 && <span className="goal-card__unread">{row.goal.unread} new</span>}
+                    </Link>
+                  )}
                   {row.goal.placeName && (
                     <span className="goal-card__place">
                       <IconPin />
@@ -290,17 +347,19 @@ export default function Goals() {
                   ))}
                 </div>
 
-                <Suggestion
-                  goal={row.goal}
-                  behaviors={behaviors}
-                  today={today}
-                  weekIso={toIsoDate(weekStart)}
-                  onApply={applyTarget}
-                  onArchive={(goal) => {
-                    setActive(goal);
-                    setModal('archive');
-                  }}
-                />
+                {row.goal.role !== 'member' && (
+                  <Suggestion
+                    goal={row.goal}
+                    behaviors={behaviors}
+                    today={today}
+                    weekIso={toIsoDate(weekStart)}
+                    onApply={applyTarget}
+                    onArchive={(goal) => {
+                      setActive(goal);
+                      setModal('archive');
+                    }}
+                  />
+                )}
               </article>
             );
           })}
@@ -326,6 +385,8 @@ export default function Goals() {
             <span>
               It moves to History with everything you logged against it, and leaves your
               dashboard. You can restore it from History at any time.
+              {active.memberCount > 1 &&
+                ' It also ends the goal for everyone you shared it with; what they logged stays theirs.'}
             </span>
           </p>
           <div className="app-form">
@@ -345,6 +406,34 @@ export default function Goals() {
                 disabled={archiving}
               >
                 {archiving ? 'Archiving…' : 'Archive goal'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {modal === 'share' && active && <ShareGoalDialog goal={active} onClose={handleSaved} onChanged={reload} />}
+
+      {modal === 'leave' && active && (
+        <Modal title="Leave goal" onClose={closeModal}>
+          <p className="goals__confirm">
+            Leave &ldquo;{active.title}&rdquo;?
+            <span>
+              It leaves your dashboard and you stop seeing its thread. Everything you logged stays
+              yours. You&rsquo;d need a new invite to come back.
+            </span>
+          </p>
+          <div className="app-form">
+            {archiveError && (
+              <p className="app-form__error" role="alert">
+                {archiveError}
+              </p>
+            )}
+            <div className="app-form__actions">
+              <button type="button" className="app-btn app-btn--ghost" onClick={closeModal}>
+                Stay
+              </button>
+              <button type="button" className="app-btn" onClick={leaveGoal} disabled={archiving}>
+                {archiving ? 'Leaving…' : 'Leave goal'}
               </button>
             </div>
           </div>

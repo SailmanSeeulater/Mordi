@@ -185,3 +185,28 @@
 .goal-suggest--idle { background: var(--color-bg); }
 .goal-suggest p { margin: 0; line-height: 1.45; }
 .goal-suggest__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Shared goals: who is in it, and anything unread in its thread. */
+.goal-card__together {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-decoration: none;
+}
+.goal-card__together:hover { text-decoration: underline; }
+.goal-card__unread {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.goals__history {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--color-accent-700);
+}
