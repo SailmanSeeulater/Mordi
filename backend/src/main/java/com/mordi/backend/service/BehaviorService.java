@@ -3,13 +3,10 @@ package com.mordi.backend.service;
 import com.mordi.backend.dto.BehaviorRequest;
 import com.mordi.backend.dto.PlaceSummary;
 import com.mordi.backend.exception.BehaviorNotFoundException;
-import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Behavior;
-import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.Location;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
-import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.LocationRepository;
 import com.mordi.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +22,8 @@ public class BehaviorService {
 
     private final BehaviorRepository behaviorRepository;
     private final UserRepository userRepository;
-    private final GoalRepository goalRepository;
     private final LocationRepository locationRepository;
+    private final GoalAccess goalAccess;
 
     public Behavior logBehavior(String email, BehaviorRequest request) {
         User user = userRepository.findByEmail(email)
@@ -42,10 +39,9 @@ public class BehaviorService {
 
 
         if (request.getGoalId() != null) {
-            Goal goal = goalRepository.findById(request.getGoalId())
-                        .filter(g -> g.isActive() && g.getUser().getEmail().equals(email))
-                        .orElseThrow(GoalNotFoundException::new);
-            behavior.setGoal(goal);
+            // Your own goal, or a shared one you have joined: each person's
+            // entries stay theirs either way.
+            behavior.setGoal(goalAccess.joined(user, request.getGoalId()));
         }
 
         // A place name on its own is fine — "the gym" carried over from the

@@ -5,6 +5,8 @@ import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.GoalMemberRepository;
+import com.mordi.backend.repository.GoalMessageRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,13 +40,19 @@ class GoalServiceTest {
     @Mock
     private BehaviorRepository behaviorRepository;
 
+    @Mock
+    private GoalMemberRepository memberRepository;
+
+    @Mock
+    private GoalMessageRepository messageRepository;
+
     private GoalService goalService;
     private User me;
     private User someoneElse;
 
     @BeforeEach
     void setUp() {
-        goalService = new GoalService(goalRepository, userRepository, behaviorRepository);
+        goalService = new GoalService(goalRepository, userRepository, behaviorRepository, memberRepository, messageRepository);
         me = user(ME);
         someoneElse = user("other@mordi.com");
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
@@ -265,5 +273,39 @@ class GoalServiceTest {
             verify(goalRepository).findByUserAndActiveTrueAndArchivedAtIsNull(me);
             verify(goalRepository, never()).findByUserAndActive(any(), anyBoolean());
         }
+    }
+
+    @Test
+    void getActiveGoals_addsSharedGoalsIJoined_eachMarkedWithRoleHeadCountAndUnread() {
+        someoneElse.setName("Alex Kim");
+        Goal mine = existingGoal(me);
+        Goal joined = existingGoal(someoneElse);
+        joined.setId(20L);
+        when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNull(me)).thenReturn(new java.util.ArrayList<>(java.util.List.of(mine)));
+        when(memberRepository.findJoinedGoals(me)).thenReturn(java.util.List.of(joined));
+        when(memberRepository.countByGoalIds(any())).thenReturn(java.util.List.<Object[]>of(new Object[] {20L, 3L}));
+        when(messageRepository.countUnread(me)).thenReturn(java.util.List.<Object[]>of(new Object[] {20L, 2L}));
+
+        java.util.List<Goal> goals = goalService.getActiveGoals(ME);
+
+        assertThat(goals).containsExactly(mine, joined);
+        assertThat(mine.getRole()).isEqualTo("owner");
+        assertThat(mine.getMemberCount()).isEqualTo(1);
+        assertThat(mine.getUnread()).isZero();
+        assertThat(mine.getOwnerName()).isNull();
+        assertThat(joined.getRole()).isEqualTo("member");
+        assertThat(joined.getMemberCount()).isEqualTo(3);
+        assertThat(joined.getUnread()).isEqualTo(2);
+        assertThat(joined.getOwnerName()).isEqualTo("Alex Kim");
+    }
+
+    @Test
+    void editingArchivingOrDeleting_aSharedGoalIOnlyJoined_readsAsNotFound() {
+        Goal joined = existingGoal(someoneElse);
+        when(goalRepository.findById(10L)).thenReturn(Optional.of(joined));
+
+        assertThatThrownBy(() -> goalService.archiveGoal(ME, 10L)).isInstanceOf(GoalNotFoundException.class);
+        assertThatThrownBy(() -> goalService.deactivateGoal(ME, 10L)).isInstanceOf(GoalNotFoundException.class);
+        verify(goalRepository, never()).save(any());
     }
 }

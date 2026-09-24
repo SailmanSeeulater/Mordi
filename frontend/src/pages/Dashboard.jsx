@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import client from '../api/client';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
@@ -20,6 +20,9 @@ import LatelyFeed from '../components/LatelyFeed';
 import PlanToday from '../components/PlanToday';
 import UndoToast from '../components/UndoToast';
 import WeekReviewCard from '../components/WeekReviewCard';
+import AddToPage from '../components/AddToPage';
+import { ESTABLISHED_DAYS, enableModule, initialPrefs, isOn, savePrefs, useModules } from '../lib/modules';
+import { sharedGoals } from '../lib/together';
 import {
   addDays,
   currentStreak,
@@ -215,6 +218,23 @@ export default function Dashboard() {
   const goalOrder = useSortOrder('mordi-goal-order', rowsWithId);
   const goalDrag = useDragSort(goalOrder.moveOver);
 
+  // Focused or everything: decided once, from this person's own history,
+  // then grown with use. Until the week has loaded it is undecided.
+  const savedModules = useModules();
+  const modules = savedModules ?? (loadState === 'ready' ? initialPrefs(behaviors) : null);
+  const on = (id) => isOn(modules, id);
+  const focused = modules?.mode === 'focused';
+  useEffect(() => {
+    if (loadState !== 'ready') return;
+    if (!savedModules) {
+      savePrefs(initialPrefs(behaviors));
+      return;
+    }
+    // Some things turn themselves on once there is something to show.
+    if (sharedGoals(goals).length > 0) enableModule('together');
+    if (new Set(behaviors.map((b) => b.logDate)).size >= ESTABLISHED_DAYS) enableModule('activity');
+  }, [loadState, savedModules, behaviors, goals]);
+
   const [rearrange, setRearrange] = useState(false);
   const blockOrder = useSortOrder('mordi-dash-blocks', SECTIONS);
   const blockDrag = useDragSort(blockOrder.moveOver);
@@ -333,7 +353,7 @@ export default function Dashboard() {
     <AppShell
       title="Today"
       action={
-        loadState === 'ready' && goals.length > 0 ? (
+        loadState === 'ready' && goals.length > 0 && !focused ? (
           <>
             <button
               type="button"
@@ -467,10 +487,12 @@ export default function Dashboard() {
               </h2>
               {/* Same card, because it is the same question: what is this week
                   actually like. */}
-              <div className="pass__crown">
-                <ClockChip />
-                <WeatherStrip />
-              </div>
+              {on('clock') && (
+                <div className="pass__crown">
+                  <ClockChip />
+                  <WeatherStrip />
+                </div>
+              )}
               <div className="pass__body">
                 <div className="pass__headline">
                   <p className="pass__figure">
@@ -554,6 +576,7 @@ export default function Dashboard() {
             </section>
             </Block>
 
+            {on('plan') && (
             <Block
               id="plan"
               label="Today's plan"
@@ -564,7 +587,9 @@ export default function Dashboard() {
             >
               <PlanToday today={today} goals={goals} onChanged={handleTimeSaved} onToast={showToast} />
             </Block>
+            )}
 
+            {on('activity') && (
             <Block
               id="activity"
               label="Activity"
@@ -575,7 +600,9 @@ export default function Dashboard() {
             >
               <ActivityHeatmap today={today} reloadKey={historyKey} onPickDay={openCalendar} />
             </Block>
+            )}
 
+            {on('notes') && (
             <Block
               id="notes"
               label="Notes"
@@ -588,6 +615,7 @@ export default function Dashboard() {
                 <NotesPanel />
               </section>
             </Block>
+            )}
           </div>
 
           <div className="dash__col">
@@ -595,13 +623,15 @@ export default function Dashboard() {
                 as the day goes: what is left to do, what is being done now,
                 and what is done. */}
             <div className="app-panel side">
-              <TodoList />
-              <TimeLogger onSaved={handleTimeSaved} />
+              {on('todo') && <TodoList />}
+              {on('timer') && <TimeLogger onSaved={handleTimeSaved} />}
               <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries} />
             </div>
           </div>
         </div>
       )}
+
+      {loadState === 'ready' && goals.length > 0 && focused && <AddToPage prefs={modules} />}
 
       {modal === 'log' && (
         <Modal title="Log an entry" onClose={closeModal}>

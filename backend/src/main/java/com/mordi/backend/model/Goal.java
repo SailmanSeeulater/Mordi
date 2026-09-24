@@ -50,6 +50,22 @@ public class Goal {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // Not stored: how the goal looks to whoever is asking, filled in when
+    // goals are listed. "owner" or "member"; everyone in it, the owner
+    // included (1 for a goal nobody else has joined); messages in its thread
+    // the person has not read; and, on a goal someone else owns, their name.
+    @Transient
+    private String role;
+
+    @Transient
+    private int memberCount = 1;
+
+    @Transient
+    private long unread;
+
+    @Transient
+    private String ownerName;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

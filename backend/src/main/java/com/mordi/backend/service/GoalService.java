@@ -6,10 +6,13 @@ import com.mordi.backend.exception.GoalNotFoundException;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.GoalMemberRepository;
+import com.mordi.backend.repository.GoalMessageRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,8 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final UserRepository userRepository;
     private final BehaviorRepository behaviorRepository;
+    private final GoalMemberRepository memberRepository;
+    private final GoalMessageRepository messageRepository;
 
     public Goal createGoal(String email, GoalRequest request) {
         User user = findUser(email);
@@ -39,8 +44,38 @@ public class GoalService {
         return goalRepository.save(goal);
     }
 
+    /**
+     * The person's own current goals, then the shared ones they have joined,
+     * each marked with how it looks to them: their role, how many people are
+     * in it, and what they have not read in its thread.
+     */
     public List<Goal> getActiveGoals(String email) {
-        return goalRepository.findByUserAndActiveTrueAndArchivedAtIsNull(findUser(email));
+        User user = findUser(email);
+        List<Goal> goals = new ArrayList<>(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNull(user));
+        goals.forEach(goal -> goal.setRole("owner"));
+        for (Goal joined : memberRepository.findJoinedGoals(user)) {
+            joined.setRole("member");
+            joined.setOwnerName(joined.getUser().getName());
+            goals.add(joined);
+        }
+        if (goals.isEmpty()) {
+            return goals;
+        }
+
+        Map<Long, Long> heads = new HashMap<>();
+        for (Object[] row : memberRepository.countByGoalIds(goals.stream().map(Goal::getId).toList())) {
+            heads.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+        Map<Long, Long> unread = new HashMap<>();
+        for (Object[] row : messageRepository.countUnread(user)) {
+            unread.put((Long) row[0], ((Number) row[1]).longValue());
+        }
+        for (Goal goal : goals) {
+            // A goal never shared has no member rows: it is just its owner.
+            goal.setMemberCount((int) Math.max(1, heads.getOrDefault(goal.getId(), 1L)));
+            goal.setUnread(unread.getOrDefault(goal.getId(), 0L));
+        }
+        return goals;
     }
 
     public Goal updateGoal(String email, Long goalId, GoalRequest request) {

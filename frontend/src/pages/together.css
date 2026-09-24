@@ -1,0 +1,402 @@
+/* ── Together: shared goals, their week, their thread ─────── */
+
+.together {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* The list of shared goals. */
+.together__list ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+}
+.together__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out);
+}
+.together__item:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.together__item[aria-current='page'] { background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
+.together__item-title {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.together__item-meta {
+  grid-column: 1;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+.together__unread {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Initials in a disc: people, never photos, so nothing to upload or moderate. */
+.together-avatar {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface));
+  color: var(--color-accent-700);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.together-avatar--sm { width: 24px; height: 24px; font-size: 10px; }
+
+/* ── The room ─────────────────────────────── */
+
+.together__room {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  /* The window below the top bar, less the main area's own padding. */
+  height: max(540px, calc(100svh - 112px));
+}
+.together__room--idle { height: auto; min-height: 240px; justify-content: center; }
+
+.room__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 16px 18px 10px;
+}
+.room__back { display: none; }
+.room__heading {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+.room__heading .app-panel__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Who did it which day: one row per person, one square per day. */
+.room__week {
+  padding: 2px 18px 14px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.room__row {
+  display: grid;
+  grid-template-columns: minmax(96px, 1.5fr) repeat(7, minmax(18px, 1fr)) 48px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.room__row--head {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.room__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+}
+.room__row--head .room__who { font-size: 11px; }
+.room__day { text-align: center; }
+.room__day--today { color: var(--color-accent-700); font-weight: 700; }
+.room__cell {
+  height: 22px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.room__cell--done { background: var(--color-accent); }
+.room__cell--today:not(.room__cell--done) {
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+.room__score {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.room__loading {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* The thread. */
+.room__thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+/* No scrollbar: the edges fade where there is more, as Lately's feed does. */
+.room__log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 12px 10px;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+.room__log::-webkit-scrollbar { display: none; }
+.room__older { align-self: center; margin-bottom: 8px; font-size: 13px; }
+.room__quiet {
+  margin: auto;
+  max-width: 34ch;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.msg {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: var(--r-panel);
+  outline: none;
+  transition: background-color 160ms var(--ease-out);
+}
+.msg:focus { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.msg--you:focus { background: color-mix(in srgb, var(--color-accent) 12%, transparent); }
+/* The one moment in the room: a message that arrives while you are here
+   rises into place. History that was already there does not. */
+.msg--new { animation: msg-in 260ms var(--ease-out); }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg--new { animation: none; }
+}
+.msg:not(.msg--grouped):not(:first-child) { margin-top: 10px; }
+.msg--you { background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
+.msg--grouped { padding-top: 1px; }
+.msg__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.msg__name { font-size: 13.5px; font-weight: 600; }
+.msg__time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.msg__body {
+  margin: 0;
+  padding-left: 32px;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* Delete shows on hover, or when the message is tapped or tabbed to. */
+.msg__delete {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
+}
+.msg:hover .msg__delete,
+.msg:focus-within .msg__delete { opacity: 1; }
+
+.room__error { margin: 0 18px 8px; }
+
+.room__composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--color-divider);
+}
+.room__composer textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  max-height: 160px;
+  padding: 11px 13px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.room__composer textarea::placeholder { color: var(--color-text-muted); opacity: 1; }
+.room__composer textarea:focus { border-color: var(--color-accent-700); }
+.room__composer textarea:disabled { opacity: 0.6; }
+.room__send {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.room__left {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.room__left--over { color: var(--color-signal); font-weight: 700; }
+
+.together__confirm {
+  margin: 0;
+  padding: 4px 18px 18px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.together__confirm span {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── Share dialog ─────────────────────────── */
+
+.share {
+  display: grid;
+  gap: 18px;
+  padding: 0 18px 18px;
+}
+.share__lede {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.share__lede strong { font-weight: 650; }
+.share__block { display: grid; gap: 8px; justify-items: start; }
+.share__block > * { justify-self: stretch; }
+.share__block > .app-btn { justify-self: start; }
+.share__title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.share__count { margin-left: 6px; font-weight: 400; }
+.share__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.share__link { margin-bottom: 0; }
+.share__people {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.share__person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.share__name {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14.5px;
+}
+.share__tag {
+  padding: 2px 7px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.share__confirm { display: flex; gap: 6px; }
+
+/* ── Narrow screens: the list, or one room ─── */
+
+@media (max-width: 860px) {
+  .together { grid-template-columns: minmax(0, 1fr); }
+  .together--open .together__list { display: none; }
+  .together:not(.together--open) .together__room--idle { display: none; }
+  .room__back { display: inline; flex-basis: 100%; }
+  /* Top bar 65, main padding 16 above and 84 below for the tab bar. */
+  .together__room { height: max(420px, calc(100svh - 165px - env(safe-area-inset-bottom, 0px))); }
+}
+@media (max-width: 560px) {
+  .room__week { padding-left: 12px; padding-right: 12px; }
+  .room__row {
+    grid-template-columns: minmax(64px, 1.2fr) repeat(7, minmax(14px, 1fr)) 36px;
+    gap: 4px;
+  }
+  .room__who .together-avatar { display: none; }
+  .room__cell { height: 18px; border-radius: 5px; }
+  .room__composer { padding: 10px 12px 12px; }
+  .msg__body { padding-left: 0; }
+}
+
+/* ── Joining from an invite link ──────────── */
+
+.join { max-width: 620px; }
+.join__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+.join__terms {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+  max-width: 52ch;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.join__terms strong { font-weight: 650; }

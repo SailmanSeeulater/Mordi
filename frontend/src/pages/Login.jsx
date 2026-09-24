@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { returnPath } from "../lib/returnTo";
 import { useAuth } from "../context/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
@@ -14,6 +15,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function Login() {
     try {
       const res = await client.post("/api/auth/login", { email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
-      navigate("/dashboard");
+      navigate(returnPath(location.state), { replace: true });
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -35,7 +37,7 @@ export default function Login() {
       title="Sign in"
       footer={
         <>
-          New to Mordi? <Link to="/register">Create an account</Link>
+          New to Mordi? <Link to="/register" state={location.state}>Create an account</Link>
         </>
       }
     >
