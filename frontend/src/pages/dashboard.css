@@ -614,3 +614,57 @@
 }
 .onboard__starter:hover { border-color: var(--color-accent-700); }
 .onboard__starter small { font-family: var(--font-mono); font-size: var(--t-micro); color: var(--color-text-muted); }
+
+/* ── Add to this page ─────────────────────── */
+
+.addmore__lede {
+  margin: 0;
+  padding: 0 18px 12px;
+  max-width: 68ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+.addmore__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0 10px 12px;
+  list-style: none;
+}
+.addmore__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out);
+}
+.addmore__item:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.addmore__plus {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-700);
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.addmore__item:hover .addmore__plus {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.addmore__text { display: grid; gap: 2px; min-width: 0; }
+.addmore__label { font-size: 15px; font-weight: 600; }
+.addmore__blurb { font-size: 13px; line-height: 1.45; color: var(--color-text-muted); }

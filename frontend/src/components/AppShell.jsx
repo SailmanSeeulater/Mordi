@@ -1,7 +1,8 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
+import { isOn, useModules } from '../lib/modules';
 import './app.css';
 
 const svgProps = {
@@ -60,6 +61,14 @@ const IconNotes = () => (
     <path d="M14.5 3.5V8H19M9.5 12.5h6M9.5 16h4" />
   </svg>
 );
+const IconTogether = () => (
+  <svg {...svgProps}>
+    <circle cx="9" cy="8" r="3.2" />
+    <path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5" />
+    <circle cx="16.5" cy="9" r="2.6" />
+    <path d="M15.5 14.6c2.6-.3 4.5 1.3 5 4.4" />
+  </svg>
+);
 const IconSettings = () => (
   <svg {...svgProps}>
     <circle cx="12" cy="12" r="3.2" />
@@ -69,11 +78,13 @@ const IconSettings = () => (
 
 const NAV = [
   { to: '/dashboard', label: 'Today', Icon: IconDashboard },
-  { to: '/calendar', label: 'Calendar', Icon: IconCalendar },
+  { to: '/calendar', label: 'Calendar', Icon: IconCalendar, module: 'plan' },
   { to: '/goals', label: 'Goals', Icon: IconGoals },
-  { to: '/notes', label: 'Notes', Icon: IconNotes },
-  { to: '/history', label: 'History', Icon: IconHistory },
-  { to: '/locations', label: 'Places', Icon: IconPlaces },
+  { to: '/notes', label: 'Notes', Icon: IconNotes, module: 'notes' },
+  { to: '/together', label: 'Together', Icon: IconTogether, module: 'together' },
+  // Off the phone tab bar, which fits eight; Goals links to it there.
+  { to: '/history', label: 'History', Icon: IconHistory, phone: false, module: 'history' },
+  { to: '/locations', label: 'Places', Icon: IconPlaces, module: 'places' },
   { to: '/reports', label: 'Report', Icon: IconReport },
   { to: '/settings', label: 'Settings', Icon: IconSettings },
 ];
@@ -82,7 +93,15 @@ export default function AppShell({ title, action, children }) {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const modules = useModules();
   const name = user?.name?.trim() || '';
+
+  // Sections that belong to a module show once it is on, and the page you
+  // are on always shows, however you got there.
+  const nav = NAV.filter(
+    (item) => !item.module || isOn(modules, item.module) || pathname.startsWith(item.to),
+  );
 
   const handleLogout = () => {
     logout();
@@ -95,7 +114,7 @@ export default function AppShell({ title, action, children }) {
         <Link to="/dashboard" className="app-rail__mark" aria-label="Mordi">
           M
         </Link>
-        {NAV.map((item) => (
+        {nav.map((item) => (
           <NavLink key={item.to} to={item.to} className="app-rail__link">
             <item.Icon />
             {item.label}
@@ -125,7 +144,7 @@ export default function AppShell({ title, action, children }) {
       </div>
 
       <nav className="app-tabbar" aria-label="Sections">
-        {NAV.map((item) => (
+        {nav.filter((item) => item.phone !== false).map((item) => (
           <NavLink key={item.to} to={item.to} className="app-tabbar__link">
             <item.Icon />
             {item.label}

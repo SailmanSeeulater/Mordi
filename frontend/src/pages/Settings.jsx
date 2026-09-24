@@ -8,6 +8,7 @@ import client from '../api/client';
 import AppShell from '../components/AppShell';
 import ThemeGrid from '../components/ThemeGrid';
 import RemindersSettings from '../components/RemindersSettings';
+import LayoutSettings from '../components/LayoutSettings';
 import { toIsoDate } from './dashboardData';
 import './settings.css';
 
@@ -71,6 +72,8 @@ export default function Settings() {
   return (
     <AppShell title="Settings">
       <div className="settings">
+        <LayoutSettings />
+
         <section className="app-panel" aria-labelledby="set-appearance">
           <div className="app-panel__head">
             <h2 className="app-panel__title" id="set-appearance">

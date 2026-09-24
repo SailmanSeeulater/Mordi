@@ -120,7 +120,7 @@ export default function RemindersSettings() {
       <>
         <p className="settings__note">
           Once a day at the hour you pick, and only when a goal still has days left this week. Nothing on a week
-          that&rsquo;s already done.
+          that&rsquo;s already done. New messages in goals you share arrive here too.
         </p>
         <div className="settings__row">
           <span className="settings__label" id="set-reminder-hour">

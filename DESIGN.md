@@ -105,6 +105,17 @@ and the feed never moves.
 
 ## Components
 
+**Focused first, grown with use.** A new browser starts *Focused*: goal rings,
+the week card and Lately, with a rail of Today, Goals, Report and Settings.
+Everything else is a module (`lib/modules.js`): Calendar, To do, Timer, Notes,
+Activity, Clock & weather, Places, Together, History. The dashboard ends with
+"Add to this page", a list (not a card grid) of what is not on yet, which goes
+away when nothing is left. Together, History and Activity turn themselves on
+when there is something to show. A browser with two weeks or more of logging
+starts on *Everything*, today's full layout. Settings opens with "What Mordi
+shows": the Focused/Everything segments and a switch per module. The page you
+are on always shows in the rail, whatever the modules say.
+
 - **Shell** (`.app`) — 76px labelled rail on desktop, bottom tab bar under
   860px, a solid top bar with the page title, rearrange toggle, primary action,
   colour button and account. Under 560px, Log out moves to Settings.
@@ -136,6 +147,17 @@ and the feed never moves.
   surface and ink. Month is a six-week grid, dots on a phone. `.ics` files from
   Google, Apple or Outlook import after a preview, repeating events expanded.
 - **History** — archived goals with what they amounted to; restore or delete.
+- **Together** — shared goals. A list of shared goals beside one room that fills
+  the window: the week as one row per person and one square per day (filled for
+  done, with the count as text beside it), then the goal's thread and a
+  composer that grows with the text. People are initials in a disc, never
+  photos. The thread fades at its edges instead of drawing a scrollbar; a
+  message's Delete shows on hover, or when the message is tapped or tabbed to.
+  The room's one motion: a message that arrives while you are there rises in.
+  On desktop it opens straight into a goal (unread first); on phones the list
+  is the index and a room is its own screen. Invite links land on `/join#code`,
+  which says whose goal it is and exactly what joining shares before anything
+  happens.
 - **Week report** (`/reports/:week`) — a headline sentence on the week-card
   field, then a goal × day table heatmap, entries per day against last week,
   the mood mix and mood by day, tracked time against planned time, and places.

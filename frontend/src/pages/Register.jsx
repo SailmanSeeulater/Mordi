@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { returnPath } from "../lib/returnTo";
 import { useAuth } from "../context/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
@@ -15,6 +16,7 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ export default function Register() {
         password,
       });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
-      navigate("/dashboard");
+      navigate(returnPath(location.state), { replace: true });
     } catch {
       setError("Registration failed. Email may already be in use.");
     } finally {
@@ -40,7 +42,7 @@ export default function Register() {
       title="Create your account"
       footer={
         <>
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login" state={location.state}>Sign in</Link>
         </>
       }
     >

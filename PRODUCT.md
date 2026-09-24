@@ -35,7 +35,8 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 - Weekly progress, streaks, and the goal × day grid are computed in the browser from `GET /api/goals` and `GET /api/behaviors/range`; the backend has no streak or per-goal aggregation.
 - A `Report` entity exists (weekly totals, completion rate, most common mood) but no per-goal or per-day breakdown.
 - Server timestamps are stored without a timezone, so times of day are not shown to users — dates only.
-- No notification, reminder, sharing, or multi-user capability exists. Do not imply any.
+- Reminders: opt-in Web Push, once a day at the person's chosen hour, only when a goal still has days left.
+- Shared goals ("Together"): an owner shares a goal by invite link (7-day, revocable, hashed at rest); up to 8 people each log it themselves. Members see each other's names and which days each marked it done, never notes, moods or places. Each shared goal has one message thread among its members; there is no messaging between arbitrary accounts, no user search, and no shared calendar or notes.
 
 ## Brand Commitments
 
@@ -56,6 +57,7 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 3. Logging is one action. Anything that makes logging slower is a regression, whatever it adds.
 4. Say only what the data supports. No fabricated insight, no trend claims the records cannot carry.
 5. Empty is a first-run state, not an error. A new account should still show what the app is for.
+6. Start focused and grow with use. A new account sees the goals and the week; the rest is added by the person or appears once it has something to show. Too much at once was the most common feedback.
 
 ## Accessibility & Inclusion
 

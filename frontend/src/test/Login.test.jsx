@@ -100,7 +100,26 @@ describe("Login", () => {
       { email: "user@example.com", name: "Test User" },
       "fake-jwt"
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
+  });
+
+  it("goes back to the invite that sent them to sign in", async () => {
+    client.post.mockResolvedValueOnce({
+      data: { email: "user@example.com", name: "Test User", token: "fake-jwt" },
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: "/login", state: { from: { pathname: "/join", search: "", hash: "#code123" } } }]}
+      >
+        <Login />
+      </MemoryRouter>
+    );
+    fillAndSubmit();
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/join#code123", { replace: true });
+    });
   });
 
   it("shows a generic error message on failed login, without leaking backend detail", async () => {

@@ -8,6 +8,7 @@ import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.Location;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.LocationRepository;
 import com.mordi.backend.repository.UserRepository;
@@ -43,6 +44,9 @@ class BehaviorServiceTest {
     @Mock
     private LocationRepository locationRepository;
 
+    @Mock
+    private GoalMemberRepository goalMemberRepository;
+
     private BehaviorService behaviorService;
     private User me;
     private User someoneElse;
@@ -50,7 +54,8 @@ class BehaviorServiceTest {
     @BeforeEach
     void setUp() {
         behaviorService =
-            new BehaviorService(behaviorRepository, userRepository, goalRepository, locationRepository);
+            new BehaviorService(behaviorRepository, userRepository, locationRepository,
+                new GoalAccess(goalRepository, goalMemberRepository));
         me = user(1L, ME, "Me");
         someoneElse = user(2L, "other@mordi.com", "Someone Else");
     }
@@ -103,6 +108,20 @@ class BehaviorServiceTest {
             .hasMessage("Goal not found");
 
         verify(behaviorRepository, never()).save(any());
+    }
+
+    @Test
+    void logBehavior_againstASharedGoalIHaveJoined_isLoggedAsMyOwnEntry() {
+        Goal shared = goal(20L, someoneElse);
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(goalRepository.findById(20L)).thenReturn(Optional.of(shared));
+        when(goalMemberRepository.existsByGoalAndUser(shared, me)).thenReturn(true);
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Behavior saved = behaviorService.logBehavior(ME, request(20L));
+
+        assertThat(saved.getGoal()).isSameAs(shared);
+        assertThat(saved.getUser()).isSameAs(me);
     }
 
     @Test

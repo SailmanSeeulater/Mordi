@@ -193,14 +193,30 @@ public class PushService {
         return ReminderComposer.compose(progress, today);
     }
 
+    /**
+     * Anything else worth a notification, such as a message in a shared goal,
+     * to every browser the person subscribed. Nothing at all when push is not
+     * set up on this server or the person never turned it on.
+     */
+    public int notify(User user, String title, String body, String url, String tag) {
+        if (!sender.enabled()) {
+            return 0;
+        }
+        return deliver(user, title, body, url, tag);
+    }
+
     private int deliver(User user, ReminderComposer.Reminder reminder) {
+        return deliver(user, reminder.title(), reminder.body(), "/dashboard", "mordi-week");
+    }
+
+    private int deliver(User user, String title, String body, String url, String tag) {
         String payload;
         try {
             payload = json.writeValueAsString(Map.of(
-                "title", reminder.title(),
-                "body", reminder.body(),
-                "url", "/dashboard",
-                "tag", "mordi-week"));
+                "title", title,
+                "body", body,
+                "url", url,
+                "tag", tag));
         } catch (JsonProcessingException e) {
             return 0;
         }

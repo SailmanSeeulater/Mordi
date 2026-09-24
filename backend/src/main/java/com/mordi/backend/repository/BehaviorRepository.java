@@ -32,4 +32,14 @@ public interface BehaviorRepository extends JpaRepository<Behavior, Long> {
     List<Object[]> summarizePlaces(@Param("user") User user);
 
     java.util.Optional<Behavior> findByIdAndUser(Long id, User user);
+
+    /**
+     * For a shared goal's week: who marked it done on which day. Only the
+     * person and the date; notes, moods and places stay with their owner.
+     */
+    @Query("select distinct b.user.id, b.logDate from Behavior b where b.goal.id = :goalId "
+        + "and b.completed = true and b.logDate between :start and :end")
+    List<Object[]> completedDaysForGoal(@Param("goalId") Long goalId,
+                                        @Param("start") LocalDate start,
+                                        @Param("end") LocalDate end);
 }

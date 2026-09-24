@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Landing from "./pages/Landing";
@@ -18,16 +18,21 @@ const Locations = lazy(() => import("./pages/Locations"));
 const History = lazy(() => import("./pages/History"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Notes = lazy(() => import("./pages/Notes"));
+const Together = lazy(() => import("./pages/Together"));
+const Join = lazy(() => import("./pages/Join"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
 
 function PrivateRoute({ children }) {
   const { user, restoring } = useAuth();
+  const location = useLocation();
   // While a stored-nothing load is still trying the refresh cookie, render
   // nothing rather than bouncing a signed-in person to the sign-in page.
   if (restoring) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  // Remember where they were headed (an invite link, say), so signing in or
+  // signing up brings them back to it.
+  return user ? children : <Navigate to="/login" replace state={{ from: location }} />;
 }
 
 /**
@@ -121,6 +126,30 @@ function App() {
             element={
               <PrivateRoute>
                 <Calendar />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/together"
+            element={
+              <PrivateRoute>
+                <Together />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/together/:goalId"
+            element={
+              <PrivateRoute>
+                <Together />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/join"
+            element={
+              <PrivateRoute>
+                <Join />
               </PrivateRoute>
             }
           />

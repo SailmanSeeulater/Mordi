@@ -88,3 +88,53 @@
 }
 
 .settings__reminder-hour { min-width: 140px; }
+
+/* What Mordi shows: the mode, then a switch per module. */
+.settings__layout-mode { padding: 0 18px 12px; max-width: 320px; }
+.settings__modules {
+  margin: 0;
+  padding: 0 0 8px;
+  list-style: none;
+}
+.settings__module {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
+}
+.settings__module-text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.settings__module-label { font-size: 15px; font-weight: 600; }
+.settings__module-blurb { font-size: 13px; line-height: 1.45; color: var(--color-text-muted); }
+
+/* A switch: the track is a pill and the knob a circle, both genuinely round. */
+.app-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--color-text) 18%, transparent);
+  cursor: pointer;
+  transition: background-color 200ms var(--ease-out);
+}
+.app-switch[aria-checked='true'] { background: var(--color-accent); }
+.app-switch__knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--lift-1);
+  transition: transform 220ms var(--ease-out);
+}
+.app-switch[aria-checked='true'] .app-switch__knob { transform: translateX(18px); }
+@media (pointer: coarse) {
+  .app-switch { width: 52px; height: 32px; }
+  .app-switch__knob { width: 26px; height: 26px; }
+  .app-switch[aria-checked='true'] .app-switch__knob { transform: translateX(20px); }
+}
