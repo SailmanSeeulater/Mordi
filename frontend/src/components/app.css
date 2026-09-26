@@ -108,9 +108,10 @@
 
 .app-topbar__title {
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 21px;
+  font-weight: 600;
+  font-size: 23px;
   line-height: 1.1;
+  letter-spacing: -0.012em;
   margin: 0;
 }
 
@@ -120,7 +121,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 2px 8px 2px 2px;
+  border-radius: var(--r-control);
+  color: var(--color-text);
   font-size: 13px;
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out);
+}
+.app-whoami:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+
+/* The clock, beside the account: tabular, so it never twitches in width. */
+.app-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--r-control);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .app-avatar {
@@ -230,11 +251,10 @@
 }
 .theme-grid__heading {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .theme-grid__swatches {
   display: grid;
@@ -311,17 +331,19 @@
 
 .app-panel__title {
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 19px;
+  font-weight: 600;
+  font-size: 20px;
   line-height: 1.15;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .app-panel__meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .app-panel__spacer { flex: 1; }
@@ -970,6 +992,7 @@
   .app-tabbar__link { min-width: 0; overflow: hidden; white-space: nowrap; }
 
   .app-whoami__name { display: none; }
+  .app-clock { display: none; }
   .theme-switch__name { display: none; }
   .theme-switch__cycle { padding: 0 2px 0 6px; }
   .app-form__actions .app-btn { flex: 1; }

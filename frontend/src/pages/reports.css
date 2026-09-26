@@ -12,7 +12,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--t-h2);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-display);
 }
 
@@ -57,11 +57,9 @@
 
 .rep-card__week {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -115,11 +113,10 @@
 }
 .rep-card__stats > div { display: grid; gap: 3px; min-width: 0; }
 .rep-card__stats dt {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .rep-card__stats dd {
   margin: 0;
@@ -250,11 +247,12 @@
   bottom: -22px;
   left: -6px;
   right: -6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
+  font-family: var(--font-label);
+  font-size: 12px;
   text-align: center;
   white-space: nowrap;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 @keyframes rep-grow {
   from { transform: scaleY(0); }

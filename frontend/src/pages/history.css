@@ -28,9 +28,10 @@
   font-weight: 600;
 }
 .history__archived {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .history__meta {
@@ -66,9 +67,10 @@
   min-width: 0;
 }
 .history__stats dt {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .history__stats dd {
   margin: 0;

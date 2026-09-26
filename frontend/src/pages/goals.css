@@ -56,7 +56,7 @@
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 19px;
   line-height: 1;
 }
@@ -91,11 +91,10 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 10px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .goal-card__tag {
@@ -124,6 +123,14 @@
   grid-area: actions;
   display: flex;
   gap: 8px;
+}
+/* With a mouse the actions wait until the card is pointed at or focused, so
+   a page of goals reads as goals, not as buttons. Touch screens have no
+   hover, so there they stay. */
+@media (hover: hover) and (pointer: fine) {
+  .goal-card__actions { opacity: 0; transition: opacity 160ms var(--ease-out); }
+  .goal-card:hover .goal-card__actions,
+  .goal-card:focus-within .goal-card__actions { opacity: 1; }
 }
 
 .goal-card__week {

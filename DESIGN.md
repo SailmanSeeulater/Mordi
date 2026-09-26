@@ -2,7 +2,7 @@
 
 Written from the built app, not from intentions. Tokens live in
 `frontend/src/index.css` (type, structural roles) and `frontend/src/themes.css`
-(the twenty-five color combinations).
+(the twenty-six color combinations).
 
 ## World
 
@@ -14,12 +14,14 @@ same active theme.
 
 ## Color
 
-Twenty-five combinations, sixteen light and nine dark, picked by the person and
+Twenty-six combinations, sixteen light and ten dark, picked by the person and
 saved per browser. **Sorbet is the default.**
 
 - Light: paper, sorbet, mint, lagoon, lilac, sand, linen, slate, sage, clover,
   harbor, cobalt, orchid, rose, clay, marigold.
-- Dark: graphite, midnight, forest, ember, dusk, ocean, cocoa, ink, moss.
+- Dark: graphite, midnight, forest, ember, dusk, ocean, cocoa, ink, moss,
+  swiss (Apple Wallet: a black sheet, cards a step up, white type, one red,
+  and the week card a white pass on the black).
 
 Each sets eleven roles:
 
@@ -56,11 +58,19 @@ the picker's list and the CSS blocks ever disagree.
 
 ## Type
 
-- One family everywhere: **Crimson Pro** (Fontshare, with Google Fonts as a
-  second source). Headings differ from body by weight and tracking, never by
-  family. `--font-display` and `--font-heading` are aliases of `--font-body`.
-- **IBM Plex Mono** for dates, counts, clock, and small group labels, always
-  with tabular numerals.
+- Apple's own pairing. The interface is the platform's sans, **San
+  Francisco** on Apple devices (`-apple-system`), with **Inter** standing in
+  on Windows and Android. Titles, the landing headline and the notes reading
+  view take the platform's serif, **New York** (`ui-serif`), with **Source
+  Serif 4** standing in. Serif titles are semibold (600) and tracked a touch
+  tighter; every number, label and control stays in the sans, and the week
+  card's figure is the sans at 700 with tabular numerals.
+- Small word labels beside the data ("4× weekly", a day's name, "Edited
+  Sep 20", the `dt` of a fact pair) are the serif at 12px, medium weight, in
+  sentence case: no uppercase, no tracking.
+- No third face. Digits, dates, counts, the clock and code are the sans with
+  tabular numerals (turned on for the whole page), so columns of numbers still
+  align without a mono.
 - One scale in `index.css`: display clamp, 21 / 18 / 15 / 14 / 13 / 11px.
 - No kicker or eyebrow above a heading, anywhere.
 
@@ -118,10 +128,16 @@ are on always shows in the rail, whatever the modules say.
 
 - **Shell** (`.app`) — 76px labelled rail on desktop, bottom tab bar under
   860px, a solid top bar with the page title, rearrange toggle, primary action,
-  colour button and account. Under 560px, Log out moves to Settings.
-- **Week card** (`.pass`) — completion percent, Streak/Entries, a Mon–Sun strip
-  of day chips that open the month calendar, and two chips in the corner: the
-  clock and the weather. On phones the chips take their own row.
+  the clock (hidden under 560px), colour button and the account, which opens
+  Settings. Log out lives in Settings only.
+- **Week card** (`.pass`) — the count against the target ("8 of 24"), which
+  counts up once on arrival, and a pace line for today ("On pace", "Ahead by
+  2", "3 behind for Thursday"), with the range and percent small beside it.
+  Two facts: goals on target, best day. A Mon–Sun strip of day chips, each a
+  bar of its day filled to the share of the week's busiest day, with the
+  count written on it; a missed day is dashed, a day ahead is faint, today
+  has a ring; each opens the month calendar. One action: Log today. The
+  weather chip sits in the corner; the clock lives in the top bar.
 - **Goal rings** — conic progress per goal, dashed when nothing is logged;
   draggable, arrow keys to move.
 - **Goal deck** — matte passes, grip-to-reorder when open.
@@ -170,7 +186,7 @@ are on always shows in the rail, whatever the modules say.
   scroll lock, Escape, focus restored. The landing page's Sign in / Create
   account uses the same dialog, fields and segmented switch as the app.
 - **Select** — a listbox portalled into the themed root, opaque, no scrollbar.
-- **Colour picker** — twenty-five swatches grouped Light then Dark, in the top
+- **Colour picker** — twenty-six swatches grouped Light then Dark, in the top
   bar menu and in Settings, from one shared component.
 
 ## Accessibility

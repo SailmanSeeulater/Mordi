@@ -7,7 +7,7 @@ const format = new Intl.DateTimeFormat(undefined, {
 });
 
 /**
- * The time, beside the weather on the week card, to the second.
+ * The time, in the top bar, to the second.
  *
  * Each tick is scheduled for the start of the next second rather than on a
  * plain one-second interval: an interval started at an arbitrary moment shows
@@ -37,7 +37,7 @@ export default function ClockChip() {
   }, []);
 
   return (
-    <time className="wx wx--clock" dateTime={now.toISOString()}>
+    <time className="app-clock" dateTime={now.toISOString()}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
         <circle cx="12" cy="12" r="8.5" />

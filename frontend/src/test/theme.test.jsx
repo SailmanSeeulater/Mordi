@@ -46,11 +46,11 @@ describe('themes', () => {
     vi.restoreAllMocks();
   });
 
-  it('ships twenty-five combinations, sixteen light and nine dark', () => {
-    expect(THEMES).toHaveLength(25);
+  it('ships twenty-six combinations, sixteen light and ten dark', () => {
+    expect(THEMES).toHaveLength(26);
     expect(THEMES.filter((t) => t.scheme === 'light')).toHaveLength(16);
-    expect(THEMES.filter((t) => t.scheme === 'dark')).toHaveLength(9);
-    expect(new Set(THEMES.map((t) => t.id)).size).toBe(25);
+    expect(THEMES.filter((t) => t.scheme === 'dark')).toHaveLength(10);
+    expect(new Set(THEMES.map((t) => t.id)).size).toBe(26);
   });
 
   it('lists exactly the combinations themes.css defines, with matching schemes', () => {

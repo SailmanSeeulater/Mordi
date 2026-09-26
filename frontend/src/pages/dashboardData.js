@@ -173,3 +173,51 @@ export function recentEntries(behaviors, count) {
     )
     .slice(0, count);
 }
+
+/**
+ * How the week stands against its own target, as of today. The target is
+ * spread evenly over the seven days; "expected" is the share due by the end
+ * of today, and "delta" is how far ahead (+) or behind (-) the count is.
+ * Sunday night, expected is the whole target.
+ */
+export function weekPace(planned, achieved, todayIndex) {
+  if (!planned) return { expected: 0, delta: 0, state: 'none' };
+  const dayIndex = Math.min(6, Math.max(0, todayIndex));
+  const expected = Math.round((planned * (dayIndex + 1)) / 7);
+  const delta = achieved - expected;
+  if (achieved >= planned) return { expected, delta, state: 'done' };
+  if (delta > 0) return { expected, delta, state: 'ahead' };
+  if (delta < 0) return { expected, delta, state: 'behind' };
+  return { expected, delta, state: 'on' };
+}
+
+/** "Week done", "On pace", "Ahead by 2", "Log 3 to be on pace". A shortfall
+ * is phrased as the next step, not the deficit. */
+export function paceLabel(pace) {
+  switch (pace.state) {
+    case 'done':
+      return 'Week done';
+    case 'ahead':
+      return `Ahead by ${pace.delta}`;
+    case 'behind':
+      return `Log ${-pace.delta} to be on pace`;
+    case 'on':
+      return 'On pace';
+    default:
+      return 'No targets set';
+  }
+}
+
+/** Entries logged on each of the seven days, Monday first. */
+export function entriesPerDay(behaviors, days) {
+  return days.map((iso) => behaviors.filter((b) => b.logDate === iso).length);
+}
+
+/** The index of the busiest day so far, or null when nothing was logged. */
+export function bestDay(counts) {
+  let best = null;
+  counts.forEach((n, i) => {
+    if (n > 0 && (best === null || n > counts[best])) best = i;
+  });
+  return best;
+}
