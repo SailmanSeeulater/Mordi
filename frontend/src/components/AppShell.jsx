@@ -1,7 +1,8 @@
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
+import ClockChip from './ClockChip';
 import { isOn, useModules } from '../lib/modules';
 import './app.css';
 
@@ -90,9 +91,8 @@ const NAV = [
 ];
 
 export default function AppShell({ title, action, children }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme } = useTheme();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const modules = useModules();
   const name = user?.name?.trim() || '';
@@ -102,11 +102,6 @@ export default function AppShell({ title, action, children }) {
   const nav = NAV.filter(
     (item) => !item.module || isOn(modules, item.module) || pathname.startsWith(item.to),
   );
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="app" data-theme={theme}>
@@ -128,16 +123,16 @@ export default function AppShell({ title, action, children }) {
           {title && <h1 className="app-topbar__title">{title}</h1>}
           <div className="app-topbar__spacer" />
           {action}
+          {isOn(modules, 'clock') && <ClockChip />}
           <ThemeSwitcher />
-          <div className="app-whoami">
+          {/* The account is a place, not a control: it opens Settings, where
+              Log out already lives. One fewer thing in the bar. */}
+          <Link to="/settings" className="app-whoami" aria-label={`${name || 'Account'}: settings`}>
             <span className="app-avatar" aria-hidden="true">
               {name ? name[0].toUpperCase() : '?'}
             </span>
             <span className="app-whoami__name">{name}</span>
-            <button type="button" className="app-linkbtn" onClick={handleLogout}>
-              Log out
-            </button>
-          </div>
+          </Link>
         </header>
 
         <main className="app-main">{children}</main>

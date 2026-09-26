@@ -1,8 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-/* Crimson Pro, from Fontshare, is the site's face. The same family is
-   requested from Google Fonts above as a second source, because if Fontshare
-   is unreachable everything would otherwise silently fall back to Georgia. */
-@import url('https://api.fontshare.com/v2/css?f[]=crimson-pro@400,500,600,700&display=swap');
+/* The type is the platform's own: San Francisco on Apple devices. Elsewhere
+   Inter, which is linked from index.html and drawn to the same proportions,
+   so the app reads the same on a Windows or Android screen. */
 
 :root {
   color-scheme: light;
@@ -26,11 +24,23 @@
      family — that swap between families was the inconsistency. --font-display
      and --font-heading are aliases so no rule has to change to follow the
      decision, and changing it means changing one line here. */
-  --font-body: 'Crimson Pro', Georgia, 'Times New Roman', serif;
-  --font-display: var(--font-body);
-  --font-heading: var(--font-body);
-  /* Mono is for tabular numerals and labels only, never for prose. */
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
+  /* Apple's own pairing: San Francisco for the interface, New York for the
+     words that carry weight. Titles and the reading view take the serif;
+     controls, labels and every number stay in the sans. Source Serif 4
+     stands in for New York where it is not installed. */
+  --font-heading: ui-serif, 'New York', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-display: var(--font-heading);
+  --font-prose: var(--font-heading);
+  /* Small word labels beside the data (a goal's "4× weekly", a day's name,
+     "Edited Sep 20"): the serif, at 12px so it stays legible. Digits, the
+     clock, counts and code stay in the mono. */
+  --font-label: var(--font-heading);
+  /* Two faces and no more: San Francisco and New York. What used to be the
+     mono role, digits, counts, the clock, code, is the sans with tabular
+     numerals, which is how Apple sets a number. The token keeps its name so
+     no rule has to change; body turns tabular figures on everywhere. */
+  --font-mono: var(--font-body);
 
   /* One type scale. Every size in the app comes from here. */
   --t-display: clamp(30px, 4.2vw, 42px);
@@ -56,6 +66,7 @@ body {
   font-family: var(--font-body);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 
 #root {

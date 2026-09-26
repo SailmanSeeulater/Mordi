@@ -12,7 +12,6 @@ import LogEntryForm from '../components/LogEntryForm';
 import CalendarModal from '../components/CalendarModal';
 import WeatherStrip from '../components/WeatherStrip';
 import NotesPanel from '../components/NotesPanel';
-import ClockChip from '../components/ClockChip';
 import TimeLogger from '../components/TimeLogger';
 import ActivityHeatmap from '../components/ActivityHeatmap';
 import TodoList from '../components/TodoList';
@@ -20,12 +19,16 @@ import LatelyFeed from '../components/LatelyFeed';
 import PlanToday from '../components/PlanToday';
 import UndoToast from '../components/UndoToast';
 import WeekReviewCard from '../components/WeekReviewCard';
+import useCountUp from '../hooks/useCountUp';
 import AddToPage from '../components/AddToPage';
 import { ESTABLISHED_DAYS, enableModule, initialPrefs, isOn, savePrefs, useModules } from '../lib/modules';
 import { sharedGoals } from '../lib/together';
 import {
   addDays,
-  currentStreak,
+  bestDay,
+  entriesPerDay,
+  paceLabel,
+  weekPace,
   formatWeekRange,
   parseIsoDate,
   recentEntries,
@@ -238,7 +241,6 @@ export default function Dashboard() {
   const [rearrange, setRearrange] = useState(false);
   const blockOrder = useSortOrder('mordi-dash-blocks', SECTIONS);
   const blockDrag = useDragSort(blockOrder.moveOver);
-  const streak = useMemo(() => currentStreak(behaviors, today), [behaviors, today]);
   const recent = useMemo(() => recentEntries(behaviors, 40), [behaviors]);
   // Bumped after a save, so the year of activity picks up the new entry too.
   const [historyKey, setHistoryKey] = useState(0);
@@ -335,6 +337,12 @@ export default function Dashboard() {
   const todayColumn = summary.days.indexOf(todayIso);
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
   const achieved = summary.rows.reduce((sum, r) => sum + Math.min(r.done, r.target), 0);
+  const pace = weekPace(planned, achieved, todayColumn);
+  const shownAchieved = useCountUp(achieved);
+  const perDay = useMemo(() => entriesPerDay(behaviors, summary.days), [behaviors, summary.days]);
+  const busiest = bestDay(perDay);
+  const maxPerDay = Math.max(1, ...perDay);
+  const onTarget = summary.rows.filter((r) => r.done >= r.target).length;
 
   // The pass's day strip reads the user's own logging, across every goal.
   const dayStates = useMemo(() => {
@@ -364,9 +372,6 @@ export default function Dashboard() {
               title={rearrange ? 'Done rearranging' : 'Rearrange this page'}
             >
               <IconRearrange />
-            </button>
-            <button type="button" className="app-btn app-btn--sm" onClick={() => openLog()}>
-              Log entry
             </button>
           </>
         ) : null
@@ -489,32 +494,37 @@ export default function Dashboard() {
                   actually like. */}
               {on('clock') && (
                 <div className="pass__crown">
-                  <ClockChip />
                   <WeatherStrip />
                 </div>
               )}
               <div className="pass__body">
                 <div className="pass__headline">
+                  {/* The count against the target, not a percent of the whole
+                      week: 8 of 24 on a Thursday is on pace, 33% reads as
+                      failure. The arrival count-up is the card's one motion. */}
                   <p className="pass__figure">
-                    {summary.percent}
-                    <small>%</small>
+                    <span className="pass__count">{shownAchieved}</span>
+                    <small>of {planned}</small>
                   </p>
-                  <p className="pass__sub">
-                    <span className="pass__range">{formatWeekRange(weekStart)}</span> — {achieved}{' '}
-                    of {planned} planned {planned === 1 ? 'entry' : 'entries'} logged across{' '}
-                    {summary.rows.length} {summary.rows.length === 1 ? 'goal' : 'goals'}.
+                  <p className={`pass__pace pass__pace--${pace.state}`}>
+                    {paceLabel(pace)}
+                    <span className="pass__range">
+                      {' '}
+                      &middot; {formatWeekRange(weekStart)}
+                      {planned > 0 && ` · ${summary.percent}%`}
+                    </span>
                   </p>
                 </div>
                 <dl className="pass__fields">
                   <div className="pass__field">
-                    <dt>Streak</dt>
+                    <dt>Goals on target</dt>
                     <dd>
-                      {streak} {streak === 1 ? 'day' : 'days'}
+                      {onTarget} of {summary.rows.length}
                     </dd>
                   </div>
                   <div className="pass__field">
-                    <dt>Entries</dt>
-                    <dd>{summary.entries}</dd>
+                    <dt>Best day</dt>
+                    <dd>{busiest === null ? '—' : DAY_NAMES[busiest].slice(0, 3)}</dd>
                   </div>
                 </dl>
               </div>
@@ -530,13 +540,15 @@ export default function Dashboard() {
                       'day-chip' +
                       (state === 'done' ? ' day-chip--done' : '') +
                       (state === 'missed' ? ' day-chip--missed' : '') +
+                      (state === 'ahead' ? ' day-chip--ahead' : '') +
                       (i === todayColumn ? ' day-chip--today' : '')
                     }
+                    style={{ '--fill': perDay[i] / maxPerDay, '--i': i }}
                     onClick={() => openCalendar(summary.days[i])}
                     aria-label={
                       `${DAY_NAMES[i]} ${parseIsoDate(summary.days[i]).getDate()}` +
-                      (state === 'done'
-                        ? ', logged'
+                      (perDay[i] > 0
+                        ? `, ${perDay[i]} ${perDay[i] === 1 ? 'entry' : 'entries'}`
                         : state === 'missed'
                           ? ', nothing logged'
                           : state === 'ahead'
@@ -546,31 +558,24 @@ export default function Dashboard() {
                       '. Open the month calendar.'
                     }
                   >
-                    <span aria-hidden="true">{DAY_LETTERS[i]}</span>
+                    <span className="day-chip__bar" aria-hidden="true" />
+                    <span className="day-chip__letter" aria-hidden="true">
+                      {DAY_LETTERS[i]}
+                    </span>
                     <span className="day-chip__num" aria-hidden="true">
                       {parseIsoDate(summary.days[i]).getDate()}
                     </span>
-                    {i === todayColumn ? (
-                      <span className="day-chip__now" aria-hidden="true">
-                        NOW
-                      </span>
-                    ) : (
-                      <span className="day-chip__dot" aria-hidden="true" />
-                    )}
+                    <span className="day-chip__count" aria-hidden="true">
+                      {perDay[i] > 0 ? perDay[i] : state === 'missed' ? '–' : ''}
+                    </span>
                   </button>
                 ))}
               </div>
 
+              {/* One action. Adding a goal is the + ring above and the top bar. */}
               <div className="pass__action">
                 <button type="button" className="pass__cta" onClick={() => openLog()}>
                   Log today
-                </button>
-                <button
-                  type="button"
-                  className="pass__cta pass__cta--quiet"
-                  onClick={() => setModal('goal')}
-                >
-                  Add goal
                 </button>
               </div>
             </section>
@@ -634,7 +639,7 @@ export default function Dashboard() {
       {loadState === 'ready' && goals.length > 0 && focused && <AddToPage prefs={modules} />}
 
       {modal === 'log' && (
-        <Modal title="Log an entry" onClose={closeModal}>
+        <Modal title="Log today" onClose={closeModal}>
           <LogEntryForm
             goals={goals}
             initialGoalId={logGoalId}

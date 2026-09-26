@@ -13,9 +13,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: color-mix(in oklab, var(--go) 55%, var(--color-text));
+  font-weight: 500;
 }
 .timer__live--paused {
   color: color-mix(in oklab, var(--pause) 55%, var(--color-text));
@@ -154,9 +155,10 @@
 }
 .clock-face__meta {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 /* Round buttons: tinted fill, label in the tone, and a hairline ring set a

@@ -52,11 +52,11 @@
 .lately__date {
   margin: 0;
   padding: 0 6px 2px;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: 0.02em;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 .lately__entries {

@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-/** The twenty-five combinations in src/themes.css, in picker order: light, then dark. */
+/** The twenty-six combinations in src/themes.css, in picker order: light, then dark. */
 export const THEMES = [
   { id: 'paper', label: 'Paper', scheme: 'light' },
   { id: 'sorbet', label: 'Sorbet', scheme: 'light' },
@@ -27,6 +27,7 @@ export const THEMES = [
   { id: 'cocoa', label: 'Cocoa', scheme: 'dark' },
   { id: 'ink', label: 'Ink', scheme: 'dark' },
   { id: 'moss', label: 'Moss', scheme: 'dark' },
+  { id: 'swiss', label: 'Swiss', scheme: 'dark' },
 ];
 
 export const DEFAULT_THEME = 'sorbet';

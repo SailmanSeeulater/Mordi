@@ -121,7 +121,7 @@ body.mordi-landing {
 }
 .mordi-nav__brand {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 20px;
   letter-spacing: -0.01em;
   background: none;
@@ -148,10 +148,10 @@ body.mordi-landing {
 }
 .mordi-hero__title {
   font-family: var(--font-heading);
-  font-size: clamp(38px, 5.6vw, 72px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  font-size: clamp(40px, 5.8vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-weight: 600;
   margin: 0 0 0 -0.05em; /* optical hang */
 }
 .mordi-hero__sub {
@@ -184,7 +184,7 @@ body.mordi-landing {
 }
 .mordi-card__title {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 15px;
 }
 .mordi-card__date {
@@ -276,7 +276,7 @@ body.mordi-landing {
 }
 .mordi-close__title {
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: clamp(34px, 4.2vw, 56px);
   line-height: 1.06;
   letter-spacing: -0.015em;

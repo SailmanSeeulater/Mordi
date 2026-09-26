@@ -109,33 +109,38 @@
 .pass__figure {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  font-family: var(--font-display);
-  font-weight: 800;
+  gap: 10px;
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: clamp(48px, 7.4vw, 68px);
   line-height: 0.92;
-  margin: 0;
+  letter-spacing: -0.035em;
   font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tracking-display);
 }
+.pass__count { min-width: 1.1ch; }
 .pass__figure small {
-  font-size: 0.34em;
+  font-size: 0.3em;
+  font-weight: 500;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.pass__pace {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-on-pass);
+}
+.pass__pace--behind { font-weight: 700; }
+.pass__pace .pass__range {
   font-weight: 400;
+  white-space: nowrap;
 }
 
 /* Text on the week card stays at full strength: a reduced alpha composites
    below 4.5:1 over the darker accent stop. */
-.pass__sub {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.4;
-  max-width: 32ch;
-  color: var(--color-on-pass);
-}
-.pass__range {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
+.pass__range { font-variant-numeric: tabular-nums; }
 
 .pass__fields {
   display: flex;
@@ -144,11 +149,10 @@
 }
 .pass__field { display: grid; gap: 2px; }
 .pass__field dt {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-on-pass);
+  font-weight: 500;
 }
 .pass__field dd {
   margin: 0;
@@ -165,63 +169,74 @@
   padding: 4px 24px 20px;
 }
 
+/* Each chip is a bar of its day: filled from the bottom to the share of the
+   week's busiest day, so a three-entry Tuesday stands taller than a
+   one-entry Monday. A missed day is a dashed outline; a day still to come
+   is faint; today has a ring. The count is written on the chip too, so the
+   height is never the only cue. */
 .day-chip {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 3px;
-  padding: 7px 0 8px;
+  align-content: end;
+  gap: 2px;
+  min-height: 62px;
+  padding: 6px 0 7px;
   border-radius: var(--r-control);
-  /* No translucent fill: a 16% on-pass tint measured 3.6:1 for the text on
-     top. Undone days are an outline, so their text sits on the raw field. */
-  background: none;
   border: 1.5px solid color-mix(in srgb, var(--color-on-pass) 34%, transparent);
+  background: none;
+  overflow: hidden;
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
   color: var(--color-on-pass);
   cursor: pointer;
-  transition: transform 160ms var(--ease-out);
+  transition: transform 160ms var(--ease-out), border-color 160ms var(--ease-out);
 }
-.day-chip:hover { transform: translateY(-1px); }
-.day-chip--today:hover { transform: translateY(-1px) scale(1.06); }
+.day-chip > :not(.day-chip__bar) { position: relative; }
+.day-chip__bar {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: calc(var(--fill, 0) * 100%);
+  background: color-mix(in srgb, var(--color-on-pass) 22%, transparent);
+  transform-origin: bottom;
+  animation: day-bar 480ms var(--ease-out) both;
+  animation-delay: calc(60ms + var(--i, 0) * 45ms);
+}
+@keyframes day-bar {
+  from { transform: scaleY(0); }
+}
+.day-chip:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--color-on-pass) 60%, transparent); }
+.day-chip__letter { font-size: 10px; font-weight: 500; opacity: 0.85; }
 .day-chip__num {
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.day-chip__dot {
-  width: 5px;
-  height: 5px;
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--color-on-pass) 70%, transparent);
+.day-chip__count {
+  min-height: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
-/* Three distinguishable states: solid for logged, dashed for missed, a plain
-   thin outline for days still open. */
+/* A day whose target was met is solid, its bar the field itself. */
 .day-chip--done {
   background: var(--color-on-pass);
   border-color: var(--color-on-pass);
   color: var(--color-pass);
 }
-.day-chip--done .day-chip__dot { background: var(--color-pass); }
+.day-chip--done .day-chip__bar { background: color-mix(in srgb, var(--color-pass) 14%, transparent); }
 .day-chip--missed {
   border-style: dashed;
   border-color: color-mix(in srgb, var(--color-on-pass) 62%, transparent);
 }
-.day-chip--missed .day-chip__dot {
-  background: none;
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-on-pass) 75%, transparent);
-}
+.day-chip--ahead { border-color: color-mix(in srgb, var(--color-on-pass) 18%, transparent); }
+.day-chip--ahead .day-chip__num { font-weight: 500; }
 .day-chip--today {
-  transform: scale(1.06);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-on-pass) 55%, transparent);
 }
-.day-chip__now {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1;
+@media (prefers-reduced-motion: reduce) {
+  .day-chip__bar { animation: none; }
 }
 
 .pass__action {
@@ -383,7 +398,6 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .wx {
@@ -416,12 +430,6 @@
 
 .wx--wait {
   border-style: dashed;
-}
-
-/* The clock uses the same chip, so the two read as a pair. */
-.wx--clock {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 /* ── To do + Lately ────────────────────────── */
@@ -506,13 +514,12 @@
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--color-text) 8%, transparent);
   color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   cursor: grab;
   /* The browser must not claim the gesture: this one is ours. */
   touch-action: none;
+  font-weight: 500;
 }
 .mod__grip:hover {
   background: color-mix(in srgb, var(--color-text) 14%, transparent);
@@ -613,7 +620,9 @@
   cursor: pointer;
 }
 .onboard__starter:hover { border-color: var(--color-accent-700); }
-.onboard__starter small { font-family: var(--font-mono); font-size: var(--t-micro); color: var(--color-text-muted); }
+.onboard__starter small { font-family: var(--font-label); font-size: 12px; color: var(--color-text-muted);
+  font-weight: 500;
+}
 
 /* ── Add to this page ─────────────────────── */
 

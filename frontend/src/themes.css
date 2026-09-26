@@ -281,6 +281,7 @@
   --color-divider: rgba(37, 31, 13, 0.16);
 }
 
+
 [data-theme='graphite'] {
   color-scheme: dark;
   --color-bg: #1c1d20;
@@ -405,4 +406,20 @@
   --color-on-pass: #e6eadb;
   --color-signal: #e88f85;
   --color-divider: rgba(229, 231, 223, 0.14);
+}
+
+/* Swiss: Apple Wallet. A black sheet, cards a step up from it, white type,
+   one red, and the week card a white pass sitting on the black. */
+[data-theme='swiss'] {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-surface: #1c1c1e;
+  --color-text: #f5f5f7;
+  --color-accent: #d70015;
+  --color-accent-700: #ff6b62;
+  --color-on-accent: #ffffff;
+  --color-pass: #f5f5f7;
+  --color-on-pass: #111111;
+  --color-signal: #ff453a;
+  --color-divider: rgba(245, 245, 247, 0.22);
 }

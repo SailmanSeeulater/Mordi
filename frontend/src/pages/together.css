@@ -117,9 +117,10 @@
   padding: 4px 0;
 }
 .room__row--head {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .room__who {
   display: flex;
@@ -310,11 +311,9 @@
 .share__block > .app-btn { justify-self: start; }
 .share__title {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-label);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--color-text-muted);
 }
 .share__count { margin-left: 6px; font-weight: 400; }
@@ -351,8 +350,8 @@
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--color-text) 8%, transparent);
   color: var(--color-text-muted);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-family: var(--font-label);
+  font-size: 12px;
   font-weight: 600;
 }
 .share__confirm { display: flex; gap: 6px; }
