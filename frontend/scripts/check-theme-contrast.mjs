@@ -98,8 +98,8 @@ const light = themes.filter((t) => t.scheme === 'light').length;
 console.log(rows.filter((r) => r.startsWith('FAIL')).join('\n') || 'All contrast checks pass.');
 console.log(`\n${themes.length} themes (${light} light, ${themes.length - light} dark), ${rows.length} checks, ${failures} failing.`);
 
-if (themes.length !== 25) {
-  console.error(`Expected 25 themes, found ${themes.length}.`);
+if (themes.length !== 26) {
+  console.error(`Expected 26 themes, found ${themes.length}.`);
   process.exit(1);
 }
 process.exit(failures === 0 ? 0 : 1);

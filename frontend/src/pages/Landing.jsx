@@ -8,12 +8,12 @@ import Modal from '../components/Modal';
 import './landing.css';
 
 const TASKS = [
-  { label: 'Ship landing page draft', done: false, tag: 'High', tone: 'accent' },
-  { label: 'Morning run — 5k', done: true, tag: 'Habit', tone: 'neutral' },
-  { label: 'Call the dentist', done: false, tag: 'Low', tone: 'outline' },
-  { label: 'Review project notes', done: false, tag: 'Medium', tone: 'neutral' },
-  { label: 'Reply to client email', done: false, tag: 'Low', tone: 'outline' },
-  { label: 'Pay rent', done: false, tag: 'High', tone: 'accent' },
+  { label: 'Morning run', done: true, tag: '3 of 4', tone: 'accent' },
+  { label: 'Read before bed', done: true, tag: '5 of 7', tone: 'neutral' },
+  { label: 'Deep work block', done: false, tag: '2 of 5', tone: 'outline' },
+  { label: 'Stretch and mobility', done: true, tag: '3 of 3', tone: 'accent' },
+  { label: 'Twenty pages a night', done: false, tag: '1 of 5', tone: 'outline' },
+  { label: 'No phone after 10', done: false, tag: '4 of 7', tone: 'neutral' },
 ];
 
 
@@ -146,10 +146,10 @@ export default function Landing() {
       <div className="mordi-container">
         <section className="mordi-hero">
           <div>
-            <h1 className="mordi-hero__title">A task tracker that actually gets used.</h1>
+            <h1 className="mordi-hero__title">Goals you set. A week that keeps count.</h1>
             <p className="mordi-hero__sub">
-              Lists, calendar, habits, and notes in one clean view. No setup ritual, no busywork
-              &mdash; just today&rsquo;s tasks, laid out clearly.
+              Say how many days a week, then log it in one tap. Mordi counts against your own
+              target &mdash; no streaks to protect, no busywork.
             </p>
             <div className="mordi-hero__actions">
               <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>

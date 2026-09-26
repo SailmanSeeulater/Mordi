@@ -30,9 +30,10 @@
   font-weight: 600;
 }
 .planner__month {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .planner__views { width: 150px; }
 
@@ -60,10 +61,9 @@
   cursor: pointer;
 }
 .planner__day-head span {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
 }
 .planner__day-head strong {
   display: grid;
@@ -113,13 +113,19 @@
   cursor: pointer;
 }
 
-/* The hours scroll; the head and all-day row stay put above them. */
+/* The hours scroll; the head and all-day row stay put above them.
+   No drawn scrollbar: it took 10px from the grid but not from the head above
+   it, so the day columns drifted left of their headings, a pixel and a half
+   per day and ten by Sunday. The edges fade where there is more instead. */
 .planner__scroller {
   height: min(68vh, 760px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 14px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 14px), transparent 100%);
 }
+.planner__scroller::-webkit-scrollbar { display: none; }
 .planner__grid {
   position: relative;
   display: grid;
@@ -390,11 +396,10 @@
 }
 .month__head span {
   padding: 10px 8px 8px;
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .month__day {
   display: flex;
@@ -567,9 +572,10 @@
 }
 .plan-today__btn--done:hover { background: var(--color-accent-700); }
 .plan-today__state {
-  font-family: var(--font-mono);
-  font-size: var(--t-micro);
+  font-family: var(--font-label);
+  font-size: 12px;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 .plan-today__state--done { color: var(--color-accent-700); font-weight: 600; }
 @media (pointer: coarse) { .plan-today__btn { min-height: 44px; min-width: 44px; } }

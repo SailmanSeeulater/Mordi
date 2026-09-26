@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { bestDay, entriesPerDay, paceLabel, weekPace } from '../pages/dashboardData';
 import {
   toIsoDate,
   startOfWeek,
@@ -233,5 +234,44 @@ describe('month helpers', () => {
       expect(inside[0]).toBe('2026-02-01');
       expect(inside.at(-1)).toBe('2026-02-28');
     });
+  });
+});
+
+describe('weekPace', () => {
+  it('spreads the target over the week and compares against today', () => {
+    // 14 planned: 2 a day. By Thursday (index 3) 8 are due.
+    expect(weekPace(14, 8, 3)).toEqual({ expected: 8, delta: 0, state: 'on' });
+    expect(weekPace(14, 10, 3)).toEqual({ expected: 8, delta: 2, state: 'ahead' });
+    expect(weekPace(14, 5, 3)).toEqual({ expected: 8, delta: -3, state: 'behind' });
+  });
+
+  it('is done once the target is met, and says so without targets', () => {
+    expect(weekPace(14, 14, 2).state).toBe('done');
+    expect(weekPace(0, 0, 2).state).toBe('none');
+  });
+
+  it('reads as a sentence', () => {
+    expect(paceLabel(weekPace(14, 8, 3))).toBe('On pace');
+    expect(paceLabel(weekPace(14, 10, 3))).toBe('Ahead by 2');
+    expect(paceLabel(weekPace(14, 5, 3))).toBe('Log 3 to be on pace');
+    expect(paceLabel(weekPace(14, 14, 3))).toBe('Week done');
+  });
+});
+
+describe('entries per day', () => {
+  const days = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27'];
+  const logs = [
+    { logDate: '2026-09-21' },
+    { logDate: '2026-09-22' },
+    { logDate: '2026-09-22' },
+    { logDate: '2026-09-22' },
+    { logDate: '2026-09-24' },
+    { logDate: '2026-09-30' },
+  ];
+  it('counts each day of the week and finds the busiest', () => {
+    const counts = entriesPerDay(logs, days);
+    expect(counts).toEqual([1, 3, 0, 1, 0, 0, 0]);
+    expect(bestDay(counts)).toBe(1);
+    expect(bestDay([0, 0, 0, 0, 0, 0, 0])).toBeNull();
   });
 });

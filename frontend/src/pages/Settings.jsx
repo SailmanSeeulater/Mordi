@@ -86,7 +86,7 @@ export default function Settings() {
             <ThemeGrid theme={theme} onPick={setTheme} idPrefix="set-themes" />
           </div>
           <p className="settings__note">
-            Twenty-five combinations, sixteen light and nine dark. Sorbet is the default. Your
+            Twenty-six combinations, sixteen light and ten dark. Sorbet is the default. Your
             pick applies across the whole site, landing page included, and is saved in this
             browser only — so another device keeps its own.
           </p>

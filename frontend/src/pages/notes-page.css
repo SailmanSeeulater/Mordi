@@ -5,6 +5,18 @@
   gap: 18px;
   align-items: start;
 }
+/* Grid children are as wide as their longest line unless told otherwise: a
+   note's first sentence was pushing the list to 536px and the reading page
+   past its column. Every box down to the text may shrink. */
+.vault > *,
+.vault__list,
+.vault__list > li,
+.vault__item,
+.vault__item-body,
+.vault__pane,
+.note-reader,
+.note-reader__page { min-width: 0; }
+.vault__item-body { overflow-wrap: anywhere; }
 .vault__side {
   display: grid;
   gap: 12px;
@@ -53,7 +65,7 @@
 .vault__item[aria-current='true'] {
   background: color-mix(in oklab, var(--color-accent) 12%, var(--color-surface));
 }
-.vault__item-top { display: flex; align-items: center; gap: 8px; }
+.vault__item-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .vault__item-title {
   flex: 1;
   min-width: 0;

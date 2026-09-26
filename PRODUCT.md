@@ -40,9 +40,9 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 
 ## Brand Commitments
 
-- Name: Mordi. One type family, Crimson Pro, for everything; IBM Plex Mono for dates and counts.
+- Name: Mordi. Apple's pairing: the platform's sans (San Francisco, Inter elsewhere) for the interface and every number; the platform's serif (New York, Source Serif 4 elsewhere) for titles and reading. No third face: numbers are the sans with tabular figures.
 - The user has pinned a **matte** finish: no gradients, gloss, translucency, or background wash anywhere, on the app or the landing page.
-- Twenty-five user-selectable color combinations, sixteen light and nine dark. The combination applies site-wide, landing page included, and **Sorbet** is the default. The cream-and-red `paper` combination remains one of them.
+- Twenty-six user-selectable color combinations, sixteen light and ten dark. The combination applies site-wide, landing page included, and **Sorbet** is the default. The cream-and-red `paper` combination remains one of them.
 
 ## Evidence on Hand
 
