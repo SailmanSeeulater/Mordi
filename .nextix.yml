@@ -1,0 +1,3 @@
+setup:
+  - cd frontend && npm ci
+test: cd frontend && npm test

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# CI only reads the code. Agent PRs trigger it, so its token must not be able to push.
+permissions:
+  contents: read
+
 jobs:
   backend:
     name: Backend - build & test
