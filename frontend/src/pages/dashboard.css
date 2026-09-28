@@ -119,6 +119,26 @@
   font-variant-numeric: tabular-nums;
 }
 .pass__count { min-width: 1.1ch; }
+
+/* The number counts to its new total after a log, and pops once on the way,
+   so the entry is felt on the card rather than just appearing in it.
+   Transform only, and the origin is the left edge so the figure grows into
+   the card instead of shifting the "of 24" beside it. */
+.pass__count--pop {
+  transform-origin: left center;
+  animation: count-pop 320ms var(--ease-out);
+}
+
+@keyframes count-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pass__count--pop { animation: none; }
+}
+
 .pass__figure small {
   font-size: 0.3em;
   font-weight: 500;
@@ -387,23 +407,29 @@
 
 /* ── Weather chip ──────────────────────────── */
 
-/* Top-left of the week card, built to the day chip's spec: same hairline in
+/* Top-right of the week card, built to the day chip's spec: same hairline in
    the on-pass colour, same corner, same mono numerals. Everything except
    the glyph and the temperature lives in the accessible name and the tooltip,
-   so it reads as one more small fact on the card rather than a panel. */
+   so it reads as one more small fact on the card rather than a panel.
+   It is a row of the card, not a thing floating over one: taken out of the
+   flow it sat on top of the fields at the widths where they reach the right
+   edge, and on a touch pointer, where the chip is 44px tall, at every width. */
 .pass__crown {
-  position: absolute;
-  top: 22px;
-  right: 24px;
-  z-index: 2;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
+  min-width: 0;
+  padding: 16px 24px 0;
 }
+
+/* The figure sits under the chip rather than under the card's own top edge. */
+.pass__crown + .pass__body { padding-top: 10px; }
 
 .wx {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  max-width: 100%;
   padding: 7px 12px 7px 9px;
   border: 1.5px solid color-mix(in srgb, var(--color-on-pass) 34%, transparent);
   border-radius: var(--r-control);
@@ -417,6 +443,16 @@
 }
 .wx small {
   font-size: 0.8em;
+}
+
+/* The glyph keeps its size; the words are what give way, on one line, inside
+   the chip's own border. */
+.wx > svg { flex: none; }
+.wx__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wx--btn {
@@ -457,14 +493,8 @@
   .pass__action { padding: 0 18px 20px; }
   .day-chip { padding: 6px 0 7px; font-size: 10px; }
   .pass__cta { flex: 1; }
-  .pass__crown {
-    position: static;
-    justify-content: flex-end;
-    padding: 14px 16px 0;
-  }
-  
-  
-  
+  .pass__crown { padding: 14px 16px 0; }
+  .pass__crown + .pass__body { padding-top: 8px; }
 }
 
 /* Reduced motion: the deck still opens and closes, it just arrives rather

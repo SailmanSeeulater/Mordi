@@ -338,7 +338,7 @@ export default function Dashboard() {
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
   const achieved = summary.rows.reduce((sum, r) => sum + Math.min(r.done, r.target), 0);
   const pace = weekPace(planned, achieved, todayColumn);
-  const shownAchieved = useCountUp(achieved);
+  const [shownAchieved, counting] = useCountUp(achieved);
   const perDay = useMemo(() => entriesPerDay(behaviors, summary.days), [behaviors, summary.days]);
   const busiest = bestDay(perDay);
   const maxPerDay = Math.max(1, ...perDay);
@@ -501,9 +501,12 @@ export default function Dashboard() {
                 <div className="pass__headline">
                   {/* The count against the target, not a percent of the whole
                       week: 8 of 24 on a Thursday is on pace, 33% reads as
-                      failure. The arrival count-up is the card's one motion. */}
+                      failure. The count-up is the card's one motion: it runs
+                      on arrival, and again the moment a ring is tapped. */}
                   <p className="pass__figure">
-                    <span className="pass__count">{shownAchieved}</span>
+                    <span className={'pass__count' + (counting ? ' pass__count--pop' : '')}>
+                      {shownAchieved}
+                    </span>
                     <small>of {planned}</small>
                   </p>
                   <p className={`pass__pace pass__pace--${pace.state}`}>
