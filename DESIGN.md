@@ -131,13 +131,15 @@ are on always shows in the rail, whatever the modules say.
   the clock (hidden under 560px), colour button and the account, which opens
   Settings. Log out lives in Settings only.
 - **Week card** (`.pass`) — the count against the target ("8 of 24"), which
-  counts up once on arrival, and a pace line for today ("On pace", "Ahead by
+  counts up on arrival and again to its new total whenever an entry is logged,
+  popping once as it goes, and a pace line for today ("On pace", "Ahead by
   2", "3 behind for Thursday"), with the range and percent small beside it.
   Two facts: goals on target, best day. A Mon–Sun strip of day chips, each a
   bar of its day filled to the share of the week's busiest day, with the
   count written on it; a missed day is dashed, a day ahead is faint, today
   has a ring; each opens the month calendar. One action: Log today. The
-  weather chip sits in the corner; the clock lives in the top bar.
+  weather chip sits on its own row along the card's top edge, right-aligned,
+  so it never sits over the facts beside it; the clock lives in the top bar.
 - **Goal rings** — conic progress per goal, dashed when nothing is logged;
   draggable, arrow keys to move.
 - **Goal deck** — matte passes, grip-to-reorder when open.

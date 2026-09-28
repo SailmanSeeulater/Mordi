@@ -25,7 +25,7 @@ export default function WeatherStrip() {
         title="Uses your location once, and remembers it on this device"
       >
         <WeatherGlyph kind="partly" size={16} idSuffix="-offer" />
-        {state === 'error' ? 'Retry' : 'Weather'}
+        <span className="wx__label">{state === 'error' ? 'Retry' : 'Weather'}</span>
       </button>
     );
   }
@@ -33,7 +33,7 @@ export default function WeatherStrip() {
   if (!weather) {
     return (
       <span className="wx wx--wait" role="status">
-        Checking…
+        <span className="wx__label">Checking…</span>
       </span>
     );
   }
@@ -47,7 +47,7 @@ export default function WeatherStrip() {
   return (
     <span className="wx" title={detail}>
       <WeatherGlyph kind={weather.kind} isDay={weather.isDay} size={18} idSuffix="-pass" />
-      <span aria-hidden="true">
+      <span className="wx__label" aria-hidden="true">
         {weather.temperature}
         <small>°</small>
       </span>
