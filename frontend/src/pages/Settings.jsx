@@ -10,6 +10,7 @@ import ThemeGrid from '../components/ThemeGrid';
 import RemindersSettings from '../components/RemindersSettings';
 import LayoutSettings from '../components/LayoutSettings';
 import ChangePasswordForm from '../components/ChangePasswordForm';
+import DeleteAccount from '../components/DeleteAccount';
 import { toIsoDate } from './dashboardData';
 import './settings.css';
 
@@ -166,6 +167,8 @@ export default function Settings() {
           </div>
         </section>
 
+        <DeleteAccount />
+
         <section className="app-panel" aria-labelledby="set-about">
           <div className="app-panel__head">
             <h2 className="app-panel__title" id="set-about">
@@ -174,8 +177,8 @@ export default function Settings() {
           </div>
           <div className="settings__links">
             <Link to="/about">About Mordi</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/terms">Terms</Link>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
           </div>
         </section>
       </div>

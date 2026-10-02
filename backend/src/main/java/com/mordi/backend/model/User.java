@@ -45,6 +45,15 @@ public class User {
     @Column(name = "last_reminded_on")
     private LocalDate lastRemindedOn;
 
+    // The Terms version agreed to at sign-up; null for older accounts.
+    @JsonIgnore
+    @Column(name = "terms_version", length = 20)
+    private String termsVersion;
+
+    @JsonIgnore
+    @Column(name = "terms_accepted_at")
+    private LocalDateTime termsAcceptedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

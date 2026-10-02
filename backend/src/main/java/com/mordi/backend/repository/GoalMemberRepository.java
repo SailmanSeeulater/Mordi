@@ -27,6 +27,14 @@ public interface GoalMemberRepository extends JpaRepository<GoalMember, Long> {
         + "and m.goal.active = true and m.goal.archivedAt is null")
     List<Goal> findJoinedGoals(@Param("user") User user);
 
+    /**
+     * Everyone else in the goals this person owns, longest-standing first
+     * within each goal: the order in which they would inherit it.
+     */
+    @Query("select m from GoalMember m where m.goal.user = :owner and m.user <> :owner "
+        + "order by m.goal.id, m.joinedAt, m.id")
+    List<GoalMember> findOthersInGoalsOwnedBy(@Param("owner") User owner);
+
     /** Goal id and head count, for the goals given. */
     @Query("select m.goal.id, count(m) from GoalMember m where m.goal.id in :goalIds group by m.goal.id")
     List<Object[]> countByGoalIds(@Param("goalIds") Collection<Long> goalIds);

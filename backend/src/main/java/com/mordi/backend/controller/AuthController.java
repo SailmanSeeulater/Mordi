@@ -56,7 +56,7 @@ public class AuthController {
         try {
             RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
             AuthResponse body = new AuthResponse(
-                jwtUtil.generateToken(rotation.user().getEmail()),
+                jwtUtil.generateToken(rotation.user().getEmail(), rotation.user().getId()),
                 rotation.user().getEmail(),
                 rotation.user().getName());
             return withSession(body, rotation.token());

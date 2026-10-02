@@ -579,6 +579,19 @@
   background: color-mix(in srgb, var(--color-signal) 10%, transparent);
 }
 
+/* The agreement line beside a sign-up button: small, but plainly there. */
+.app-form__consent {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+.app-form__consent a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
 /* Good news above a form, in the same shape as an error so the eye finds it
    in the same place: "your password has been changed". */
 .app-form__notice {

@@ -29,6 +29,17 @@ class AccountEmailsTest {
     }
 
     @Test
+    void theGoodbyeSaysWhatWentWhereBackupsStandAndWhoToWrite() {
+        Email email = AccountEmails.accountDeleted("ana@example.com", "Ana", "privacy@mordi.test");
+
+        assertThat(email.to()).isEqualTo("ana@example.com");
+        assertThat(email.subject()).containsIgnoringCase("deleted");
+        assertThat(email.text()).startsWith("Hi Ana,").contains("7 days").contains("privacy@mordi.test")
+            .contains("joined them first");
+        assertThat(email.html()).contains("7 days").contains("privacy@mordi.test").doesNotContain("href");
+    }
+
+    @Test
     void noNameStillReadsAsAGreeting() {
         assertThat(AccountEmails.passwordReset("a@b.c", "", LINK, Duration.ofMinutes(30)).text()).startsWith("Hi,");
         assertThat(AccountEmails.passwordReset("a@b.c", null, LINK, Duration.ofMinutes(30)).text()).startsWith("Hi,");

@@ -25,14 +25,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final Duration REFILL_PERIOD = Duration.ofMinutes(1);
 
     /**
-     * What anyone can call without signing in and that costs something each
-     * time: a password check, or an email. Each path has its own bucket per
-     * address, so guessing passwords does not use up someone's reset requests.
+     * Every request that checks a password or sends an email. Each has its
+     * own bucket per address, so guessing passwords does not use up someone's
+     * reset requests. The account ones need a signed-in token as well, but a
+     * stolen token should not buy unlimited guesses at the password.
      */
     static final Set<String> LIMITED = Set.of(
-        "/api/auth/login",
-        "/api/auth/forgot",
-        "/api/auth/reset");
+        "POST /api/auth/login",
+        "POST /api/auth/forgot",
+        "POST /api/auth/reset",
+        "PUT /api/account/password",
+        "DELETE /api/account");
 
     private final ProxyManager<String> proxyManager;
 
@@ -69,8 +72,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private boolean isRateLimited(HttpServletRequest request) {
-        return "POST".equalsIgnoreCase(request.getMethod())
-            && LIMITED.contains(request.getRequestURI());
+        return LIMITED.contains(request.getMethod().toUpperCase() + " " + request.getRequestURI());
     }
 
     private BucketProxy resolveBucket(String path, String clientIp) {
