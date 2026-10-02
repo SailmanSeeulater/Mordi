@@ -1,5 +1,6 @@
 package com.mordi.backend.config;
 
+import com.mordi.backend.service.EmailAddresses;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +30,9 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtil.isTokenValid(token)) {
-                String email = jwtUtil.extractEmail(token);
+                // Tokens issued before addresses were lowercased carry the
+                // address as it was typed; the row no longer does.
+                String email = EmailAddresses.normalize(jwtUtil.extractEmail(token));
                 UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(
                         email,

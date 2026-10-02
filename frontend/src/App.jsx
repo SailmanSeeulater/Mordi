@@ -20,6 +20,8 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const Notes = lazy(() => import("./pages/Notes"));
 const Together = lazy(() => import("./pages/Together"));
 const Join = lazy(() => import("./pages/Join"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -54,6 +56,10 @@ function App() {
         <Routes>
           <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+          <Route path="/forgot-password" element={<PublicOnly><ForgotPassword /></PublicOnly>} />
+          {/* Not PublicOnly: the emailed link has to work even in a browser
+              that is signed in, and the page signs it out itself. */}
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/about" element={<Placeholder title="About" />} />
           <Route path="/privacy" element={<Placeholder title="Privacy" />} />
           <Route path="/terms" element={<Placeholder title="Terms" />} />

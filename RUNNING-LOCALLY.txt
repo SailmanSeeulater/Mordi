@@ -36,6 +36,19 @@ it is hardcoded, so the other lines in .env.example are not used by Compose:
       everything else works without it (the map shows a load error and the
       saved-places list still renders).
 
+Optional, and fine to leave blank locally:
+
+  RESEND_API_KEY
+      Lets the backend send email (password reset links) through Resend.
+      Leave it empty and the backend prints each message it would have sent
+      to its own log, link included - open the log, copy the link, and the
+      reset flow works end to end with no mail account.
+
+  APP_URL
+      The origin that emailed links point at. http://localhost:3000 under
+      Compose, http://localhost:5173 for the Vite dev server. Production has
+      its own value in the VPS .env.
+
 For the record, the database identity is fixed in docker-compose.yml, not in
 .env: database "mordi", user "mordi_user". The POSTGRES_USER,
 SPRING_DATASOURCE_* and VITE_API_BASE_URL lines in .env.example are leftovers
