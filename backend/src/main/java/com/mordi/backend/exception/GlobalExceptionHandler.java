@@ -26,6 +26,14 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
+    // 410 rather than 404: the link was real once and will not be again. The
+    // client tells it apart from a 400 on the new password, which can be fixed
+    // on the same page.
+    @ExceptionHandler(LinkExpiredException.class)
+    public ResponseEntity<Map<String, Object>> handleLinkExpired(LinkExpiredException ex) {
+        return buildResponse(HttpStatus.GONE, ex.getMessage());
+    }
+
     @ExceptionHandler(GoalNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleGoalNotFound(GoalNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());

@@ -16,6 +16,8 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // Handed over by the reset page: "your password has been changed".
+  const notice = location.state?.notice;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,6 +44,11 @@ export default function Login() {
       }
     >
       <form className="app-form" onSubmit={handleSubmit}>
+        {notice && (
+          <p className="app-form__notice" role="status">
+            {notice}
+          </p>
+        )}
         <div className="app-field">
           <label htmlFor="login-email">Email</label>
           <input
@@ -63,6 +70,9 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          <p className="auth__aside">
+            <Link to="/forgot-password">Forgot your password?</Link>
+          </p>
         </div>
         {error && (
           <p className="app-form__error" role="alert">

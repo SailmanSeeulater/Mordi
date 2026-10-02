@@ -5,15 +5,9 @@ import com.mordi.backend.model.RefreshToken;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.RefreshTokenRepository;
 import com.mordi.backend.repository.UserRepository;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,14 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class RefreshTokenService {
 
-    /** 256 bits: not guessable, and far more than a hash collision needs. */
-    private static final int TOKEN_BYTES = 32;
-
     private final RefreshTokenRepository repository;
     private final UserRepository userRepository;
     private final Duration ttl;
     private final Clock clock;
-    private final SecureRandom random = new SecureRandom();
 
     // @Autowired is required, not decoration. With two constructors and neither
     // marked, Spring does not choose one: it looks for a no-argument
@@ -138,10 +128,17 @@ public class RefreshTokenService {
         });
     }
 
+    /**
+     * Ends every session this person has, on every device. After a password
+     * change, whoever held the old password is out.
+     */
+    @Transactional
+    public void revokeAllFor(User user) {
+        repository.revokeAllForUser(user, LocalDateTime.now(clock));
+    }
+
     private String issue(User user, UUID familyId) {
-        byte[] bytes = new byte[TOKEN_BYTES];
-        random.nextBytes(bytes);
-        String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String raw = Tokens.random();
 
         LocalDateTime now = LocalDateTime.now(clock);
         RefreshToken token = new RefreshToken();
@@ -155,18 +152,7 @@ public class RefreshTokenService {
         return raw;
     }
 
-    /**
-     * SHA-256, not a password hash. The input is 256 random bits, so there is
-     * nothing for a slow hash to protect against, and lookups need to be
-     * deterministic.
-     */
     static String hash(String rawToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(rawToken.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            // Every JVM is required to provide SHA-256.
-            throw new IllegalStateException(e);
-        }
+        return Tokens.hash(rawToken);
     }
 }

@@ -182,4 +182,57 @@ class AuthServiceTest {
         verify(passwordEncoder, never()).matches(anyString(), anyString());
         verify(jwtUtil, never()).generateToken(anyString());
     }
+
+    // ---- addresses are one case ---------------------------------------------
+
+    @Test
+    void register_storesTheAddressLowercasedAndTrimmed() {
+        AuthRequest request = new AuthRequest();
+        request.setEmail("  Ana.Lima@Example.COM ");
+        request.setPassword("plainPassword123");
+        request.setName("Ana");
+
+        when(userRepository.existsByEmail("ana.lima@example.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+        when(jwtUtil.generateToken("ana.lima@example.com")).thenReturn("token");
+
+        AuthResponse response = authService.register(request);
+
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUser.capture());
+        assertThat(savedUser.getValue().getEmail()).isEqualTo("ana.lima@example.com");
+        assertThat(response.getEmail()).isEqualTo("ana.lima@example.com");
+    }
+
+    @Test
+    void register_seesADuplicateThatDiffersOnlyInCase() {
+        AuthRequest request = new AuthRequest();
+        request.setEmail("Taken@Mordi.com");
+        request.setPassword("whatever1");
+        request.setName("Someone");
+
+        when(userRepository.existsByEmail("taken@mordi.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(request))
+            .isInstanceOf(EmailAlreadyExistsException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void login_findsTheAccountHoweverTheAddressWasTyped() {
+        AuthRequest request = new AuthRequest();
+        request.setEmail(" Existing@MORDI.com");
+        request.setPassword("correctPassword");
+
+        User existingUser = new User();
+        existingUser.setEmail("existing@mordi.com");
+        existingUser.setPassword("hashed-existing-password");
+        existingUser.setName("Existing User");
+
+        when(userRepository.findByEmail("existing@mordi.com")).thenReturn(Optional.of(existingUser));
+        when(passwordEncoder.matches("correctPassword", "hashed-existing-password")).thenReturn(true);
+        when(jwtUtil.generateToken("existing@mordi.com")).thenReturn("valid-token");
+
+        assertThat(authService.login(request).getToken()).isEqualTo("valid-token");
+    }
 }

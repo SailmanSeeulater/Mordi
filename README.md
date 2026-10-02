@@ -15,13 +15,14 @@ A full-stack personal accountability web app. Set goals with a weekly target, lo
 | Database | PostgreSQL 16, versioned with Flyway |
 | Cache | Redis |
 | Auth | JWT (stateless), BCrypt |
+| Email | Resend (HTTP API; password reset links) |
 | Maps | Google Maps API |
 | Monitoring | Spring Boot Actuator (health/readiness) |
 | CI | GitHub Actions (backend tests, frontend lint/build) |
 
 ## Features
 
-- JWT authentication — register, login, stateless sessions
+- JWT authentication — register, login, stateless sessions; password reset by a one-time emailed link, and a change-password form that signs every other device out
 - Goals with a numeric weekly target (1–7 times a week), categories, and create / edit / archive
 - Daily entry logging with mood, attributed to a day
 - A week view that measures progress against the target you set — a day with nothing logged counts as missed only for goals meant to happen daily
@@ -80,6 +81,12 @@ from the template), `JWT_SECRET`, and `VITE_GOOGLE_MAPS_API_KEY`. The database
 name and user are hardcoded in `docker-compose.yml` (`mordi` / `mordi_user`),
 so the `POSTGRES_USER`, `SPRING_DATASOURCE_*` and `VITE_API_BASE_URL` lines in
 `.env.example` are leftovers that nothing reads.
+
+Optional, also read by Compose: `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` for
+push reminders, and `RESEND_API_KEY` / `MAIL_FROM` / `APP_URL` for email.
+Without a Resend key the backend logs each message it would have sent — the
+password-reset link included — so the reset flow can be tried locally with no
+mail account at all. `APP_URL` is the origin emailed links point at.
 
 ### Start everything with Docker Compose
 

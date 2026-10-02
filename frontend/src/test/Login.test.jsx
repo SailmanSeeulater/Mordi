@@ -69,6 +69,28 @@ describe("Login", () => {
     expect(link).toHaveAttribute("href", "/register");
   });
 
+  it("links to the password reset page", () => {
+    renderLogin();
+    expect(screen.getByRole("link", { name: /forgot your password/i })).toHaveAttribute(
+      "href",
+      "/forgot-password"
+    );
+  });
+
+  it("shows a notice handed over by the reset page, and none otherwise", () => {
+    renderLogin();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+
+    render(
+      <MemoryRouter
+        initialEntries={[{ pathname: "/login", state: { notice: "Your password has been changed." } }]}
+      >
+        <Login />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Your password has been changed.");
+  });
+
   it("updates input values as the user types", () => {
     renderLogin();
     const emailInput = screen.getByLabelText("Email");

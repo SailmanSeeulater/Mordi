@@ -56,6 +56,46 @@
   text-underline-offset: 3px;
 }
 
+/* One line of context above a form: what the page is for. */
+.auth__lead {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* The sign-in form's "Forgot your password?", tucked under the field. */
+.auth__aside {
+  margin: 8px 0 0;
+  font-size: 13px;
+  text-align: right;
+}
+.auth__aside a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+/* What the reset page says once the link is on its way. */
+.auth__done {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* A button that reads as a link, mid-sentence. */
+.auth__linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 @media (max-width: 640px) {
   .auth__main {
     align-items: flex-start;

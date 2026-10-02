@@ -10,12 +10,12 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
 
   redis:
     image: redis:7
     container_name: mordi-redis
-    restart: always
+    restart: unless-stopped
 
   backend:
     # Both, deliberately. On the VPS the tag is pulled from GHCR, already built
@@ -37,6 +37,11 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       MORDI_JWT_SECRET: ${JWT_SECRET}
       MORDI_JWT_EXPIRATION: 900000
+      # Email through Resend; optional. Without the key, mail is logged by
+      # the backend instead of sent. APP_URL is where emailed links point.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: "${MAIL_FROM:-Mordi <hello@latesailor.dev>}"
+      APP_URL: ${APP_URL:-https://latesailor.dev}
       # Web Push reminders; optional. Without both keys reminders stay off.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
@@ -46,7 +51,7 @@ services:
     depends_on:
       - postgres
       - redis
-    restart: always
+    restart: unless-stopped
 
   frontend:
     image: ghcr.io/sailmanseeulater/mordi-frontend:${MORDI_TAG:-latest}
@@ -59,7 +64,7 @@ services:
       - "3000:80"
     depends_on:
       - backend
-    restart: always
+    restart: unless-stopped
 
 volumes:
   postgres_data:

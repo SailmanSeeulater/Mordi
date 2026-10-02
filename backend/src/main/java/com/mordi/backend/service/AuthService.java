@@ -19,12 +19,13 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     public AuthResponse register(AuthRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String email = EmailAddresses.normalize(request.getEmail());
+        if (userRepository.existsByEmail(email)) {
             throw new EmailAlreadyExistsException("Email already registered");
         }
 
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         userRepository.save(user);
@@ -34,7 +35,7 @@ public class AuthService {
 
     public AuthResponse login(AuthRequest request) {
         User user = userRepository
-            .findByEmail(request.getEmail())
+            .findByEmail(EmailAddresses.normalize(request.getEmail()))
             .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
 
         if (
