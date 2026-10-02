@@ -41,7 +41,7 @@ services:
       # the backend instead of sent. APP_URL is where emailed links point.
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: "${MAIL_FROM:-Mordi <hello@latesailor.dev>}"
-      APP_URL: ${APP_URL:-https://latesailor.dev}
+      APP_URL: ${APP_URL:-https://mordi.latesailor.dev}
       # Web Push reminders; optional. Without both keys reminders stay off.
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}

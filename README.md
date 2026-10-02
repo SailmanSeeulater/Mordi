@@ -4,7 +4,7 @@
 
 A full-stack personal accountability web app. Set goals with a weekly target, log daily entries and mood, track locations, and see at a glance whether the week is on track.
 
-**Live:** [latesailor.dev](https://latesailor.dev)
+**Live:** [mordi.latesailor.dev](https://mordi.latesailor.dev)
 
 ## Tech Stack
 
