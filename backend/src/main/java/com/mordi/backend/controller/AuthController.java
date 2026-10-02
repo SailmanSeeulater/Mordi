@@ -3,41 +3,33 @@ package com.mordi.backend.controller;
 import com.mordi.backend.config.JwtUtil;
 import com.mordi.backend.dto.AuthRequest;
 import com.mordi.backend.dto.AuthResponse;
+import com.mordi.backend.dto.ForgotPasswordRequest;
+import com.mordi.backend.dto.ResetPasswordRequest;
 import com.mordi.backend.exception.InvalidRefreshTokenException;
 import com.mordi.backend.service.AuthService;
+import com.mordi.backend.service.PasswordService;
 import com.mordi.backend.service.RefreshTokenService;
 import jakarta.validation.Valid;
-import java.time.Duration;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     /** The cookie that carries the refresh token. */
-    static final String REFRESH_COOKIE = "mordi_refresh";
+    static final String REFRESH_COOKIE = SessionCookies.REFRESH_COOKIE;
 
     private final AuthService authService;
+    private final PasswordService passwordService;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
-    private final boolean secureCookie;
-
-    public AuthController(
-            AuthService authService,
-            RefreshTokenService refreshTokenService,
-            JwtUtil jwtUtil,
-            @Value("${mordi.auth.cookie-secure:true}") boolean secureCookie) {
-        this.authService = authService;
-        this.refreshTokenService = refreshTokenService;
-        this.jwtUtil = jwtUtil;
-        this.secureCookie = secureCookie;
-    }
+    private final SessionCookies cookies;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
@@ -72,7 +64,7 @@ public class AuthController {
             // Clear the cookie on the way out, so a dead token is not sent
             // again on every page load.
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .header(HttpHeaders.SET_COOKIE, clearedCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.cleared().toString())
                 .body(Map.of("status", 401, "error", ex.getMessage()));
         }
     }
@@ -87,33 +79,30 @@ public class AuthController {
             @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
         refreshTokenService.revoke(refreshToken);
         return ResponseEntity.noContent()
-            .header(HttpHeaders.SET_COOKIE, clearedCookie().toString())
+            .header(HttpHeaders.SET_COOKIE, cookies.cleared().toString())
             .build();
+    }
+
+    /**
+     * The same answer whether or not the address has an account, so this
+     * cannot be used to find out which addresses are registered.
+     */
+    @PostMapping("/forgot")
+    public ResponseEntity<Map<String, String>> forgot(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordService.requestReset(request.getEmail());
+        return ResponseEntity.ok(Map.of("message", "If that address has an account, a reset link is on its way."));
+    }
+
+    /** No session comes back: every device was just signed out, this one included. */
+    @PostMapping("/reset")
+    public ResponseEntity<Void> reset(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordService.reset(request.getToken(), request.getPassword());
+        return ResponseEntity.noContent().build();
     }
 
     private ResponseEntity<AuthResponse> withSession(AuthResponse body, String refreshToken) {
         return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, refreshCookie(refreshToken, refreshTokenService.ttl()).toString())
+            .header(HttpHeaders.SET_COOKIE, cookies.refresh(refreshToken).toString())
             .body(body);
-    }
-
-    /**
-     * httpOnly, so no script on the page can read it: the long-lived credential
-     * is exactly the one an XSS bug should not be able to take. SameSite=Strict,
-     * because the only caller is this app's own code on its own origin. Scoped
-     * to /api/auth, so it is not attached to every other request.
-     */
-    private ResponseCookie refreshCookie(String value, Duration maxAge) {
-        return ResponseCookie.from(REFRESH_COOKIE, value)
-            .httpOnly(true)
-            .secure(secureCookie)
-            .sameSite("Strict")
-            .path("/api/auth")
-            .maxAge(maxAge)
-            .build();
-    }
-
-    private ResponseCookie clearedCookie() {
-        return refreshCookie("", Duration.ZERO);
     }
 }

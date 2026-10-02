@@ -15,6 +15,7 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Set;
 import java.util.function.Supplier;
 
 @Component
@@ -22,6 +23,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final int CAPACITY = 5;
     private static final Duration REFILL_PERIOD = Duration.ofMinutes(1);
+
+    /**
+     * What anyone can call without signing in and that costs something each
+     * time: a password check, or an email. Each path has its own bucket per
+     * address, so guessing passwords does not use up someone's reset requests.
+     */
+    static final Set<String> LIMITED = Set.of(
+        "/api/auth/login",
+        "/api/auth/forgot",
+        "/api/auth/reset");
 
     private final ProxyManager<String> proxyManager;
 
@@ -44,7 +55,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         String clientIp = resolveClientIp(request);
-        BucketProxy bucket = resolveBucket(clientIp);
+        BucketProxy bucket = resolveBucket(request.getRequestURI(), clientIp);
 
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
@@ -52,18 +63,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
             response.setStatus(429);
             response.setContentType("application/json");
             response.getWriter().write(
-                "{\"status\":429,\"error\":\"Too many login attempts. Please wait a minute and try again.\"}"
+                "{\"status\":429,\"error\":\"Too many attempts. Please wait a minute and try again.\"}"
             );
         }
     }
 
     private boolean isRateLimited(HttpServletRequest request) {
         return "POST".equalsIgnoreCase(request.getMethod())
-            && "/api/auth/login".equals(request.getRequestURI());
+            && LIMITED.contains(request.getRequestURI());
     }
 
-    private BucketProxy resolveBucket(String clientIp) {
-        String key = "rate-limit:login:" + clientIp;
+    private BucketProxy resolveBucket(String path, String clientIp) {
+        String key = "rate-limit:" + path + ":" + clientIp;
         Supplier<BucketConfiguration> configSupplier = () -> BucketConfiguration.builder()
             .addLimit(limit -> limit.capacity(CAPACITY).refillGreedy(CAPACITY, REFILL_PERIOD))
             .build();

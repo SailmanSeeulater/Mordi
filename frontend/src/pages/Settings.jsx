@@ -9,6 +9,7 @@ import AppShell from '../components/AppShell';
 import ThemeGrid from '../components/ThemeGrid';
 import RemindersSettings from '../components/RemindersSettings';
 import LayoutSettings from '../components/LayoutSettings';
+import ChangePasswordForm from '../components/ChangePasswordForm';
 import { toIsoDate } from './dashboardData';
 import './settings.css';
 
@@ -111,6 +112,7 @@ export default function Settings() {
           <p className="settings__note">
             Changing your name or email isn&rsquo;t supported yet — the API has no endpoint for it.
           </p>
+          <ChangePasswordForm />
         </section>
 
         <section className="app-panel" aria-labelledby="set-data">

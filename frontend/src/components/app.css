@@ -579,6 +579,18 @@
   background: color-mix(in srgb, var(--color-signal) 10%, transparent);
 }
 
+/* Good news above a form, in the same shape as an error so the eye finds it
+   in the same place: "your password has been changed". */
+.app-form__notice {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-accent-700);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
 /* The Sign in / Create account switch at the top of the account dialog. */
 .auth-switch {
   padding: 2px 18px 10px;
