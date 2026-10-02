@@ -35,7 +35,7 @@ public class PasswordService {
             UserTokenService tokens,
             RefreshTokenService sessions,
             ResendMailer mailer,
-            @Value("${mordi.app.url:https://latesailor.dev}") String appUrl) {
+            @Value("${mordi.app.url:https://mordi.latesailor.dev}") String appUrl) {
         this.users = users;
         this.encoder = encoder;
         this.tokens = tokens;
