@@ -64,7 +64,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail("new@mordi.com")).thenReturn(false);
         when(passwordEncoder.encode("plainPassword123")).thenReturn("hashed-password");
-        when(jwtUtil.generateToken("new@mordi.com")).thenReturn("fake-jwt-token");
+        when(jwtUtil.generateToken("new@mordi.com", null)).thenReturn("fake-jwt-token");
 
         AuthResponse response = authService.register(request);
 
@@ -95,7 +95,7 @@ class AuthServiceTest {
         // The important behavioral guarantee, regardless of exception type:
         // a duplicate-email attempt must never reach the database.
         verify(userRepository, never()).save(any());
-        verify(jwtUtil, never()).generateToken(anyString());
+        verify(jwtUtil, never()).generateToken(anyString(), any());
     }
 
     @Test
@@ -107,7 +107,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail("secure@mordi.com")).thenReturn(false);
         when(passwordEncoder.encode("superSecret1!")).thenReturn("$2a$10$hashedvalue");
-        when(jwtUtil.generateToken(anyString())).thenReturn("token");
+        when(jwtUtil.generateToken(anyString(), any())).thenReturn("token");
 
         authService.register(request);
 
@@ -135,7 +135,7 @@ class AuthServiceTest {
             .thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches("correctPassword", "hashed-existing-password"))
             .thenReturn(true);
-        when(jwtUtil.generateToken("existing@mordi.com")).thenReturn("valid-token");
+        when(jwtUtil.generateToken("existing@mordi.com", null)).thenReturn("valid-token");
 
         AuthResponse response = authService.login(request);
 
@@ -163,7 +163,7 @@ class AuthServiceTest {
             .isInstanceOf(InvalidCredentialsException.class)
             .hasMessageContaining("Invalid email or password");
 
-        verify(jwtUtil, never()).generateToken(anyString());
+        verify(jwtUtil, never()).generateToken(anyString(), any());
     }
 
     @Test
@@ -180,7 +180,7 @@ class AuthServiceTest {
 
         // Should short-circuit before ever touching the password encoder
         verify(passwordEncoder, never()).matches(anyString(), anyString());
-        verify(jwtUtil, never()).generateToken(anyString());
+        verify(jwtUtil, never()).generateToken(anyString(), any());
     }
 
     // ---- addresses are one case ---------------------------------------------
@@ -194,7 +194,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail("ana.lima@example.com")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("hashed");
-        when(jwtUtil.generateToken("ana.lima@example.com")).thenReturn("token");
+        when(jwtUtil.generateToken("ana.lima@example.com", null)).thenReturn("token");
 
         AuthResponse response = authService.register(request);
 
@@ -202,6 +202,24 @@ class AuthServiceTest {
         verify(userRepository).save(savedUser.capture());
         assertThat(savedUser.getValue().getEmail()).isEqualTo("ana.lima@example.com");
         assertThat(response.getEmail()).isEqualTo("ana.lima@example.com");
+    }
+
+    @Test
+    void register_recordsWhichTermsWereAgreedTo() {
+        AuthRequest request = new AuthRequest();
+        request.setEmail("terms@mordi.com");
+        request.setPassword("plainPassword123");
+        request.setName("Terms Reader");
+
+        when(userRepository.existsByEmail("terms@mordi.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hashed");
+
+        authService.register(request);
+
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUser.capture());
+        assertThat(savedUser.getValue().getTermsVersion()).isEqualTo(AuthService.TERMS_VERSION);
+        assertThat(savedUser.getValue().getTermsAcceptedAt()).isNotNull();
     }
 
     @Test
@@ -231,7 +249,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail("existing@mordi.com")).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.matches("correctPassword", "hashed-existing-password")).thenReturn(true);
-        when(jwtUtil.generateToken("existing@mordi.com")).thenReturn("valid-token");
+        when(jwtUtil.generateToken("existing@mordi.com", null)).thenReturn("valid-token");
 
         assertThat(authService.login(request).getToken()).isEqualTo("valid-token");
     }

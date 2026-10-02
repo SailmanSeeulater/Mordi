@@ -22,6 +22,8 @@ const Together = lazy(() => import("./pages/Together"));
 const Join = lazy(() => import("./pages/Join"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -61,8 +63,8 @@ function App() {
               that is signed in, and the page signs it out itself. */}
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/about" element={<Placeholder title="About" />} />
-          <Route path="/privacy" element={<Placeholder title="Privacy" />} />
-          <Route path="/terms" element={<Placeholder title="Terms" />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/dashboard"
             element={

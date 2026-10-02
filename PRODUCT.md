@@ -21,9 +21,12 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 ## Operating Context
 
 - Web app, phone and desktop, used in short sessions at the edges of the day.
-- Routes: landing (`/`), sign in and create account, forgot and reset password (`/forgot-password`, `/reset-password#token`), dashboard (`/dashboard`), goals (`/goals`), locations (`/locations`), weekly report (`/reports`), settings (`/settings`).
+- Routes: landing (`/`), sign in and create account, forgot and reset password (`/forgot-password`, `/reset-password#token`), Terms and Privacy (`/terms`, `/privacy`), dashboard (`/dashboard`), goals (`/goals`), locations (`/locations`), weekly report (`/reports`), settings (`/settings`).
 - Auth is email plus password; addresses are case-insensitive. A 15-minute access token is kept in `localStorage`; a 30-day refresh token, rotated on every use, lives in an httpOnly cookie, so a session survives from one day to the next. The frontend calls a same-origin Spring Boot API.
 - A forgotten password is reset by a one-time link emailed through Resend: valid for 30 minutes, usable once, only the latest one sent. Setting a new password, by link or from Settings, signs every device out. The forgot form answers the same whether or not the address has an account.
+- Deleting an account (Settings, password required) is immediate and total: goals, entries, places, notes, to-dos, events, reports, sessions and the person's shared-goal messages all go. A shared goal with other members passes to whoever joined it first; entries others logged against a goal that goes with its owner stay theirs, unattached. A confirmation email is sent once the deletion commits. Nightly backups roll over within 7 days.
+- Sign-in tokens carry the account id and are checked against a live account on every request, so a deleted account's token stops working at once.
+- The Terms (California law, 13+) and Privacy Policy live at `/terms` and `/privacy`; their facts sit in `frontend/src/lib/legal.js`. Sign-up says that creating an account agrees to both, and the agreed version is stored on the account. When a feature starts collecting something new or calling a new service, the Privacy Policy and the version change with it.
 - A companion Locations feature saves places with a map, sharing the same shell.
 
 ## Capabilities and Constraints

@@ -1,0 +1,129 @@
+/* Terms and Privacy: one reading column, the serif for headings, the sans for
+   the text, and nothing else competing with the words. */
+
+.legal {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.legal__top {
+  padding: 18px clamp(20px, 5vw, 48px);
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.legal__brand {
+  display: inline-block;
+  padding: 6px 0;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.legal__main {
+  flex: 1;
+  padding: 48px 20px 72px;
+}
+
+.legal__article {
+  max-width: 68ch;
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.legal__title {
+  margin: 0 0 6px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: clamp(32px, 5vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.legal__meta {
+  margin: 0 0 28px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.legal__summary {
+  margin: 0 0 36px;
+  padding: 18px 20px 4px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--r-control);
+  background: var(--color-surface);
+}
+.legal__article h2 {
+  margin: 40px 0 10px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+/* After the rule above, and one class stronger, so the box's own heading
+   sits at its top edge instead of 40px down. */
+.legal__article .legal__summary h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.legal__article h3 {
+  margin: 22px 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.legal__article p { margin: 0 0 14px; }
+
+.legal__article ul {
+  margin: 0 0 16px;
+  padding-left: 1.2em;
+}
+.legal__article li { margin-bottom: 8px; }
+
+.legal__article a,
+.legal__foot a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+/* Who gets what: a definition list, so it reflows to one column on a phone
+   instead of a table that scrolls sideways. */
+.legal__services {
+  margin: 0 0 16px;
+  border-top: 1px solid var(--color-divider);
+}
+.legal__services div {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.4fr) 1fr;
+  gap: 4px 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+.legal__services dt { font-weight: 600; }
+.legal__services dd { margin: 0; }
+
+.legal__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 24px;
+  padding: 20px;
+  border-top: 1px solid var(--color-divider);
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .legal__main { padding: 28px 16px 48px; }
+  .legal__services div { grid-template-columns: 1fr; }
+}

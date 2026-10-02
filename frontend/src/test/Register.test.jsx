@@ -58,6 +58,14 @@ function fillAndSubmit({
 describe("Register", () => {
   const mockLogin = vi.fn();
 
+  it("says that creating an account agrees to the Terms and Privacy Policy", () => {
+    useAuth.mockReturnValue({ login: mockLogin });
+    renderRegister();
+    expect(screen.getByText(/By creating an account, you agree/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Terms of Service" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     useAuth.mockReturnValue({ login: mockLogin });

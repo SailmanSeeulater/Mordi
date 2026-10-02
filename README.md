@@ -31,6 +31,8 @@ A full-stack personal accountability web app. Set goals with a weekly target, lo
 - GPS location tracking with Google Maps visualization and reverse geocoding
 - Automated weekly report generation with completion-rate analytics
 - Download-your-data export (goals, entries, places) as JSON
+- Account deletion from Settings, immediate and password-confirmed: everything the account owns cascades away in the database, shared goals pass to their longest-standing member, and a confirmation email follows the commit
+- Terms of Service and Privacy Policy (`/terms`, `/privacy`), written from what the code actually stores and sends; the Terms version agreed to is recorded at sign-up
 - Health and readiness endpoints for monitoring
 
 ## Design

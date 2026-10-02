@@ -5,6 +5,7 @@ import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import client from '../api/client';
 import Modal from '../components/Modal';
+import TermsConsent from '../components/TermsConsent';
 import './landing.css';
 
 const TASKS = [
@@ -328,6 +329,7 @@ export default function Landing() {
                 />
                 <p className="app-field__hint">At least 8 characters.</p>
               </div>
+              <TermsConsent />
               <div className="app-form__actions">
                 <button type="submit" className="app-btn app-btn--block" disabled={submitting}>
                   {submitting ? 'Creating account…' : 'Create account'}
