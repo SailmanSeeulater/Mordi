@@ -6,7 +6,7 @@
  * TERMS_VERSION in the backend's AuthService to match (a test checks).
  */
 export const LEGAL = {
-  operator: '[Your full name]',
+  operator: 'Perfect Phanitchaleun',
   state: 'California',
   contact: 'privacy@latesailor.dev',
   site: 'mordi.latesailor.dev',
