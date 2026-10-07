@@ -76,6 +76,21 @@
   background: var(--color-bg);
 }
 
+/* A finished to-do: the same card, quieter, led by a tick rather than a mood. */
+.lately__entry--todo .lately__note { color: var(--color-text-muted); }
+
+.lately__tick {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
 .lately__top {
   display: flex;
   align-items: flex-start;

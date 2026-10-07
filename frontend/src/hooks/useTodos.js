@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import client from '../api/client';
+import { toIsoDate } from '../pages/dashboardData';
+
+/**
+ * Fired after any change to the list is saved. Finished to-dos show in Lately
+ * and the week report, which load them separately and listen for this.
+ */
+export const TODOS_CHANGED = 'mordi:todos-changed';
 
 /** Open items first, each group in the order it was added — same as the API. */
 export function sortTodos(todos) {
@@ -65,7 +72,9 @@ export default function useTodos() {
     setTodos((list) => sortTodos(apply(list)));
     setError('');
     try {
-      return await request();
+      const result = await request();
+      window.dispatchEvent(new Event(TODOS_CHANGED));
+      return result;
     } catch {
       setTodos((list) => sortTodos(undo(list)));
       setError(failure);
@@ -100,11 +109,15 @@ export default function useTodos() {
 
   const toggle = useCallback(
     (todo) => {
+      const done = !todo.done;
+      // The day it was finished is the person's own, not the server's: ticked
+      // off at 11pm, it belongs to today in Lately and in this week's report.
+      const completedOn = done ? toIsoDate(new Date()) : null;
       const flip = (list) => list.map((t) => (t.id === todo.id ? { ...t, done: !t.done } : t));
       return run({
         apply: flip,
         undo: flip,
-        request: () => client.put(`/api/todos/${todo.id}`, { done: !todo.done }),
+        request: () => client.put(`/api/todos/${todo.id}`, done ? { done, completedOn } : { done }),
         failure: "Couldn't update that. Check your connection and try again.",
       });
     },

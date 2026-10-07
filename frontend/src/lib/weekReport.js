@@ -42,9 +42,11 @@ function overlapSeconds(event, from, to) {
  * @param goals     current goals (GET /api/goals)
  * @param behaviors entries covering at least this week and the one before
  * @param events    planned events overlapping this week
+ * @param todos     to-dos finished this week and the one before
+ *                  (GET /api/todos/done), cleared from the list or not
  * @param weekStart any date in the week; normalised to its Monday
  */
-export function buildWeekReport({ goals, behaviors, events = [], weekStart, today }) {
+export function buildWeekReport({ goals, behaviors, events = [], todos = [], weekStart, today }) {
   const monday = startOfWeek(weekStart);
   const days = Array.from({ length: 7 }, (_, i) => toIsoDate(addDays(monday, i)));
   const prevMonday = addDays(monday, -7);
@@ -52,6 +54,17 @@ export function buildWeekReport({ goals, behaviors, events = [], weekStart, toda
 
   const week = behaviors.filter((b) => inWeek(b.logDate, days));
   const prev = behaviors.filter((b) => inWeek(b.logDate, prevDays));
+
+  // To-dos count on the day they were ticked off. They have no target, so
+  // they sit beside the goals rather than in their percentages.
+  const finished = (t) => t?.done !== false && t?.completedOn;
+  const weekTodos = todos
+    .filter((t) => finished(t) && inWeek(t.completedOn, days))
+    .sort((a, b) =>
+      a.completedOn.localeCompare(b.completedOn) ||
+      String(a.completedAt ?? '').localeCompare(String(b.completedAt ?? '')),
+    );
+  const prevTodosDone = todos.filter((t) => finished(t) && inWeek(t.completedOn, prevDays)).length;
   const weekGoals = goalsForWeek(goals, week);
 
   const summary = weekSummary(weekGoals, behaviors, monday, today);
@@ -72,6 +85,7 @@ export function buildWeekReport({ goals, behaviors, events = [], weekStart, toda
       seconds: list.reduce((s, b) => s + (b.durationSeconds ?? 0), 0),
       mood: scored.length ? scored.reduce((s, b) => s + MOOD_SCORE[b.mood], 0) / scored.length : null,
       prevTotal: prev.filter((b) => b.logDate === prevDays[i]).length,
+      todos: weekTodos.filter((t) => t.completedOn === iso).length,
       future: iso > toIsoDate(today),
     };
   });
@@ -182,6 +196,9 @@ export function buildWeekReport({ goals, behaviors, events = [], weekStart, toda
     },
     hours,
     timedEntries: timed,
+    todosDone: weekTodos.length,
+    prevTodosDone,
+    finishedTodos: weekTodos.map((t) => ({ id: t.id, text: t.text, iso: t.completedOn, at: t.completedAt ?? null })),
     goalsOnTarget: summary.rows.filter((r) => r.done >= r.target).length,
     goalsTotal: summary.rows.length,
   };
@@ -202,8 +219,11 @@ export function hoursMinutes(seconds) {
  */
 export function headline(r) {
   if (r.percent === null) {
-    return r.entries
-      ? `You logged ${r.entries} ${r.entries === 1 ? 'entry' : 'entries'} across ${r.activeDays} ${r.activeDays === 1 ? 'day' : 'days'}, with no weekly targets set.`
+    if (r.entries) {
+      return `You logged ${r.entries} ${r.entries === 1 ? 'entry' : 'entries'} across ${r.activeDays} ${r.activeDays === 1 ? 'day' : 'days'}, with no weekly targets set.`;
+    }
+    return r.todosDone
+      ? `You finished ${r.todosDone} ${r.todosDone === 1 ? 'to-do' : 'to-dos'}, with no entries logged.`
       : 'Nothing was logged this week.';
   }
   let text = `You hit ${r.achieved} of ${r.planned} planned days`;

@@ -137,7 +137,12 @@ export default function TodoList() {
 
       {loadState === 'ready' && done > 0 && (
         <div className="todo__foot">
-          <button type="button" className="app-linkbtn" onClick={clearDone}>
+          <button
+            type="button"
+            className="app-linkbtn"
+            onClick={clearDone}
+            title="Takes them off this list. They stay in Lately and your weekly report."
+          >
             Clear {done} done
           </button>
         </div>

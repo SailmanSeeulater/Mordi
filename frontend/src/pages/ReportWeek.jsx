@@ -414,6 +414,49 @@ function PlacesBlock({ report }) {
   );
 }
 
+/* ── To-dos finished ────────────────────────────────────────── */
+
+/** How many to show before "and N more": enough for a busy week, short enough to scan. */
+const TODO_LIMIT = 12;
+
+function TodosBlock({ report }) {
+  if (!report.todosDone && !report.prevTodosDone) return null;
+  const shown = report.finishedTodos.slice(0, TODO_LIMIT);
+  const more = report.todosDone - shown.length;
+  const diff = report.todosDone - report.prevTodosDone;
+  return (
+    <section className="wk-block" aria-labelledby="wk-todos-title">
+      <header className="wk-block__head">
+        <h3 id="wk-todos-title">To-dos finished</h3>
+        <p>
+          {report.todosDone} this week
+          {report.prevTodosDone > 0 && (
+            <>
+              , {diff === 0 ? 'the same as' : `${Math.abs(diff)} ${diff > 0 ? 'more than' : 'fewer than'}`} last week
+            </>
+          )}
+        </p>
+      </header>
+      {shown.length === 0 ? (
+        <p className="wk-empty">None this week.</p>
+      ) : (
+        <ul className="wk-todos">
+          {shown.map((t) => (
+            <li key={t.id}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              <span className="app-trunc">{t.text}</span>
+              <time dateTime={t.iso}>{dayShort.format(parseIsoDate(t.iso))}</time>
+            </li>
+          ))}
+        </ul>
+      )}
+      {more > 0 && <p className="wk-todos__more">and {more} more</p>}
+    </section>
+  );
+}
+
 /**
  * One week, taken apart: a sentence saying how it went against the targets
  * set, then the week as a goal × day grid, entries per day against the week
@@ -440,17 +483,19 @@ export default function ReportWeek() {
     const sunday = toIsoDate(addDays(monday, 6));
     const prevMonday = toIsoDate(addDays(monday, -7));
     try {
-      const [goals, behaviors, events, reports] = await Promise.allSettled([
+      const [goals, behaviors, events, reports, todos] = await Promise.allSettled([
         client.get('/api/goals'),
         client.get('/api/behaviors/range', { params: { start: prevMonday, end: sunday } }),
         client.get('/api/events', { params: { start: mondayIso, end: sunday } }),
         client.get('/api/reports'),
+        client.get('/api/todos/done', { params: { start: prevMonday, end: sunday } }),
       ]);
       if (goals.status !== 'fulfilled' || behaviors.status !== 'fulfilled') throw new Error('load failed');
       setData({
         goals: Array.isArray(goals.value.data) ? goals.value.data : [],
         behaviors: Array.isArray(behaviors.value.data) ? behaviors.value.data : [],
         events: events.status === 'fulfilled' && Array.isArray(events.value.data) ? events.value.data : [],
+        todos: todos.status === 'fulfilled' && Array.isArray(todos.value.data) ? todos.value.data : [],
         written:
           reports.status === 'fulfilled' && Array.isArray(reports.value.data)
             ? reports.value.data.filter((r) => r.weekStart === mondayIso).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0] ?? null
@@ -538,6 +583,12 @@ export default function ReportWeek() {
                 <dt>Longest run</dt>
                 <dd>{report.longestRun} {report.longestRun === 1 ? 'day' : 'days'}</dd>
               </div>
+              {(report.todosDone > 0 || report.prevTodosDone > 0) && (
+                <div>
+                  <dt>To-dos done</dt>
+                  <dd>{report.todosDone}</dd>
+                </div>
+              )}
               <div>
                 <dt>Tracked</dt>
                 <dd>{hoursMinutes(report.trackedSeconds)}</dd>
@@ -557,6 +608,7 @@ export default function ReportWeek() {
             <MoodBlock report={report} />
             <TimeBlock report={report} />
             <PlacesBlock report={report} />
+            <TodosBlock report={report} />
           </div>
           <WhenBlock report={report} />
 

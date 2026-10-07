@@ -3,6 +3,7 @@ import client from '../api/client';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
 import useWeekData from '../hooks/useWeekData';
+import useFinishedTodos from '../hooks/useFinishedTodos';
 import useSortOrder from '../hooks/useSortOrder';
 import useDragSort from '../hooks/useDragSort';
 import AppShell from '../components/AppShell';
@@ -23,6 +24,7 @@ import useCountUp from '../hooks/useCountUp';
 import AddToPage from '../components/AddToPage';
 import { ESTABLISHED_DAYS, enableModule, initialPrefs, isOn, savePrefs, useModules } from '../lib/modules';
 import { sharedGoals } from '../lib/together';
+import { mergeFeed } from '../lib/feed';
 import {
   addDays,
   bestDay,
@@ -241,7 +243,14 @@ export default function Dashboard() {
   const [rearrange, setRearrange] = useState(false);
   const blockOrder = useSortOrder('mordi-dash-blocks', SECTIONS);
   const blockDrag = useDragSort(blockOrder.moveOver);
-  const recent = useMemo(() => recentEntries(behaviors, 40), [behaviors]);
+  // Finished to-dos sit in Lately beside entries, over the same eight weeks.
+  const finishedTodos = useFinishedTodos(toIsoDate(addDays(weekStart, -7 * 8)), todayIso);
+  const recent = useMemo(
+    () => mergeFeed(recentEntries(behaviors, 40), finishedTodos, 40),
+    [behaviors, finishedTodos],
+  );
+  const weekStartIso = toIsoDate(weekStart);
+  const todosThisWeek = finishedTodos.filter((t) => t.completedOn >= weekStartIso).length;
   // Bumped after a save, so the year of activity picks up the new entry too.
   const [historyKey, setHistoryKey] = useState(0);
 
@@ -633,7 +642,7 @@ export default function Dashboard() {
             <div className="app-panel side">
               {on('todo') && <TodoList />}
               {on('timer') && <TimeLogger onSaved={handleTimeSaved} />}
-              <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries} />
+              <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries + todosThisWeek} />
             </div>
           </div>
         </div>

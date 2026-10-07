@@ -33,7 +33,7 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 
 - Goals: title, optional category (fitness / sleep / productivity / health), `targetPerWeek` 1–7, optional usual place, soft-delete via an `active` flag, `createdAt`.
 - Notes: up to five per user, optional title, pinnable.
-- To-dos: one line of text, done or not, no description or due date.
+- To-dos: one line of text, done or not, no description or due date. Finishing one is part of the record: it is stamped with the moment and the person's own day (`completedOn`, sent by the browser), shows in Lately beside entries, and counts in that week's report (a "To-dos done" fact, a "To-dos finished" block, and a sentence in the written summary). To-dos sit beside goals, never inside their targets or percentages. "Clear done" takes finished items off the list but keeps them as history; deleting one removes it everywhere.
 - Entries ("behaviors"): note, mood (great / good / neutral / bad / terrible), `completed` boolean, `logDate`, optional link to one goal, optional place, and an optional `durationSeconds` for sessions saved from the time logger (0 to 7 days).
 - Entries are done-or-not; there is no partial state, and adding one would be a backend change.
 - Weekly progress, streaks, and the goal × day grid are computed in the browser from `GET /api/goals` and `GET /api/behaviors/range`; the backend has no streak or per-goal aggregation.

@@ -124,3 +124,46 @@ describe('hoursMinutes', () => {
     expect(hoursMinutes(3 * 3600 + 20 * 60)).toBe('3h 20m');
   });
 });
+
+describe('finished to-dos in the week', () => {
+  const todo = (id, completedOn, completedAt, extra = {}) => ({
+    id, text: `Task ${id}`, done: true, completedOn, completedAt, ...extra,
+  });
+  const todos = [
+    todo(1, '2026-09-15', '2026-09-15T18:00:00Z'),
+    todo(2, '2026-09-14', '2026-09-14T09:00:00Z'),
+    todo(3, '2026-09-15', '2026-09-15T08:00:00Z'),
+    todo(4, '2026-09-08', '2026-09-08T08:00:00Z'), // last week
+    todo(5, '2026-09-22', '2026-09-22T08:00:00Z'), // next week
+    todo(6, '2026-09-16', null, { done: false, completedOn: null }), // reopened
+  ];
+  const r = buildWeekReport({ goals: [run, read], behaviors, todos, weekStart, today });
+
+  it('counts this week and last, apart from the goals and their percentages', () => {
+    expect(r.todosDone).toBe(3);
+    expect(r.prevTodosDone).toBe(1);
+    const withoutTodos = buildWeekReport({ goals: [run, read], behaviors, weekStart, today });
+    expect(r.percent).toBe(withoutTodos.percent);
+    expect(r.entries).toBe(withoutTodos.entries);
+  });
+
+  it('lists them in the order they were finished, with their days', () => {
+    expect(r.finishedTodos.map((t) => t.id)).toEqual([2, 3, 1]);
+    expect(r.finishedTodos[0]).toMatchObject({ text: 'Task 2', iso: '2026-09-14' });
+  });
+
+  it('puts them on their days', () => {
+    expect(r.perDay.map((d) => d.todos)).toEqual([1, 2, 0, 0, 0, 0, 0]);
+  });
+
+  it('has no to-dos to show when none were given', () => {
+    const none = buildWeekReport({ goals: [run], behaviors, weekStart, today });
+    expect(none.todosDone).toBe(0);
+    expect(none.finishedTodos).toEqual([]);
+  });
+
+  it('a week of only to-dos still gets a headline about them', () => {
+    const only = buildWeekReport({ goals: [], behaviors: [], todos, weekStart, today });
+    expect(headline(only)).toBe('You finished 3 to-dos, with no entries logged.');
+  });
+});

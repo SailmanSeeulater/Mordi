@@ -466,6 +466,37 @@
 .wk-places svg { color: var(--color-accent-700); }
 .wk-places strong { font-family: var(--font-mono); font-size: var(--t-micro); }
 
+/* To-dos finished: the places list's rows, a tick in place of the pin and the
+   day in place of the count. */
+.wk-todos {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wk-todos li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  font-size: var(--t-small);
+}
+.wk-todos svg { color: var(--color-accent-700); }
+.wk-todos time {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+}
+.wk-todos__more {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
 .wk-written { justify-items: start; }
 .wk-written__text {
   margin: 0;
