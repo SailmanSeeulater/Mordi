@@ -8,6 +8,7 @@ import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -75,7 +76,8 @@ class TodoServiceTest {
         todo.setDone(done);
         todo.setCreatedAt(LocalDateTime.ofInstant(NOW, UTC).minusDays(1));
         if (done) {
-            todo.setCompletedAt(LocalDateTime.ofInstant(NOW, UTC).minusHours(2));
+            todo.setCompletedAt(NOW.minusSeconds(2 * 3600));
+            todo.setCompletedOn(LocalDate.of(2026, 9, 17));
         }
         return todo;
     }
@@ -120,29 +122,43 @@ class TodoServiceTest {
     class TickingOff {
 
         @Test
-        void finishingRecordsWhen() {
+        void finishingRecordsTheMomentAndThePersonsOwnDay() {
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(existing(5L, me, false)));
+            TodoRequest tick = request(null, true);
+            // Late on the 16th where they are, already the 17th on the server.
+            tick.setCompletedOn(LocalDate.of(2026, 9, 16));
+
+            Todo todo = todoService.updateTodo(ME, 5L, tick);
+
+            assertThat(todo.isDone()).isTrue();
+            assertThat(todo.getCompletedAt()).isEqualTo(NOW);
+            assertThat(todo.getCompletedOn()).isEqualTo(LocalDate.of(2026, 9, 16));
+        }
+
+        @Test
+        void withoutADayFromTheBrowserTheServersDateStandsIn() {
             when(todoRepository.findById(5L)).thenReturn(Optional.of(existing(5L, me, false)));
 
             Todo todo = todoService.updateTodo(ME, 5L, request(null, true));
 
-            assertThat(todo.isDone()).isTrue();
-            assertThat(todo.getCompletedAt()).isEqualTo(LocalDateTime.ofInstant(NOW, UTC));
+            assertThat(todo.getCompletedOn()).isEqualTo(LocalDate.ofInstant(NOW, UTC));
         }
 
         @Test
-        void reopeningClearsTheCompletionTime() {
+        void reopeningClearsTheCompletionTimeAndDay() {
             when(todoRepository.findById(5L)).thenReturn(Optional.of(existing(5L, me, true)));
 
             Todo todo = todoService.updateTodo(ME, 5L, request(null, false));
 
             assertThat(todo.isDone()).isFalse();
             assertThat(todo.getCompletedAt()).isNull();
+            assertThat(todo.getCompletedOn()).isNull();
         }
 
         @Test
         void sendingTheSameStateAgainDoesNotMoveTheCompletionTime() {
             Todo done = existing(5L, me, true);
-            LocalDateTime original = done.getCompletedAt();
+            Instant original = done.getCompletedAt();
             when(todoRepository.findById(5L)).thenReturn(Optional.of(done));
 
             Todo todo = todoService.updateTodo(ME, 5L, request(null, true));
@@ -209,17 +225,37 @@ class TodoServiceTest {
         @Test
         void asksForOpenItemsFirstInTheOrderTheyWereAdded() {
             List<Todo> mine = List.of(existing(1L, me, false));
-            when(todoRepository.findByUserOrderByDoneAscCreatedAtAsc(me)).thenReturn(mine);
+            when(todoRepository.findByUserAndClearedAtIsNullOrderByDoneAscCreatedAtAsc(me)).thenReturn(mine);
 
             assertThat(todoService.getTodos(ME)).isSameAs(mine);
         }
 
         @Test
-        void clearingDoneOnlyTouchesTheCallersItems() {
-            when(todoRepository.deleteDoneByUser(me)).thenReturn(3);
+        void clearingDoneHidesTheCallersItemsWithoutDeletingThem() {
+            when(todoRepository.clearDoneByUser(me, NOW)).thenReturn(3);
 
             assertThat(todoService.clearDone(ME)).isEqualTo(3);
-            verify(todoRepository).deleteDoneByUser(me);
+            verify(todoRepository).clearDoneByUser(me, NOW);
+            verify(todoRepository, never()).delete(any());
+        }
+
+        @Test
+        void finishedItemsComeBackForTheDaysAskedFor() {
+            LocalDate monday = LocalDate.of(2026, 9, 14);
+            LocalDate sunday = LocalDate.of(2026, 9, 20);
+            List<Todo> week = List.of(existing(1L, me, true));
+            when(todoRepository.findFinishedBetween(me, monday, sunday)).thenReturn(week);
+
+            assertThat(todoService.getFinished(ME, monday, sunday)).isSameAs(week);
+        }
+
+        @Test
+        void aBackwardsOrOverlongRangeIsRefused() {
+            LocalDate day = LocalDate.of(2026, 9, 14);
+            assertThatThrownBy(() -> todoService.getFinished(ME, day, day.minusDays(1)))
+                .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> todoService.getFinished(ME, day, day.plusDays(400)))
+                .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

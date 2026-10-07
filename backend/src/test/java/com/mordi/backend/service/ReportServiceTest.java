@@ -7,6 +7,7 @@ import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.ReportRepository;
+import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ class ReportServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private BehaviorRepository behaviorRepository;
     @Mock private GoalRepository goalRepository;
+    @Mock private TodoRepository todoRepository;
 
     private ReportService reportService;
     private User me;
@@ -46,7 +48,7 @@ class ReportServiceTest {
     @BeforeEach
     void setUp() {
         reportService = new ReportService(
-            reportRepository, userRepository, behaviorRepository, goalRepository);
+            reportRepository, userRepository, behaviorRepository, goalRepository, todoRepository);
         me = new User();
         me.setId(1L);
         me.setEmail(ME);
@@ -238,6 +240,34 @@ class ReportServiceTest {
             assertThat(report.getSummary())
                 .contains("Every goal hit its target.")
                 .doesNotContain("Mood");
+        }
+
+        @Test
+        void countsTheWeeksFinishedToDosAfterTheGoals() {
+            Goal run = goal(10L, 1);
+            given(List.of(run), List.of(entry(run, MONDAY, true, null)));
+            when(todoRepository.countFinishedBetween(me, MONDAY, SUNDAY)).thenReturn(3L);
+
+            assertThat(reportService.generateWeeklyReport(ME, WEDNESDAY).getSummary())
+                .endsWith("Every goal hit its target. 3 to-dos finished.");
+        }
+
+        @Test
+        void aWeekOfOnlyToDosStillSaysSomething() {
+            given(List.of(), List.of());
+            when(todoRepository.countFinishedBetween(me, MONDAY, SUNDAY)).thenReturn(1L);
+
+            assertThat(reportService.generateWeeklyReport(ME, WEDNESDAY).getSummary())
+                .isEqualTo("No goals or entries this week, but 1 to-do finished.");
+        }
+
+        @Test
+        void noToDosAddsNothing() {
+            Goal run = goal(10L, 1);
+            given(List.of(run), List.of(entry(run, MONDAY, true, null)));
+
+            assertThat(reportService.generateWeeklyReport(ME, WEDNESDAY).getSummary())
+                .doesNotContain("to-do");
         }
 
         @Test

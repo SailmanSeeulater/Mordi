@@ -6,6 +6,7 @@ import com.mordi.backend.model.Report;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.GoalRepository;
+import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.ReportRepository;
 import com.mordi.backend.repository.UserRepository;
 import java.time.DayOfWeek;
@@ -39,6 +40,7 @@ public class ReportService {
     private final UserRepository userRepository;
     private final BehaviorRepository behaviorRepository;
     private final GoalRepository goalRepository;
+    private final TodoRepository todoRepository;
 
     /** The report for the week containing today. */
     public Report generateWeeklyReport(String email) {
@@ -83,6 +85,10 @@ public class ReportService {
             }
         }
 
+        // To-dos finished that week count as part of it, though not toward any
+        // goal's target: they have none.
+        int todosDone = (int) todoRepository.countFinishedBetween(user, weekStart, weekEnd);
+
         double completionRate = planned > 0 ? (double) achieved / planned * 100 : 0;
         String mostCommonMood = mostCommonMood(behaviors);
 
@@ -101,7 +107,7 @@ public class ReportService {
         report.setCompletionRate(completionRate);
         report.setMostCommonMood(mostCommonMood);
         report.setSummary(summarise(planned, achieved, onTrack, goals.size(), totalEntries,
-            mostCommonMood, completionRate));
+            mostCommonMood, completionRate, todosDone));
 
         return reportRepository.save(report);
     }
@@ -132,13 +138,17 @@ public class ReportService {
         int goalCount,
         int entries,
         String mood,
-        double rate
+        double rate,
+        int todosDone
     ) {
         if (goalCount == 0) {
-            return entries == 0
-                ? "No goals and nothing logged this week."
-                : "No goals set this week, but " + entries + " " + plural(entries, "entry", "entries")
-                    + " logged.";
+            if (entries == 0) {
+                return todosDone == 0
+                    ? "No goals and nothing logged this week."
+                    : "No goals or entries this week, but " + todosFinished(todosDone) + ".";
+            }
+            return "No goals set this week, but " + entries + " " + plural(entries, "entry", "entries")
+                + " logged." + todosSentence(todosDone);
         }
 
         StringBuilder text = new StringBuilder();
@@ -169,7 +179,21 @@ public class ReportService {
         if (mood != null) {
             text.append(" Mood was most often ").append(mood).append(".");
         }
+        text.append(todosSentence(todosDone));
         return text.toString();
+    }
+
+    /** " 3 to-dos finished.", or nothing at all for none. */
+    private String todosSentence(int todosDone) {
+        return todosDone == 0 ? "" : " " + capitalize(todosFinished(todosDone)) + ".";
+    }
+
+    private String todosFinished(int todosDone) {
+        return todosDone + " " + plural(todosDone, "to-do", "to-dos") + " finished";
+    }
+
+    private String capitalize(String s) {
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     private String plural(int count, String one, String many) {

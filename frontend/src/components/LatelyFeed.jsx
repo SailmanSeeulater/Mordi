@@ -38,12 +38,42 @@ const pin = (
   </svg>
 );
 
+const tick = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </svg>
+);
+
+/** A finished to-do: what it was and when it was ticked off, nothing more. */
+function TodoItem({ item }) {
+  const time = loggedTime(item);
+  return (
+    <li className="lately__entry lately__entry--todo">
+      <div className="lately__top">
+        <span className="lately__tick">{tick}</span>
+        <p className="lately__note">{item.note}</p>
+      </div>
+      <div className="lately__foot">
+        {time && (
+          <time className="lately__time" dateTime={item.loggedAt}>
+            {time}
+          </time>
+        )}
+        <span className="lately__goal">To-do done</span>
+      </div>
+    </li>
+  );
+}
+
 function Groups({ groups, todayIso }) {
   return groups.map((group) => (
     <li className="lately__day" key={group.iso}>
       <p className="lately__date">{dayLabel(group.iso, todayIso)}</p>
       <ul className="lately__entries">
-        {group.entries.map((entry) => (
+        {group.entries.map((entry) => entry.kind === 'todo' ? (
+          <TodoItem item={entry} key={entry.id} />
+        ) : (
           <li className="lately__entry" key={entry.id}>
             <div className="lately__top">
               <p className="lately__note">{entry.note}</p>
