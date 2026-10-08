@@ -22,6 +22,10 @@ import UndoToast from '../components/UndoToast';
 import WeekReviewCard from '../components/WeekReviewCard';
 import useCountUp from '../hooks/useCountUp';
 import AddToPage from '../components/AddToPage';
+import Tour from '../components/Tour';
+import { useAuth } from '../context/useAuth';
+import { composeReminder } from '../lib/reminder';
+import { setTourStage, tourStage } from '../lib/tour';
 import { ESTABLISHED_DAYS, enableModule, initialPrefs, isOn, savePrefs, useModules } from '../lib/modules';
 import { sharedGoals } from '../lib/together';
 import { mergeFeed } from '../lib/feed';
@@ -135,6 +139,51 @@ const IconRearrange = () => (
 
 
 /* One tap from an empty dashboard to a working one. */
+/* The first-run tour, in two parts: the welcome and the first goal, then,
+   once a goal exists, the loop the rest of the app is built around. A step
+   whose target is not on the page is skipped. */
+const TOUR_START = [
+  {
+    id: 'welcome',
+    title: 'Welcome to Mordi.',
+    body: 'Goals get a number of days a week, you log what you do, and the week keeps count against that number. That is the whole idea.',
+  },
+  {
+    id: 'starter',
+    target: '[data-tour="starters"]',
+    title: 'Start with one goal',
+    body: 'Pick a starter or write your own. You can change the target, or the goal, any time.',
+    doneLabel: 'Got it',
+  },
+];
+const TOUR_LOOP = [
+  {
+    id: 'pass',
+    target: '[data-tour="pass"]',
+    title: 'The week card',
+    body: 'Your count against the targets you set, whether you are on pace for today, and what is still left this week. A day with nothing logged only counts as missed for a goal meant to happen every day.',
+  },
+  {
+    id: 'log',
+    target: '[data-tour="log"]',
+    title: 'Log today',
+    body: 'The one action. One tap, how it felt, and a note if you want one. Tapping a goal ring logs that goal straight away.',
+  },
+  {
+    id: 'rings',
+    target: '[data-tour="rings"]',
+    title: 'Your goals',
+    body: 'Each ring fills as the week goes. Drag them into the order you like, and add more with the plus.',
+  },
+  {
+    id: 'focused',
+    target: '[data-tour="account"]',
+    title: 'You are in Focused mode',
+    body: 'A new account shows the goals, the week and what you logged. Calendar, notes, timer, places and the rest are switches in Settings, here, when you want them.',
+    doneLabel: 'Done',
+  },
+];
+
 const STARTERS = [
   { title: 'Morning run', category: 'fitness', target: 3 },
   { title: 'Read before bed', category: 'sleep', target: 7 },
@@ -205,6 +254,24 @@ export default function Dashboard() {
 
   const today = useToday();
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
+  const user = useAuth()?.user;
+
+  // The first-run tour, kept per account in this browser. Someone who has
+  // already logged entries has found their way around and never sees it.
+  const [tour, setTour] = useState(() => tourStage(user?.email));
+  const endTour = useCallback(() => {
+    setTourStage(user?.email, 'done');
+    setTour('done');
+  }, [user?.email]);
+  const afterStart = useCallback(() => {
+    setTourStage(user?.email, 'goal');
+    setTour('goal');
+  }, [user?.email]);
+  let tourSteps = null;
+  if (loadState === 'ready' && tour !== 'done' && !(tour === 'new' && behaviors.length > 0)) {
+    if (goals.length > 0) tourSteps = TOUR_LOOP;
+    else if (tour === 'new') tourSteps = TOUR_START;
+  }
 
   const [modal, setModal] = useState(null);
   const [logGoalId, setLogGoalId] = useState('');
@@ -344,6 +411,9 @@ export default function Dashboard() {
   };
 
   const todayColumn = summary.days.indexOf(todayIso);
+  // What is still left, in the words the push reminder uses, the moment the
+  // page opens. Nothing once every target is met.
+  const reminder = useMemo(() => composeReminder(summary.rows, todayColumn), [summary.rows, todayColumn]);
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
   const achieved = summary.rows.reduce((sum, r) => sum + Math.min(r.done, r.target), 0);
   const pace = weekPace(planned, achieved, todayColumn);
@@ -416,7 +486,7 @@ export default function Dashboard() {
             <li>Come back to see the week fill in.</li>
           </ol>
           <p className="onboard__body">Start from one of these, or write your own:</p>
-          <ul className="onboard__starters">
+          <ul className="onboard__starters" data-tour="starters">
             {STARTERS.map((st) => (
               <li key={st.title}>
                 <button
@@ -457,7 +527,7 @@ export default function Dashboard() {
               drag={blockDrag}
               onNudge={blockOrder.nudge}
             >
-              <div className="rings">
+              <div className="rings" data-tour="rings">
                 {rowsWithId.map((row) => (
                   <GoalRing
                     key={row.id}
@@ -495,7 +565,7 @@ export default function Dashboard() {
               drag={blockDrag}
               onNudge={blockOrder.nudge}
             >
-            <section className="pass" aria-labelledby="dash-pass-title">
+            <section className="pass" aria-labelledby="dash-pass-title" data-tour="pass">
               <h2 className="app-sr" id="dash-pass-title">
                 This week, {formatWeekRange(weekStart)}
               </h2>
@@ -526,6 +596,17 @@ export default function Dashboard() {
                       {planned > 0 && ` · ${summary.percent}%`}
                     </span>
                   </p>
+                  {reminder && (
+                    <p className="pass__left">
+                      <strong>{reminder.title}</strong>
+                      {reminder.items.map((l) => (
+                        <span className="pass__left-item" key={l.title}>
+                          {l.title}: {l.left} of {l.target} left
+                        </span>
+                      ))}
+                      {reminder.more > 0 && <span className="pass__left-item">and {reminder.more} more</span>}
+                    </p>
+                  )}
                 </div>
                 <dl className="pass__fields">
                   <div className="pass__field">
@@ -586,7 +667,7 @@ export default function Dashboard() {
 
               {/* One action. Adding a goal is the + ring above and the top bar. */}
               <div className="pass__action">
-                <button type="button" className="pass__cta" onClick={() => openLog()}>
+                <button type="button" className="pass__cta" onClick={() => openLog()} data-tour="log">
                   Log today
                 </button>
               </div>
@@ -680,6 +761,14 @@ export default function Dashboard() {
         onUndo={(t) => t.undo?.()}
         onDone={clearToast}
       />
-    </AppShell>
+      {tourSteps && (
+        <Tour
+          key={goals.length === 0 ? 'start' : 'loop'}
+          steps={tourSteps}
+          onDone={goals.length === 0 ? afterStart : endTour}
+          onSkip={endTour}
+        />
+      )}
+      </AppShell>
   );
 }
