@@ -162,6 +162,40 @@
    below 4.5:1 over the darker accent stop. */
 .pass__range { font-variant-numeric: tabular-nums; }
 
+/* What is still left this week, the moment the page opens: the push
+   reminder's own words, as one line of chips under the pace. Gone once
+   every target is met. Rises in with the rest of the card. */
+.pass__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.pass__left strong {
+  flex-basis: 100%;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+}
+.pass__left-item {
+  padding: 4px 9px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-on-pass) 16%, transparent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  animation: left-in 420ms var(--ease-out) both;
+  animation-delay: 160ms;
+}
+@keyframes left-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pass__left-item { animation: none; }
+}
+
 .pass__fields {
   display: flex;
   gap: 22px;

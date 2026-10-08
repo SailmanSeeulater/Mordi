@@ -1,22 +1,154 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { prefersReducedMotion, useInView } from '../hooks/useLandingMotion';
 import client from '../api/client';
 import Modal from '../components/Modal';
 import TermsConsent from '../components/TermsConsent';
+import {
+  HeroWeekDemo,
+  GoalDemo,
+  LogDemo,
+  WeekRuleDemo,
+  ReportDemo,
+  ReminderDemo,
+  TodoDemo,
+  TogetherDemo,
+  FocusedDemo,
+  MoreGlyph,
+  ThemePicker,
+} from './LandingDemos';
+import {
+  NAV,
+  HERO,
+  HOW,
+  REPORT,
+  REMINDERS,
+  TODOS,
+  TOGETHER,
+  FOCUSED,
+  MORE,
+  THEMES_COPY,
+  DATA,
+  FAQ,
+  CLOSE,
+  FOOTER,
+} from './landingCopy';
 import './landing.css';
 
-const TASKS = [
-  { label: 'Morning run', done: true, tag: '3 of 4', tone: 'accent' },
-  { label: 'Read before bed', done: true, tag: '5 of 7', tone: 'neutral' },
-  { label: 'Deep work block', done: false, tag: '2 of 5', tone: 'outline' },
-  { label: 'Stretch and mobility', done: true, tag: '3 of 3', tone: 'accent' },
-  { label: 'Twenty pages a night', done: false, tag: '1 of 5', tone: 'outline' },
-  { label: 'No phone after 10', done: false, tag: '4 of 7', tone: 'neutral' },
-];
+const STEP_DEMOS = [GoalDemo, LogDemo, WeekRuleDemo];
+const STEP_MS = 6500;
 
+/**
+ * Three steps beside one demo. While the section is on screen the steps
+ * advance on their own, each with a bar that fills over its time; choosing a
+ * step, or Pause, hands control to the person and it stays with them.
+ */
+function HowItWorks() {
+  const ref = useRef(null);
+  const inView = useInView(ref, 0.3);
+  const [step, setStep] = useState(0);
+  const [auto, setAuto] = useState(() => !prefersReducedMotion());
+  const running = auto && inView;
+
+  useEffect(() => {
+    if (!running) return undefined;
+    const t = setTimeout(() => setStep((s) => (s + 1) % HOW.steps.length), STEP_MS);
+    return () => clearTimeout(t);
+  }, [running, step]);
+
+  const choose = (i) => {
+    setAuto(false);
+    setStep(i);
+  };
+
+  const onKeyDown = (e) => {
+    const n = HOW.steps.length;
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const next = (step + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : n - 1)) % n;
+    choose(next);
+    document.getElementById(`how-tab-${next}`)?.focus();
+  };
+
+  const Demo = STEP_DEMOS[step];
+
+  return (
+    <section className="lp-section" id="how" aria-labelledby="how-title" ref={ref}>
+      <div className="lp-head" data-reveal>
+        <h2 className="lp-h2" id="how-title">{HOW.title}</h2>
+        <p className="lp-lede">{HOW.sub}</p>
+      </div>
+
+      <div className="lp-how" data-reveal>
+        <div className="lp-how__steps">
+          <div role="tablist" aria-label={HOW.title} aria-orientation="vertical" onKeyDown={onKeyDown}>
+            {HOW.steps.map((s, i) => (
+              <button
+                key={s.id}
+                id={`how-tab-${i}`}
+                type="button"
+                role="tab"
+                aria-selected={i === step}
+                aria-controls="how-panel"
+                tabIndex={i === step ? 0 : -1}
+                className={'lp-step' + (i === step ? ' is-active' : '')}
+                onClick={() => choose(i)}
+              >
+                <span className="lp-step__num" aria-hidden="true">{i + 1}</span>
+                <span className="lp-step__text">
+                  <span className="lp-step__title">{s.title}</span>
+                  <span className="lp-step__body">{s.body}</span>
+                </span>
+                {i === step && (
+                  <span
+                    key={`${step}-${running}`}
+                    className={'lp-step__progress' + (running ? ' is-running' : '')}
+                    style={{ '--ms': `${STEP_MS}ms` }}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+          {auto && (
+            <button type="button" className="lp-replay lp-how__pause" onClick={() => setAuto(false)}>
+              {HOW.pause}
+            </button>
+          )}
+        </div>
+
+        <div className="lp-how__stage" id="how-panel" role="tabpanel" aria-labelledby={`how-tab-${step}`}>
+          <Demo key={step} />
+          <p className="lp-illus">Illustrative example</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** A feature row: words on one side, its demo on the other. */
+function Row({ id, title, body, aside, points, flip, children }) {
+  return (
+    <section className={'lp-section lp-row' + (flip ? ' lp-row--flip' : '')} id={id} aria-labelledby={`${id}-title`}>
+      <div className="lp-row__text" data-reveal>
+        <h2 className="lp-h2" id={`${id}-title`}>{title}</h2>
+        <p className="lp-lede">{body}</p>
+        {points && (
+          <ul className="lp-points">
+            {points.map((p) => <li key={p}>{p}</li>)}
+          </ul>
+        )}
+        {aside && <p className="lp-aside">{aside}</p>}
+      </div>
+      <div className="lp-row__demo" data-reveal>
+        {children}
+      </div>
+    </section>
+  );
+}
 
 function useScrollReveal() {
   useEffect(() => {
@@ -57,7 +189,7 @@ export default function Landing() {
   const [password, setPassword] = useState('');
 
   const { login } = useAuth();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   useScrollReveal();
@@ -125,8 +257,9 @@ export default function Landing() {
 
   return (
     <div className="mordi-page" data-theme={theme}>
+      <a className="lp-skip" href="#main">Skip to content</a>
 
-      <nav className="mordi-nav">
+      <nav className="mordi-nav" aria-label="Main">
         <button
           type="button"
           className="mordi-nav__brand"
@@ -134,71 +267,138 @@ export default function Landing() {
         >
           Mordi
         </button>
+        <div className="lp-nav__links">
+          {NAV.links.map((l) => (
+            <a key={l.href} href={l.href}>{l.label}</a>
+          ))}
+        </div>
         <div className="mordi-nav__actions">
           <button type="button" className="btn-text" onClick={() => openAuth('signin')}>
-            Sign in
+            {NAV.signIn}
           </button>
           <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
-            Sign up
+            {NAV.signUp}
           </button>
         </div>
       </nav>
 
-      <div className="mordi-container">
-        <section className="mordi-hero">
-          <div>
-            <h1 className="mordi-hero__title">Goals you set. A week that keeps count.</h1>
-            <p className="mordi-hero__sub">
-              Say how many days a week, then log it in one tap. Mordi counts against your own
-              target &mdash; no streaks to protect, no busywork.
-            </p>
-            <div className="mordi-hero__actions">
-              <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
-                Sign up
-              </button>
-            </div>
+      <main id="main" className="mordi-container">
+        <section className="lp-hero" aria-labelledby="hero-title">
+          <h1 className="lp-hero__title" id="hero-title">
+            {HERO.title.split('. ').map((line, i, all) => (
+              <span key={line} className="lp-hero__line" style={{ '--i': i }}>
+                {i < all.length - 1 ? `${line}.` : line}
+              </span>
+            ))}
+          </h1>
+          <p className="lp-hero__sub">{HERO.sub}</p>
+          <div className="lp-hero__actions">
+            <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
+              {HERO.primary}
+            </button>
+            <a className="btn btn-ghost" href="#how">{HERO.secondary}</a>
           </div>
-
-          <div className="mordi-card">
-            <div className="mordi-card__head">
-              <span className="mordi-card__title">Today</span>
-              <span className="mordi-card__date">Sep 8</span>
-            </div>
-            <div className="mordi-tasks__viewport">
-              <div className="mordi-tasks__track">
-                {[...TASKS, ...TASKS].map((t, i) => (
-                  <div
-                    key={`${t.label}-${i}`}
-                    className={'mordi-task' + (t.done ? ' mordi-task--done' : '')}
-                  >
-                    <span
-                      className={'mordi-task__box' + (t.done ? ' mordi-task__box--done' : '')}
-                      aria-hidden="true"
-                    />
-                    <span className="mordi-task__label">{t.label}</span>
-                    <span className={`tag tag-${t.tone}`}>{t.tag}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="lp-hero__stage">
+            <HeroWeekDemo />
           </div>
         </section>
 
-      </div>
+        <HowItWorks />
 
-      <section className="mordi-close" data-reveal>
+        <Row id="report" title={REPORT.title} body={REPORT.body} aside={REPORT.aside}>
+          <ReportDemo />
+        </Row>
+
+        <Row id="reminders" title={REMINDERS.title} body={REMINDERS.body} points={REMINDERS.points} aside={REMINDERS.aside} flip>
+          <ReminderDemo />
+        </Row>
+
+        <Row id="todos" title={TODOS.title} body={TODOS.body} aside={TODOS.aside}>
+          <TodoDemo />
+        </Row>
+
+        <Row id="together" title={TOGETHER.title} body={TOGETHER.body} points={TOGETHER.points} flip>
+          <TogetherDemo />
+        </Row>
+
+        <Row id="focused" title={FOCUSED.title} body={FOCUSED.body}>
+          <FocusedDemo />
+        </Row>
+
+        <section className="lp-section" id="more" aria-labelledby="more-title">
+          <div className="lp-head" data-reveal>
+            <h2 className="lp-h2" id="more-title">{MORE.title}</h2>
+          </div>
+          <ul className="lp-more">
+            {MORE.items.map((item, i) => (
+              <li key={item.id} className="lp-more__item" data-reveal style={{ '--d': `${(i % 3) * 80}ms` }}>
+                <div className="lp-more__visual">
+                  <MoreGlyph id={item.id} />
+                </div>
+                <h3 className="lp-h3">{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="lp-section lp-row" id="colors" aria-labelledby="colors-title">
+          <div className="lp-row__text" data-reveal>
+            <h2 className="lp-h2" id="colors-title">{THEMES_COPY.title}</h2>
+            <p className="lp-lede">{THEMES_COPY.body}</p>
+          </div>
+          <div className="lp-row__demo" data-reveal>
+            <ThemePicker theme={theme} onPick={setTheme} />
+          </div>
+        </section>
+
+        <section className="lp-section" id="data" aria-labelledby="data-title">
+          <div className="lp-head" data-reveal>
+            <h2 className="lp-h2" id="data-title">{DATA.title}</h2>
+          </div>
+          <ul className="lp-data">
+            {DATA.points.map((p, i) => (
+              <li key={p.title} data-reveal style={{ '--d': `${i * 80}ms` }}>
+                <h3 className="lp-h3">{p.title}</h3>
+                <p>{p.body}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="lp-data__links" data-reveal>
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+          </p>
+        </section>
+
+        <section className="lp-section lp-faq" id="faq" aria-labelledby="faq-title">
+          <div className="lp-head" data-reveal>
+            <h2 className="lp-h2" id="faq-title">{FAQ.title}</h2>
+          </div>
+          <div className="lp-faq__list" data-reveal>
+            {FAQ.items.map((item) => (
+              <details key={item.q} className="lp-faq__item">
+                <summary>
+                  {item.q}
+                  <span className="lp-faq__icon" aria-hidden="true" />
+                </summary>
+                <p>{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <section className="mordi-close" data-reveal aria-labelledby="close-title">
         <div className="mordi-close__inner">
-          <h2 className="mordi-close__title">
-            <span>Start tracking</span>
-            <span>your day.</span>
-          </h2>
+          <h2 className="mordi-close__title" id="close-title">{CLOSE.title}</h2>
+          <p className="lp-close__sub">{CLOSE.sub}</p>
           <div className="mordi-close__actions">
             <button
               type="button"
               className="btn btn-ghost btn-ghost--invert"
               onClick={() => openAuth('register')}
             >
-              Sign up
+              {CLOSE.cta}
             </button>
           </div>
         </div>
@@ -207,13 +407,28 @@ export default function Landing() {
       <footer className="mordi-footer">
         <div className="mordi-footer__cols">
           <div className="mordi-footer__col">
-            <span className="mordi-footer__heading">Company</span>
-            <Link to="/about">About</Link>
+            <span className="mordi-footer__heading">{FOOTER.product}</span>
+            {NAV.links.map((l) => (
+              <a key={l.href} href={l.href}>{l.label}</a>
+            ))}
+          </div>
+          <div className="mordi-footer__col">
+            <span className="mordi-footer__heading">{FOOTER.account}</span>
+            <button type="button" className="lp-footer__btn" onClick={() => openAuth('signin')}>
+              {NAV.signIn}
+            </button>
+            <button type="button" className="lp-footer__btn" onClick={() => openAuth('register')}>
+              {CLOSE.cta}
+            </button>
+            <Link to="/forgot-password">Forgot password</Link>
+          </div>
+          <div className="mordi-footer__col">
+            <span className="mordi-footer__heading">{FOOTER.legal}</span>
             <Link to="/privacy">Privacy</Link>
             <Link to="/terms">Terms</Link>
           </div>
         </div>
-        <span className="mordi-footer__copy">&copy; 2026 Mordi.</span>
+        <span className="mordi-footer__copy">{FOOTER.copyright}</span>
       </footer>
 
       {authOpen && (

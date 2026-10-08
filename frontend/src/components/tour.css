@@ -1,0 +1,78 @@
+/* The first-run tour: a spotlight on one thing and a card beside it.
+   The dimming is the hole's own shadow, so the page beneath keeps its
+   colours and layout and only the cut-out moves. */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.tour__hole {
+  position: fixed;
+  border-radius: var(--r-pass);
+  box-shadow: 0 0 0 200vmax color-mix(in srgb, var(--color-text) 48%, transparent);
+  pointer-events: none;
+}
+
+/* No target: the dimming comes from the layer itself. */
+.tour:not(:has(.tour__hole)) {
+  background: color-mix(in srgb, var(--color-text) 48%, transparent);
+}
+
+.tour__card {
+  position: fixed;
+  display: grid;
+  gap: 8px;
+  padding: 20px 22px 18px;
+  border-radius: var(--r-pass);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--edge), var(--lift-3);
+  animation: tour-in 360ms var(--ease-pop) both;
+}
+.tour__card:focus { outline: none; }
+.tour__card--centred {
+  top: 50%;
+  left: 50%;
+  width: min(380px, calc(100vw - 32px));
+  transform: translate(-50%, -50%);
+}
+.tour__card--centred.tour__card { animation-name: tour-in-centred; }
+
+@keyframes tour-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@keyframes tour-in-centred {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+}
+
+.tour__count {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+}
+.tour__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.tour__body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.tour__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour__card { animation: none; }
+}

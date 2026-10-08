@@ -40,7 +40,9 @@ export default function useCountUp(value, duration = 420) {
     let frame;
     const start = performance.now();
     const tick = (now) => {
-      const t = Math.min(1, (now - start) / duration);
+      // A frame's timestamp can precede `start`; clamped, so the count never
+      // dips below where it began.
+      const t = Math.min(1, Math.max(0, (now - start) / duration));
       const eased = 1 - Math.pow(1 - t, 3);
       const next = t < 1 ? Math.round(from + (value - from) * eased) : value;
       shownRef.current = next;

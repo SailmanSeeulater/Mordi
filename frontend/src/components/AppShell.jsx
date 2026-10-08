@@ -127,7 +127,12 @@ export default function AppShell({ title, action, children }) {
           <ThemeSwitcher />
           {/* The account is a place, not a control: it opens Settings, where
               Log out already lives. One fewer thing in the bar. */}
-          <Link to="/settings" className="app-whoami" aria-label={`${name || 'Account'}: settings`}>
+          <Link
+            to="/settings"
+            className="app-whoami"
+            aria-label={`${name || 'Account'}: settings`}
+            data-tour="account"
+          >
             <span className="app-avatar" aria-hidden="true">
               {name ? name[0].toUpperCase() : '?'}
             </span>
