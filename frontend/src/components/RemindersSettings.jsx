@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 import Select from './Select';
-import { currentSubscription, localTimeZone, pushSupported, subscribe, unsubscribe } from '../lib/push';
+import { currentSubscription, localTimeZone, pushSupported, subscribe, turnOnFailure, unsubscribe } from '../lib/push';
 
 const hourLabel = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 6).map((h) => ({
@@ -56,13 +56,7 @@ export default function RemindersSettings() {
       await setHour(hour ?? 19);
       setStatus({ tone: 'info', text: 'Reminders are on for this browser.' });
     } catch (err) {
-      setStatus({
-        tone: 'error',
-        text:
-          err?.message === 'denied'
-            ? 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.'
-            : 'Couldn’t turn reminders on. Check your connection and try again.',
-      });
+      setStatus({ tone: 'error', text: turnOnFailure(err) });
     } finally {
       setBusy(false);
     }
