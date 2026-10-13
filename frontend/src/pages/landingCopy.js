@@ -4,7 +4,8 @@
  *
  * Rule for this file: say only what the app does today. No testimonials, no
  * user counts, no claims the code cannot back. Any figure inside a demo is
- * illustrative and the page labels it so (see PRODUCT.md, "Evidence on Hand").
+ * illustrative, and the page says so once, for every demo, under the first
+ * one (see PRODUCT.md, "Evidence on Hand").
  */
 
 export const NAV = {
@@ -25,7 +26,6 @@ export const HERO = {
     'Give each goal a number of days a week, then log it in one tap. Mordi measures your week against that number, not against a streak it made up.',
   primary: 'Create an account',
   secondary: 'See how it works',
-  note: 'Illustrative example. A new account starts empty and fills as you log.',
 };
 
 export const HOW = {
@@ -212,7 +212,9 @@ export const DEMO_GOALS = [
 
 // Small words inside the demos.
 export const DEMO_TEXT = {
-  illustrative: 'Illustrative example',
+  // Shown once, under the hero's week card, and meant for the whole page.
+  illustrative:
+    'Every figure on this page is an illustrative example. A new account starts empty and fills as you log.',
   replay: 'Replay',
   weekCardLabel: 'Example week card',
   daysLabel: 'Entries per day, Monday to Sunday',

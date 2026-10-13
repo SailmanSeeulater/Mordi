@@ -155,7 +155,7 @@ export default function Together() {
           )}
           {!goalId && (
             <section className="together__room together__room--idle app-panel">
-              <p className="app-empty">Pick a goal to see the week and the thread.</p>
+              <p className="app-empty app-empty--fill">Pick a goal to see the week and the thread.</p>
             </section>
           )}
         </div>

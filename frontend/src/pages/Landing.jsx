@@ -76,7 +76,7 @@ function HowItWorks() {
   const Demo = STEP_DEMOS[step];
 
   return (
-    <section className="lp-section" id="how" aria-labelledby="how-title" ref={ref}>
+    <section className="lp-section lp-section--act" id="how" aria-labelledby="how-title" ref={ref}>
       <div className="lp-head" data-reveal>
         <h2 className="lp-h2" id="how-title">{HOW.title}</h2>
         <p className="lp-lede">{HOW.sub}</p>
@@ -122,17 +122,20 @@ function HowItWorks() {
 
         <div className="lp-how__stage" id="how-panel" role="tabpanel" aria-labelledby={`how-tab-${step}`}>
           <Demo key={step} />
-          <p className="lp-illus">Illustrative example</p>
         </div>
       </div>
     </section>
   );
 }
 
-/** A feature row: words on one side, its demo on the other. */
-function Row({ id, title, body, aside, points, flip, children }) {
+/**
+ * A feature row: words on one side, its demo on the other. `act` marks the
+ * first section of a new part of the page, which gets the longer interval.
+ */
+function Row({ id, title, body, aside, points, flip, act, children }) {
+  const cls = 'lp-section lp-row' + (flip ? ' lp-row--flip' : '') + (act ? ' lp-section--act' : '');
   return (
-    <section className={'lp-section lp-row' + (flip ? ' lp-row--flip' : '')} id={id} aria-labelledby={`${id}-title`}>
+    <section className={cls} id={id} aria-labelledby={`${id}-title`}>
       <div className="lp-row__text" data-reveal>
         <h2 className="lp-h2" id={`${id}-title`}>{title}</h2>
         <p className="lp-lede">{body}</p>
@@ -282,19 +285,21 @@ export default function Landing() {
 
       <main id="main" className="mordi-container">
         <section className="lp-hero" aria-labelledby="hero-title">
-          <h1 className="lp-hero__title" id="hero-title">
-            {HERO.title.split('. ').map((line, i, all) => (
-              <span key={line} className="lp-hero__line" style={{ '--i': i }}>
-                {i < all.length - 1 ? `${line}.` : line}
-              </span>
-            ))}
-          </h1>
-          <p className="lp-hero__sub">{HERO.sub}</p>
-          <div className="lp-hero__actions">
-            <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
-              {HERO.primary}
-            </button>
-            <a className="btn btn-ghost" href="#how">{HERO.secondary}</a>
+          <div className="lp-hero__copy">
+            <h1 className="lp-hero__title" id="hero-title">
+              {HERO.title.split('. ').map((line, i, all) => (
+                <span key={line} className="lp-hero__line" style={{ '--i': i }}>
+                  {i < all.length - 1 ? `${line}.` : line}
+                </span>
+              ))}
+            </h1>
+            <p className="lp-hero__sub">{HERO.sub}</p>
+            <div className="lp-hero__actions">
+              <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
+                {HERO.primary}
+              </button>
+              <a className="btn btn-ghost" href="#how">{HERO.secondary}</a>
+            </div>
           </div>
           <div className="lp-hero__stage">
             <HeroWeekDemo />
@@ -303,7 +308,7 @@ export default function Landing() {
 
         <HowItWorks />
 
-        <Row id="report" title={REPORT.title} body={REPORT.body} aside={REPORT.aside}>
+        <Row id="report" title={REPORT.title} body={REPORT.body} aside={REPORT.aside} act>
           <ReportDemo />
         </Row>
 
@@ -319,7 +324,7 @@ export default function Landing() {
           <TogetherDemo />
         </Row>
 
-        <Row id="focused" title={FOCUSED.title} body={FOCUSED.body}>
+        <Row id="focused" title={FOCUSED.title} body={FOCUSED.body} act>
           <FocusedDemo />
         </Row>
 
@@ -350,7 +355,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="lp-section" id="data" aria-labelledby="data-title">
+        <section className="lp-section lp-section--act" id="data" aria-labelledby="data-title">
           <div className="lp-head" data-reveal>
             <h2 className="lp-h2" id="data-title">{DATA.title}</h2>
           </div>

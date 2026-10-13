@@ -357,6 +357,7 @@
 }
 
 .app-empty {
+  max-width: 60ch;
   margin: 0;
   padding: 8px 18px 22px;
   font-size: 14px;
@@ -365,6 +366,36 @@
 }
 .app-empty p { margin: 0; }
 .app-empty .app-btn { margin-top: 14px; }
+
+/* An empty pane that would otherwise be a large box with one line in its
+   corner: the line takes the middle of the pane instead. The pane is a flex
+   column (or gives it room some other way) and this fills what is left. */
+.app-panel:has(> .app-empty--fill) {
+  display: flex;
+  flex-direction: column;
+}
+.app-empty--fill {
+  flex: 1 1 auto;
+  display: grid;
+  place-content: center;
+  max-width: none;
+  min-height: 12rem;
+  padding: 32px 24px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* A page with nothing on it yet (first run, a failed load, the wait before
+   either) is one composed block on a reading measure, centred in the main
+   area a little below the bar, rather than a full-width band with a few lines
+   in its top-left corner and the rest of the screen empty. Loading, error and
+   first run share the placement, so nothing jumps as one becomes the next. */
+.app-main > .onboard,
+.app-main > .app-status {
+  justify-self: center;
+  width: min(100%, 40rem);
+  margin-top: clamp(0px, 6vh, 56px);
+}
 
 .app-status {
   margin: 0;

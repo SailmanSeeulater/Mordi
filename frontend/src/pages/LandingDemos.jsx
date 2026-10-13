@@ -13,7 +13,8 @@ import { DEMO_GOALS, DEMO_THREAD, DEMO_TEXT } from './landingCopy';
  * HTML and CSS and plays once when it scrolls into view. Wherever the app has
  * the logic (the pace line, the report headline, the module list, the color
  * combinations) the demo calls it, so the page cannot drift from the product.
- * The figures are illustrative and every demo says so.
+ * The figures are illustrative. The page says so once, for every demo, under
+ * the first one (the hero's week card), rather than under each.
  *
  * Under reduced motion each demo shows its last frame and nothing moves.
  */
@@ -23,8 +24,8 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 const TODAY = 3; // Thursday
 const PLANNED = DEMO_GOALS.reduce((s, g) => s + g.target, 0);
 
-function Illustrative({ children = DEMO_TEXT.illustrative }) {
-  return <p className="lp-illus">{children}</p>;
+function Illustrative() {
+  return <p className="lp-illus">{DEMO_TEXT.illustrative}</p>;
 }
 
 function Replay({ onClick, hidden }) {
@@ -426,7 +427,6 @@ export function ReportDemo() {
           </div>
         </dl>
       </div>
-      <Illustrative />
     </div>
   );
 }
@@ -484,10 +484,7 @@ export function ReminderDemo() {
           </div>
         </div>
       </section>
-      <div className="lp-demo-foot">
-        <Illustrative />
-        <Replay onClick={replay} hidden={!done} />
-      </div>
+      <Replay onClick={replay} hidden={!done} />
     </div>
   );
 }
@@ -588,7 +585,6 @@ export function TogetherDemo() {
           </div>
         ))}
       </div>
-      <Illustrative />
     </div>
   );
 }

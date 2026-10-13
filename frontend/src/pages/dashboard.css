@@ -402,7 +402,7 @@
 }
 .onboard__body {
   margin: 0;
-  max-width: 46ch;
+  max-width: 60ch;
   font-size: 15px;
   line-height: 1.6;
   color: var(--color-text-muted);
