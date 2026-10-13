@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider } from '../context/ThemeContext';
 import { useTheme } from '../context/useTheme';
 import { DEFAULT_THEME, THEMES, THEME_STORAGE_KEY } from '../context/theme-context-value';
+import { CUSTOM_STORAGE_KEY, DEFAULT_CUSTOM_THEMES } from '../lib/customTheme';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cwd } from 'node:process';
@@ -14,10 +15,23 @@ import { cwd } from 'node:process';
 const themesCss = readFileSync(join(cwd(), 'src', 'themes.css'), 'utf8');
 
 function Probe() {
-  const { theme, setTheme, cycleTheme } = useTheme();
+  const { theme, setTheme, cycleTheme, customThemes, updateCustomTheme, resetCustomTheme } = useTheme();
   return (
     <div>
       <output>{theme}</output>
+      <span data-testid="custom">{JSON.stringify(customThemes)}</span>
+      <button type="button" onClick={() => setTheme('custom-2')}>
+        custom
+      </button>
+      <button
+        type="button"
+        onClick={() => updateCustomTheme('custom-1', { label: '  Night  ', colors: { bg: '#000', accent: 'nope' } })}
+      >
+        edit
+      </button>
+      <button type="button" onClick={() => resetCustomTheme('custom-1')}>
+        reset
+      </button>
       <button type="button" onClick={cycleTheme}>
         cycle
       </button>
@@ -76,15 +90,16 @@ describe('themes', () => {
     expect(DEFAULT_THEME).toBe('sorbet');
   });
 
-  it('cycles through every combination and wraps back around', () => {
+  it('cycles through every combination, then the custom ones, and wraps back around', () => {
     renderProbe();
     const cycle = screen.getByRole('button', { name: 'cycle' });
 
-    const start = THEMES.findIndex((t) => t.id === DEFAULT_THEME);
-    const expected = THEMES.map((_, i) => THEMES[(start + i) % THEMES.length].id);
+    const all = [...THEMES, ...DEFAULT_CUSTOM_THEMES];
+    const start = all.findIndex((t) => t.id === DEFAULT_THEME);
+    const expected = all.map((_, i) => all[(start + i) % all.length].id);
 
     const seen = [current()];
-    for (let i = 0; i < THEMES.length - 1; i += 1) {
+    for (let i = 0; i < all.length - 1; i += 1) {
       fireEvent.click(cycle);
       seen.push(current());
     }
@@ -126,5 +141,40 @@ describe('themes', () => {
     expect(current()).toBe(DEFAULT_THEME);
     fireEvent.click(screen.getByRole('button', { name: 'forest' }));
     expect(current()).toBe('forest');
+  });
+
+  it('accepts a custom slot as the theme and restores it on the next visit', () => {
+    const first = renderProbe();
+    fireEvent.click(screen.getByRole('button', { name: 'custom' }));
+    expect(current()).toBe('custom-2');
+    first.unmount();
+    renderProbe();
+    expect(current()).toBe('custom-2');
+  });
+
+  it('writes each custom slot as a [data-theme] block', () => {
+    const { container } = renderProbe();
+    const css = container.querySelector('style[data-custom-themes]').textContent;
+    for (const t of DEFAULT_CUSTOM_THEMES) {
+      expect(css).toContain(`[data-theme='${t.id}']`);
+    }
+    expect(css).toContain('--color-accent-700');
+  });
+
+  it('edits a custom slot, keeps valid colors only, persists, and resets', () => {
+    const first = renderProbe();
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    const edited = JSON.parse(screen.getByTestId('custom').textContent)[0];
+    expect(edited.label).toBe('Night');
+    expect(edited.colors.bg).toBe('#000000');
+    expect(edited.colors.accent).toBe(DEFAULT_CUSTOM_THEMES[0].colors.accent);
+    expect(JSON.parse(localStorage.getItem(CUSTOM_STORAGE_KEY))[0].label).toBe('Night');
+
+    first.unmount();
+    renderProbe();
+    expect(JSON.parse(screen.getByTestId('custom').textContent)[0].label).toBe('Night');
+
+    fireEvent.click(screen.getByRole('button', { name: 'reset' }));
+    expect(JSON.parse(screen.getByTestId('custom').textContent)[0]).toEqual(DEFAULT_CUSTOM_THEMES[0]);
   });
 });

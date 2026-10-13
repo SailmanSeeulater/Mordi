@@ -1,8 +1,19 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { DEFAULT_THEME, THEMES, THEME_STORAGE_KEY, ThemeContext } from './theme-context-value';
+import {
+  DEFAULT_CUSTOM_THEMES,
+  cleanLabel,
+  customThemeCss,
+  normalizeHex,
+  readCustomThemes,
+  schemeOf,
+  writeCustomThemes,
+} from '../lib/customTheme';
 
-const isKnown = (id) => THEMES.some((t) => t.id === id);
+// The custom slots are fixed, so an id is known whether or not it was edited.
+const KNOWN_IDS = new Set([...THEMES, ...DEFAULT_CUSTOM_THEMES].map((t) => t.id));
+const isKnown = (id) => KNOWN_IDS.has(id);
 
 /**
  * Swaps the theme inside a view transition: the browser snapshots the page,
@@ -39,6 +50,16 @@ function readStoredTheme() {
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(readStoredTheme);
+  const [customThemes, setCustomThemes] = useState(readCustomThemes);
+
+  // Built-in themes first, then the person's own, in picker and cycle order.
+  const allThemes = useMemo(
+    () => [
+      ...THEMES,
+      ...customThemes.map((t) => ({ id: t.id, label: t.label, scheme: schemeOf(t.colors.bg), custom: true })),
+    ],
+    [customThemes],
+  );
 
   const setTheme = useCallback((id) => {
     if (!isKnown(id)) return;
@@ -53,7 +74,7 @@ export function ThemeProvider({ children }) {
   const cycleTheme = useCallback(() => {
     withThemeTransition(() =>
       setThemeState((current) => {
-        const next = THEMES[(THEMES.findIndex((t) => t.id === current) + 1) % THEMES.length].id;
+        const next = allThemes[(allThemes.findIndex((t) => t.id === current) + 1) % allThemes.length].id;
         try {
           localStorage.setItem(THEME_STORAGE_KEY, next);
         } catch {
@@ -62,9 +83,47 @@ export function ThemeProvider({ children }) {
         return next;
       }),
     );
+  }, [allThemes]);
+
+  /** Changes a custom slot's name or any of its four colors. No crossfade: this runs per drag frame. */
+  const updateCustomTheme = useCallback((id, { label, colors } = {}) => {
+    setCustomThemes((list) =>
+      list.map((t) => {
+        if (t.id !== id) return t;
+        const next = { ...t, colors: { ...t.colors } };
+        if (label !== undefined) next.label = cleanLabel(label, t.label);
+        for (const [key, value] of Object.entries(colors ?? {})) {
+          const hex = normalizeHex(value);
+          if (hex && key in next.colors) next.colors[key] = hex;
+        }
+        return next;
+      }),
+    );
   }, []);
 
-  const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
+  const resetCustomTheme = useCallback((id) => {
+    const base = DEFAULT_CUSTOM_THEMES.find((t) => t.id === id);
+    if (!base) return;
+    setCustomThemes((list) => list.map((t) => (t.id === id ? base : t)));
+  }, []);
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  useEffect(() => {
+    writeCustomThemes(customThemes);
+  }, [customThemes]);
+
+  const css = useMemo(() => customThemeCss(customThemes), [customThemes]);
+
+  const value = useMemo(
+    () => ({ theme, setTheme, cycleTheme, allThemes, customThemes, updateCustomTheme, resetCustomTheme }),
+    [theme, setTheme, cycleTheme, allThemes, customThemes, updateCustomTheme, resetCustomTheme],
+  );
+
+  return (
+    <ThemeContext.Provider value={value}>
+      {/* The custom themes as ordinary [data-theme] blocks, so they paint
+          everything themes.css does. Inline, so edits apply on the same frame. */}
+      <style data-custom-themes="">{css}</style>
+      {children}
+    </ThemeContext.Provider>
+  );
 }

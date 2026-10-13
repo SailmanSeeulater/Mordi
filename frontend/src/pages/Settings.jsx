@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
-import { THEMES } from '../context/theme-context-value';
 import client from '../api/client';
 import AppShell from '../components/AppShell';
 import ThemeGrid from '../components/ThemeGrid';
+import CustomThemeEditor from '../components/CustomThemeEditor';
 import RemindersSettings from '../components/RemindersSettings';
 import LayoutSettings from '../components/LayoutSettings';
 import ChangePasswordForm from '../components/ChangePasswordForm';
@@ -21,13 +21,13 @@ export default function Settings() {
   useDocumentTitle('Settings');
 
   const { user, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, allThemes } = useTheme();
   const navigate = useNavigate();
 
   const [exporting, setExporting] = useState(false);
   const [status, setStatus] = useState({ tone: 'info', text: '' });
 
-  const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
+  const current = allThemes.find((t) => t.id === theme) ?? allThemes[0];
 
   const exportData = async () => {
     setExporting(true);
@@ -88,11 +88,13 @@ export default function Settings() {
             <ThemeGrid theme={theme} onPick={setTheme} idPrefix="set-themes" />
           </div>
           <p className="settings__note">
-            Twenty-six combinations, sixteen light and ten dark. Sorbet is the default. Your
-            pick applies across the whole site, landing page included, and is saved in this
-            browser only — so another device keeps its own.
+            Twenty-six combinations, sixteen light and ten dark, plus three of your own to mix
+            below. Sorbet is the default. Your pick applies across the whole site, landing page
+            included, and is saved in this browser only — so another device keeps its own.
           </p>
         </section>
+
+        <CustomThemeEditor />
 
         <RemindersSettings />
 
