@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -167,7 +168,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void login_withUnknownEmail_throwsAndNeverChecksPassword() {
+    void login_withUnknownEmail_throwsAndStillPaysForAPasswordCheck() {
         AuthRequest request = new AuthRequest();
         request.setEmail("ghost@mordi.com");
         request.setPassword("anything");
@@ -178,9 +179,18 @@ class AuthServiceTest {
             .isInstanceOf(InvalidCredentialsException.class)
             .hasMessageContaining("Invalid email or password");
 
-        // Should short-circuit before ever touching the password encoder
-        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        // A bcrypt check against a stand-in hash, so an unknown address takes
+        // as long to refuse as a wrong password: the timing must not say
+        // which addresses have accounts.
+        verify(passwordEncoder).matches("anything", AuthService.DUMMY_HASH);
         verify(jwtUtil, never()).generateToken(anyString(), any());
+    }
+
+    @Test
+    void theStandInHashIsARealBcryptHash() {
+        // Otherwise BCryptPasswordEncoder.matches logs a warning and returns
+        // at once, and the point of checking against it is lost.
+        assertThat(new BCryptPasswordEncoder().matches("x", AuthService.DUMMY_HASH)).isTrue();
     }
 
     // ---- addresses are one case ---------------------------------------------

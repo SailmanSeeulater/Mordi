@@ -22,6 +22,14 @@ public class PasswordService {
     /** How long a reset link works. Short: it is a password in all but name. */
     static final Duration RESET_TTL = Duration.ofMinutes(30);
 
+    /**
+     * How long after one reset email the next is held back. The rate limiter
+     * counts requests per client; this counts them per address, so a hundred
+     * machines asking for one person's reset still send that person one
+     * email, not a hundred.
+     */
+    static final Duration RESET_COOLDOWN = Duration.ofMinutes(5);
+
     private final UserRepository users;
     private final PasswordEncoder encoder;
     private final UserTokenService tokens;
@@ -48,11 +56,15 @@ public class PasswordService {
      * Emails a reset link if the address has an account, and says nothing
      * either way: the reply must not reveal whether an address is registered.
      * The token rides after a # so it stays out of server logs and Referers,
-     * as invite codes do.
+     * as invite codes do. Asking again within the cooldown does nothing, and
+     * says nothing either: the last link still works.
      */
     @Transactional
     public void requestReset(String email) {
         users.findByEmail(EmailAddresses.normalize(email)).ifPresent(user -> {
+            if (tokens.issuedWithin(user, UserToken.Purpose.PASSWORD_RESET, RESET_COOLDOWN)) {
+                return;
+            }
             String raw = tokens.issue(user, UserToken.Purpose.PASSWORD_RESET, RESET_TTL);
             String link = appUrl + "/reset-password#" + raw;
             mailer.send(AccountEmails.passwordReset(user.getEmail(), user.getName(), link, RESET_TTL));

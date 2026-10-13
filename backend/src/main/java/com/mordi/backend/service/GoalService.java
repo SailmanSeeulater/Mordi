@@ -183,7 +183,7 @@ public class GoalService {
             return fallback;
         }
         if (requested < 1 || requested > 7) {
-            throw new RuntimeException("targetPerWeek must be between 1 and 7");
+            throw new IllegalArgumentException("targetPerWeek must be between 1 and 7");
         }
         return requested;
     }

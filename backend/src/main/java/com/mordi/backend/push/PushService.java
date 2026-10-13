@@ -2,6 +2,7 @@ package com.mordi.backend.push;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mordi.backend.exception.PushEndpointTakenException;
 import com.mordi.backend.model.Behavior;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.PushSubscription;
@@ -100,9 +101,13 @@ public class PushService {
             user.setTimeZone(validZone(request.getTimeZone()));
             users.save(user);
         }
-        // One endpoint belongs to one browser: re-subscribing moves it to
-        // whoever is signed in there now.
+        // One endpoint belongs to one browser, and that browser to one
+        // account: re-subscribing refreshes the keys, it does not move the
+        // subscription to whoever is signed in there now.
         PushSubscription sub = subscriptions.findByEndpoint(request.getEndpoint()).orElseGet(PushSubscription::new);
+        if (sub.getUser() != null && !sub.getUser().getId().equals(user.getId())) {
+            throw new PushEndpointTakenException();
+        }
         sub.setUser(user);
         sub.setEndpoint(request.getEndpoint());
         sub.setP256dh(p256dh);

@@ -88,6 +88,23 @@ class UserTokenServiceTest {
     }
 
     @Test
+    void knowsWhetherALiveLinkWasIssuedRecently() {
+        when(repository.findFirstByUserAndPurposeAndUsedAtIsNullOrderByCreatedAtDesc(me, PASSWORD_RESET))
+            .thenAnswer(inv -> table.values().stream().filter(t -> !t.isUsed()).findFirst());
+
+        assertThat(at(T0).issuedWithin(me, PASSWORD_RESET, Duration.ofMinutes(5))).isFalse();
+
+        String raw = at(T0).issue(me, PASSWORD_RESET, TTL);
+
+        assertThat(at(T0.plus(Duration.ofMinutes(4))).issuedWithin(me, PASSWORD_RESET, Duration.ofMinutes(5))).isTrue();
+        assertThat(at(T0.plus(Duration.ofMinutes(6))).issuedWithin(me, PASSWORD_RESET, Duration.ofMinutes(5))).isFalse();
+
+        // A spent link does not count: the person may need a fresh one at once.
+        at(T0).consume(raw, PASSWORD_RESET);
+        assertThat(at(T0).issuedWithin(me, PASSWORD_RESET, Duration.ofMinutes(5))).isFalse();
+    }
+
+    @Test
     void consumeReturnsWhoseItWasAndMarksItUsed() {
         String raw = at(T0).issue(me, PASSWORD_RESET, TTL);
 

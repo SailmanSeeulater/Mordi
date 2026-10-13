@@ -54,6 +54,20 @@ public class UserTokenService {
     }
 
     /**
+     * Whether a token of this kind was issued to this person within the last
+     * {@code window} and is still live: the caller's cue not to send another
+     * email just yet.
+     */
+    @Transactional(readOnly = true)
+    public boolean issuedWithin(User user, UserToken.Purpose purpose, Duration window) {
+        LocalDateTime since = LocalDateTime.now(clock).minus(window);
+        return repository
+            .findFirstByUserAndPurposeAndUsedAtIsNullOrderByCreatedAtDesc(user, purpose)
+            .filter(token -> token.getCreatedAt().isAfter(since))
+            .isPresent();
+    }
+
+    /**
      * Spends a token and returns whose it was. Unknown, expired, used and
      * wrong-purpose tokens all fail the same way.
      */
