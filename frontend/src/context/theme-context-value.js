@@ -37,4 +37,8 @@ export const ThemeContext = createContext({
   theme: DEFAULT_THEME,
   setTheme: () => {},
   cycleTheme: () => {},
+  allThemes: THEMES,
+  customThemes: [],
+  updateCustomTheme: () => {},
+  resetCustomTheme: () => {},
 });

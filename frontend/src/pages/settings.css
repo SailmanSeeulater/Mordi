@@ -138,3 +138,227 @@
   .app-switch__knob { width: 26px; height: 26px; }
   .app-switch[aria-checked='true'] .app-switch__knob { transform: translateX(20px); }
 }
+
+/* ── Your themes: three slots, four colors each, one wheel ── */
+
+.ctheme {
+  display: grid;
+  gap: 14px;
+  padding: 0 18px 14px;
+}
+.ctheme__slot {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 8px;
+}
+.ctheme__name { margin: 0; }
+
+.ctheme__roles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.ctheme__role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.ctheme__role:hover { background: color-mix(in srgb, var(--color-text) 10%, transparent); }
+.ctheme__role[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-700);
+}
+.ctheme__dot {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 25%, transparent);
+}
+.ctheme__role-text { display: grid; min-width: 0; }
+.ctheme__role-label { font-size: 12px; font-weight: 600; }
+.ctheme__role-hex {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.ctheme__work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.ctheme__side { display: grid; gap: 12px; }
+
+/* The preview carries the slot's data-theme, so every color below is the
+   slot's own, not the active theme's. */
+.ctheme__preview {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--r-panel);
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 14%, transparent);
+}
+.ctheme__pv-card {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+.ctheme__pv-title { font-size: 14px; font-weight: 600; }
+.ctheme__pv-muted { font-size: 12px; color: color-mix(in srgb, var(--color-text) 70%, var(--color-bg)); }
+.ctheme__pv-link { font-size: 12px; font-weight: 600; color: var(--color-accent-700); }
+.ctheme__pv-btn {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-control);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ctheme__pv-pass {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--r-pass);
+  background: var(--color-pass);
+  color: var(--color-on-pass);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ctheme__pv-pass strong { font-size: 22px; }
+
+.ctheme__checks {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.ctheme__check {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--color-text-muted);
+}
+.ctheme__ratio { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--color-text); }
+.ctheme__check--low .ctheme__ratio { color: var(--color-signal); }
+
+/* The wheel: hue around, saturation outward, brightness as a black veil. */
+.cwheel { display: grid; gap: 14px; }
+.cwheel__dial { display: grid; place-items: center; }
+.cwheel__wheel {
+  position: relative;
+  width: min(100%, 220px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff, rgb(255 255 255 / 0)),
+    conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+.cwheel__wheel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #000;
+  opacity: var(--shade, 0);
+  pointer-events: none;
+}
+.cwheel__wheel:focus-visible {
+  outline: 2px solid var(--color-accent-700);
+  outline-offset: 3px;
+}
+.cwheel__handle {
+  position: absolute;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.5px #fff, 0 0 0 4px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+
+.cwheel__fields { display: grid; gap: 10px; }
+.cwheel__caption {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.cwheel__bright input {
+  width: 100%;
+  height: 14px;
+  margin: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(to right, #000, var(--pure));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent);
+  appearance: none;
+  cursor: pointer;
+}
+.cwheel__bright input::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  appearance: none;
+}
+.cwheel__bright input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+.cwheel__codes {
+  display: grid;
+  grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.cwheel__code input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: var(--r-control);
+  background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.cwheel__code input:focus { border-color: var(--color-accent-700); }
+
+@media (max-width: 560px) {
+  .ctheme__roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ctheme__work { grid-template-columns: 1fr; }
+}

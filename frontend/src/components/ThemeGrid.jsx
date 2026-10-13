@@ -1,12 +1,13 @@
-import { THEMES } from '../context/theme-context-value';
+import { useTheme } from '../context/useTheme';
 
 const GROUPS = [
-  { scheme: 'light', label: 'Light' },
-  { scheme: 'dark', label: 'Dark' },
+  { key: 'light', label: 'Light', has: (t) => !t.custom && t.scheme === 'light' },
+  { key: 'dark', label: 'Dark', has: (t) => !t.custom && t.scheme === 'dark' },
+  { key: 'custom', label: 'Your themes', has: (t) => t.custom },
 ];
 
 /**
- * Every color combination, grouped light then dark. Shared by the color menu
+ * Every color combination, grouped light, dark, then the person's own. Shared by the color menu
  * in the top bar and the Appearance panel in Settings, so the two can never
  * disagree about order or grouping.
  *
@@ -15,17 +16,18 @@ const GROUPS = [
  * in JS.
  */
 export default function ThemeGrid({ theme, onPick, idPrefix }) {
+  const { allThemes } = useTheme();
   return (
     <div className="theme-grid">
       {GROUPS.map((group) => {
-        const headingId = `${idPrefix}-${group.scheme}`;
+        const headingId = `${idPrefix}-${group.key}`;
         return (
-          <div className="theme-grid__group" key={group.scheme} role="group" aria-labelledby={headingId}>
+          <div className="theme-grid__group" key={group.key} role="group" aria-labelledby={headingId}>
             <p className="theme-grid__heading" id={headingId}>
               {group.label}
             </p>
             <div className="theme-grid__swatches">
-              {THEMES.filter((t) => t.scheme === group.scheme).map((t) => (
+              {allThemes.filter(group.has).map((t) => (
                 <button
                   key={t.id}
                   type="button"

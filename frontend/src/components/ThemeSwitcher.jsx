@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTheme } from '../context/useTheme';
-import { THEMES } from '../context/theme-context-value';
 import ThemeGrid from './ThemeGrid';
 
 /**
@@ -9,12 +8,12 @@ import ThemeGrid from './ThemeGrid';
  * itself in the colors it applies — no duplicated color values in JS.
  */
 export default function ThemeSwitcher({ align = 'end' }) {
-  const { theme, setTheme, cycleTheme } = useTheme();
+  const { theme, setTheme, cycleTheme, allThemes } = useTheme();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const menuId = useId();
 
-  const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
+  const current = allThemes.find((t) => t.id === theme) ?? allThemes[0];
 
   useEffect(() => {
     if (!open) return;
