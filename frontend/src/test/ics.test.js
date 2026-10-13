@@ -89,4 +89,21 @@ describe('parseIcs', () => {
     expect(events).toHaveLength(0);
     expect(skipped).toBe(3);
   });
+
+  it('stops reading once the limit is reached', () => {
+    const event = (i) => `BEGIN:VEVENT\r\nSUMMARY:E${i}\r\nDTSTART:20260921T0${i}0000\r\nEND:VEVENT\r\n`;
+    const { events } = parseIcs(wrap([1, 2, 3, 4].map(event).join('')), { now: NOW, limit: 2 });
+    expect(events.map((e) => e.title)).toEqual(['E1', 'E2']);
+  });
+
+  it('ignores whatever follows the five-thousandth event', () => {
+    let body = '';
+    for (let i = 0; i < 5001; i += 1) {
+      // All in the past, so none is kept and the cap is what stops the loop.
+      body += 'BEGIN:VEVENT\r\nSUMMARY:Old\r\nDTSTART:20200101T090000\r\nEND:VEVENT\r\n';
+    }
+    body += 'BEGIN:VEVENT\r\nSUMMARY:Late\r\nDTSTART:20260921T090000\r\nEND:VEVENT\r\n';
+    const { events } = parseIcs(wrap(body), { now: NOW });
+    expect(events).toHaveLength(0);
+  });
 });

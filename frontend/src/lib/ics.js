@@ -104,6 +104,10 @@ function parseDuration(value) {
 
 const DAYS = { MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6, SU: 0 };
 
+/** VEVENTs read from one file before the rest of it is ignored. A calendar
+ *  with more than this is not something anyone wants imported wholesale. */
+const MAX_VEVENTS = 5000;
+
 function parseRule(value) {
   const rule = {};
   for (const part of value.split(';')) {
@@ -180,12 +184,17 @@ export function parseIcs(text, { now = new Date(), pastDays = 30, futureDays = 3
   let calendarName = null;
   let skipped = 0;
   let current = null;
+  let seen = 0;
 
   for (const raw of lines) {
+    // Nothing past `limit` is kept, so there is no point reading on.
+    if (events.length >= limit) break;
     const line = parseLine(raw);
     if (!line) continue;
     if (line.name === 'X-WR-CALNAME' && !current) calendarName = unescapeText(line.value);
     if (line.name === 'BEGIN' && line.value.toUpperCase() === 'VEVENT') {
+      seen += 1;
+      if (seen > MAX_VEVENTS) break;
       current = { exdates: [] };
       continue;
     }

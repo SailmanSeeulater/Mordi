@@ -18,7 +18,7 @@ Pick one. Route A first if you have never run it locally before.
 ===============================================================================
 
 docker-compose.yml reads exactly THREE values from .env. Everything else in
-it is hardcoded, so the other lines in .env.example are not used by Compose:
+it is hardcoded, so the other lines in env.example are not used by Compose:
 
   DB_PASSWORD
       Any password for the local Postgres user. Local only, so it can be
@@ -50,11 +50,11 @@ Optional, and fine to leave blank locally:
       its own value in the VPS .env.
 
 For the record, the database identity is fixed in docker-compose.yml, not in
-.env: database "mordi", user "mordi_user". The POSTGRES_USER,
-SPRING_DATASOURCE_* and VITE_API_BASE_URL lines in .env.example are leftovers
-that nothing reads - changing them has no effect. Worth cleaning up one day.
+.env: database "mordi", user "mordi_user". The POSTGRES_DB and POSTGRES_USER
+lines in env.example are there for reference only - changing them has no
+effect.
 
-Never commit real values. .env is gitignored; .env.example is the template.
+Never commit real values. .env is gitignored; env.example is the template.
 
 
 ===============================================================================
@@ -64,11 +64,10 @@ Never commit real values. .env is gitignored; .env.example is the template.
  1. Create your .env from the template:
 
         cd "C:\Users\lesst\OneDrive\Documents\Coding Space\Mordi"
-        copy .env.example .env
+        copy env.example .env
 
  2. Open .env and make sure these three lines are present and filled in.
-    DB_PASSWORD is NOT in the template, so you have to add it - Compose will
-    refuse to start without it:
+    Compose will refuse to start without DB_PASSWORD:
 
         DB_PASSWORD=mordi_local_pw
         JWT_SECRET=<paste your long random string>

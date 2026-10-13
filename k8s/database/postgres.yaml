@@ -34,8 +34,13 @@ spec:
               value: mordi
             - name: POSTGRES_USER
               value: mordi_user
+            # From the mordi-secrets Secret (see k8s/SECRETS.md), the same
+            # value the backend reads as SPRING_DATASOURCE_PASSWORD.
             - name: POSTGRES_PASSWORD
-              value: mordi_password
+              valueFrom:
+                secretKeyRef:
+                  name: mordi-secrets
+                  key: db-password
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data

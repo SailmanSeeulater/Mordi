@@ -230,8 +230,7 @@ export default function Landing() {
       const res = await client.post('/api/auth/login', { email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Login failed:', err);
+    } catch {
       setError('Invalid email or password');
     } finally {
       setSubmitting(false);
@@ -247,8 +246,7 @@ export default function Landing() {
       const res = await client.post('/api/auth/register', { name, email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Registration failed:', err);
+    } catch {
       setError('Registration failed. Email may already be in use.');
     } finally {
       setSubmitting(false);

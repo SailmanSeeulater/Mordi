@@ -1,4 +1,4 @@
-const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { loadMapsLibrary } from './maps';
 
 /** The last place the browser reported, so the weather strip and the log form
  *  don't each have to ask for permission again. Per-device, never sent anywhere
@@ -45,13 +45,15 @@ export function getPosition(options = {}) {
 /** Rounds to ~11m. Enough to name a place, short of a precise fix. */
 export const round = (n) => Math.round(n * 10000) / 10000;
 
+/**
+ * Names a pair of coordinates through the Maps SDK's Geocoder rather than a
+ * bare request with the key in the URL. Resolves to '' without a key, or
+ * when Google has no answer or cannot be reached.
+ */
 export function reverseGeocode(latitude, longitude) {
-  if (!MAPS_KEY) return Promise.resolve('');
-  return fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${MAPS_KEY}`,
-  )
-    .then((res) => res.json())
-    .then((data) => data.results?.[0]?.formatted_address ?? '')
+  return loadMapsLibrary('geocoding')
+    .then(({ Geocoder }) => new Geocoder().geocode({ location: { lat: latitude, lng: longitude } }))
+    .then((response) => response.results?.[0]?.formatted_address ?? '')
     .catch(() => '');
 }
 

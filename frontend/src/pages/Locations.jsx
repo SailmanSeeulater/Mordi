@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, PolylineF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF, InfoWindowF, PolylineF } from "@react-google-maps/api";
 import { useTheme } from "../context/useTheme";
 import useDocumentTitle from "../hooks/useDocumentTitle";
+import useMapsApi from "../hooks/useMapsApi";
+import { reverseGeocode } from "../lib/geo";
 import client from "../api/client";
 import AppShell from "../components/AppShell";
 import TripPlanner from "../components/TripPlanner";
 import "./locations.css";
 
-const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const DEFAULT_CENTER = { lat: 32.7157, lng: -117.1611 };
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 
@@ -91,15 +92,6 @@ function formatDay(recordedAt) {
   return recordedAt ? dateFormat.format(new Date(recordedAt)) : "";
 }
 
-function reverseGeocode(lat, lng) {
-  return fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${MAPS_KEY}`,
-  )
-    .then((res) => res.json())
-    .then((data) => data.results?.[0]?.formatted_address || "Unknown location")
-    .catch(() => "Unknown location");
-}
-
 function getPosition() {
   return new Promise((resolve, reject) =>
     navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -132,7 +124,7 @@ export default function Locations() {
   const framedFirst = useRef(false);
 
   const { theme } = useTheme();
-  const { isLoaded, loadError } = useJsApiLoader({ googleMapsApiKey: MAPS_KEY });
+  const { isLoaded, loadError } = useMapsApi();
 
   // Rebuilt when the combination changes, so the map re-styles with the app.
   // Both of these read the palette off the DOM, so they have to be recomputed
@@ -386,7 +378,7 @@ export default function Locations() {
 
     const { latitude, longitude } = position.coords;
     try {
-      const placeName = await reverseGeocode(latitude, longitude);
+      const placeName = (await reverseGeocode(latitude, longitude)) || "Unknown location";
       const res = await client.post("/api/locations", { latitude, longitude, placeName });
       setStatus({ tone: "info", text: `Saved ${placeName}.` });
       setSelectedId(res.data?.placeName ? `p:${res.data.placeName.trim().toLowerCase()}` : null);
