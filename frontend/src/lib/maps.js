@@ -2,6 +2,10 @@ import { Loader } from '@googlemaps/js-api-loader';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+/** Whether this build was given a Maps key at all. Without one the Places
+ *  page shows its list and says so, instead of an empty map frame. */
+export const MAPS_CONFIGURED = Boolean(MAPS_KEY);
+
 /**
  * The one way the Maps JavaScript API gets onto the page. The Places page
  * needs it for the map, and reverse geocoding (the weather strip, the log

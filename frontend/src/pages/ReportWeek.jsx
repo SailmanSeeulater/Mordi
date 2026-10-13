@@ -63,7 +63,7 @@ function GoalMatrix({ report }) {
                 const pct = Math.min(100, Math.round((row.done / row.target) * 100));
                 return (
                   <tr key={row.goal.id} style={{ '--row': r }}>
-                    <th scope="row" className="wk-matrix__goal">
+                    <th scope="row" className="wk-matrix__goal" title={row.goal.title}>
                       {row.goal.title}
                     </th>
                     {row.cells.map((cell) => {
@@ -528,7 +528,7 @@ export default function ReportWeek() {
       await client.post('/api/reports/generate', null, { params: { week: mondayIso } });
       await load();
     } catch {
-      setWriteError("Couldn't write up this week. Check your connection and try again.");
+      setWriteError('Couldn’t write up this week. Check your connection and try again.');
     }
     setWriting(false);
   };

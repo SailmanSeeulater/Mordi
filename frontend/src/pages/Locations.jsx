@@ -4,6 +4,7 @@ import { useTheme } from "../context/useTheme";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useMapsApi from "../hooks/useMapsApi";
 import { reverseGeocode } from "../lib/geo";
+import { MAPS_CONFIGURED } from "../lib/maps";
 import client from "../api/client";
 import AppShell from "../components/AppShell";
 import TripPlanner from "../components/TripPlanner";
@@ -313,12 +314,19 @@ export default function Locations() {
     new window.google.maps.Geocoder().geocode({ address: query.trim() }, (results, geoStatus) => {
       setSearching(false);
       if (geoStatus !== "OK" || !results?.[0]) {
+        if (geoStatus === "REQUEST_DENIED") {
+          // The operator's detail stays in the console; the person only
+          // needs to know what still works.
+          console.warn(
+            "Place search was refused for this Maps key. Enable the Geocoding API for it in Google Cloud Console.",
+          );
+        }
         setStatus({
           tone: "error",
           text:
             geoStatus === "REQUEST_DENIED"
-              ? "Search is turned off for this map key. Enable the Geocoding API for it in Google Cloud Console."
-              : `Couldn't find "${query.trim()}". Try a fuller address.`,
+              ? "Search isn’t available on this site yet. You can still tap the map to drop a pin."
+              : `Couldn’t find "${query.trim()}". Try a fuller address.`,
         });
         return;
       }
@@ -342,7 +350,7 @@ export default function Locations() {
       setSelectedId(res.data?.placeName ? `p:${res.data.placeName.trim().toLowerCase()}` : null);
       reload();
     } catch {
-      setStatus({ tone: "error", text: "Couldn't save this place. Check your connection and try again." });
+      setStatus({ tone: "error", text: "Couldn’t save this place. Check your connection and try again." });
     } finally {
       setSavingPin(false);
     }
@@ -355,7 +363,7 @@ export default function Locations() {
 
   const captureLocation = async () => {
     if (!navigator.geolocation) {
-      setStatus({ tone: "error", text: "This browser can't share your location." });
+      setStatus({ tone: "error", text: "This browser can’t share your location." });
       return;
     }
     setCapturing(true);
@@ -370,8 +378,8 @@ export default function Locations() {
         tone: "error",
         text:
           err?.code === 1
-            ? "Location access is blocked. Allow it in your browser's site settings, then try again."
-            : "Couldn't get your location. Check that location services are on, then try again.",
+            ? "Location access is blocked. Allow it in your browser’s site settings, then try again."
+            : "Couldn’t get your location. Check that location services are on, then try again.",
       });
       return;
     }
@@ -385,7 +393,7 @@ export default function Locations() {
       glideTo({ lat: latitude, lng: longitude });
       reload();
     } catch {
-      setStatus({ tone: "error", text: "Couldn't save this place. Check your connection and try again." });
+      setStatus({ tone: "error", text: "Couldn’t save this place. Check your connection and try again." });
     } finally {
       setCapturing(false);
     }
@@ -430,21 +438,23 @@ export default function Locations() {
             </button>
           </div>
 
-          <form className="loc__search" onSubmit={search} role="search">
-            <label className="app-sr" htmlFor="loc-search">
-              Search for a place
-            </label>
-            <input
-              id="loc-search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search an address, or tap the map to drop a pin"
-              autoComplete="off"
-            />
-            <button type="submit" className="app-btn app-btn--quiet" disabled={searching || !isLoaded}>
-              {searching ? "Finding…" : "Search"}
-            </button>
-          </form>
+          {MAPS_CONFIGURED && (
+            <form className="loc__search" onSubmit={search} role="search">
+              <label className="app-sr" htmlFor="loc-search">
+                Search for a place
+              </label>
+              <input
+                id="loc-search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search an address, or tap the map to drop a pin"
+                autoComplete="off"
+              />
+              <button type="submit" className="app-btn app-btn--quiet" disabled={searching || !isLoaded}>
+                {searching ? "Finding…" : "Search"}
+              </button>
+            </form>
+          )}
 
           <div role="status">
             {status.text && (
@@ -454,82 +464,94 @@ export default function Locations() {
             )}
           </div>
 
-          <div className={`loc__map${picking ? " loc__map--picking" : ""}`}>
-            {loadError ? (
-              <p className="app-empty">The map couldn&rsquo;t load. Your saved places are still listed.</p>
-            ) : !isLoaded ? (
-              <p className="app-empty">Loading map…</p>
-            ) : (
-              <GoogleMap
-                mapContainerStyle={MAP_CONTAINER_STYLE}
-                center={initialCenter}
-                zoom={12}
-                options={mapOptions}
-                onClick={onMapClick}
-                onLoad={(map) => {
-                  mapRef.current = map;
-                }}
-                onUnmount={() => {
-                  mapRef.current = null;
-                }}
-              >
-                {mapped.map((loc) => (
-                  <MarkerF
-                    key={loc.id}
-                    position={{ lat: loc.latitude, lng: loc.longitude }}
-                    icon={markerIcon}
-                    title={loc.placeName || "Saved place"}
-                    onClick={() => selectPlace(loc)}
-                  />
-                ))}
-                {pin && <MarkerF position={pin.position} title={pin.label} />}
-                {/* Alternatives faint underneath, the chosen route on top. */}
-                {route?.routes.map((r, i) =>
-                  i === route.index ? null : (
-                    <PolylineF
-                      key={`alt-${i}`}
-                      path={r.path}
-                      options={{ strokeColor: ink, strokeOpacity: 0.28, strokeWeight: 5, clickable: true }}
-                      onClick={() => setRoute((cur) => (cur ? { ...cur, index: i } : cur))}
+          {/* No key on this site: the page says so in its own words and
+              keeps the parts that need no map, rather than an empty frame. */}
+          {!MAPS_CONFIGURED ? (
+            <div className="loc__unset">
+              <h3 className="loc__unset-title">Maps isn&rsquo;t set up on this site yet.</h3>
+              <p>
+                Your saved places are still listed here, a place you name when you log still counts in the
+                weekly report, and Save my location still keeps where you are.
+              </p>
+            </div>
+          ) : (
+            <div className={`loc__map${picking ? " loc__map--picking" : ""}`}>
+              {loadError ? (
+                <p className="app-empty">The map couldn&rsquo;t load. Your saved places are still listed.</p>
+              ) : !isLoaded ? (
+                <p className="app-empty">Loading map…</p>
+              ) : (
+                <GoogleMap
+                  mapContainerStyle={MAP_CONTAINER_STYLE}
+                  center={initialCenter}
+                  zoom={12}
+                  options={mapOptions}
+                  onClick={onMapClick}
+                  onLoad={(map) => {
+                    mapRef.current = map;
+                  }}
+                  onUnmount={() => {
+                    mapRef.current = null;
+                  }}
+                >
+                  {mapped.map((loc) => (
+                    <MarkerF
+                      key={loc.id}
+                      position={{ lat: loc.latitude, lng: loc.longitude }}
+                      icon={markerIcon}
+                      title={loc.placeName || "Saved place"}
+                      onClick={() => selectPlace(loc)}
                     />
-                  ),
-                )}
-                {route && (
-                  <PolylineF
-                    path={route.routes[route.index].path}
-                    options={{ strokeColor: accent, strokeWeight: 6, zIndex: 2 }}
-                  />
-                )}
-                {endMarker("A", route?.origin ?? trip.a?.position)}
-                {endMarker("B", route?.destination ?? trip.b?.position)}
-                {selected && selected.latitude != null && (
-                  <InfoWindowF
-                    position={{ lat: selected.latitude, lng: selected.longitude }}
-                    onCloseClick={() => setSelectedId(null)}
-                  >
-                    <div className="loc__info">
-                      <strong>{selected.placeName || "Unknown location"}</strong>
-                      <span>{formatDay(selected.recordedAt)}</span>
-                      <button
-                        type="button"
-                        className="loc__info-go"
-                        onClick={() =>
-                          directions("b", {
-                            kind: "place",
-                            id: selected.id,
-                            label: selected.placeName || "Saved place",
-                            position: { lat: selected.latitude, lng: selected.longitude },
-                          })
-                        }
-                      >
-                        Directions here
-                      </button>
-                    </div>
-                  </InfoWindowF>
-                )}
-              </GoogleMap>
-            )}
-          </div>
+                  ))}
+                  {pin && <MarkerF position={pin.position} title={pin.label} />}
+                  {/* Alternatives faint underneath, the chosen route on top. */}
+                  {route?.routes.map((r, i) =>
+                    i === route.index ? null : (
+                      <PolylineF
+                        key={`alt-${i}`}
+                        path={r.path}
+                        options={{ strokeColor: ink, strokeOpacity: 0.28, strokeWeight: 5, clickable: true }}
+                        onClick={() => setRoute((cur) => (cur ? { ...cur, index: i } : cur))}
+                      />
+                    ),
+                  )}
+                  {route && (
+                    <PolylineF
+                      path={route.routes[route.index].path}
+                      options={{ strokeColor: accent, strokeWeight: 6, zIndex: 2 }}
+                    />
+                  )}
+                  {endMarker("A", route?.origin ?? trip.a?.position)}
+                  {endMarker("B", route?.destination ?? trip.b?.position)}
+                  {selected && selected.latitude != null && (
+                    <InfoWindowF
+                      position={{ lat: selected.latitude, lng: selected.longitude }}
+                      onCloseClick={() => setSelectedId(null)}
+                    >
+                      <div className="loc__info">
+                        <strong>{selected.placeName || "Unknown location"}</strong>
+                        <span>{formatDay(selected.recordedAt)}</span>
+                        <button
+                          type="button"
+                          className="loc__info-go"
+                          onClick={() =>
+                            directions("b", {
+                              kind: "place",
+                              id: selected.id,
+                              label: selected.placeName || "Saved place",
+                              position: { lat: selected.latitude, lng: selected.longitude },
+                            })
+                          }
+                        >
+                          Directions here
+                        </button>
+                      </div>
+                    </InfoWindowF>
+                  )}
+                </GoogleMap>
+              )}
+            </div>
+          )}
 
           {pin && (
             <div className="loc__pin">
@@ -564,29 +586,31 @@ export default function Locations() {
         </section>
 
         <div className="loc__side">
-          <section className="app-panel loc__trip" aria-labelledby="loc-trip-title">
-            <div className="app-panel__head">
-              <h2 id="loc-trip-title" className="app-panel__title">
-                Directions
-              </h2>
-            </div>
-            {isLoaded ? (
-              <TripPlanner
-                trip={trip}
-                onPoint={setPoint}
-                onSwap={swap}
-                picking={picking}
-                onPick={setPicking}
-                places={mapped}
-                pin={pin}
-                route={route}
-                onRoute={setRoute}
-                onSelectRoute={(index) => setRoute((r) => (r ? { ...r, index } : r))}
-              />
-            ) : (
-              <p className="app-empty">{loadError ? "Directions need the map." : "Loading…"}</p>
-            )}
-          </section>
+          {MAPS_CONFIGURED && (
+            <section className="app-panel loc__trip" aria-labelledby="loc-trip-title">
+              <div className="app-panel__head">
+                <h2 id="loc-trip-title" className="app-panel__title">
+                  Directions
+                </h2>
+              </div>
+              {isLoaded ? (
+                <TripPlanner
+                  trip={trip}
+                  onPoint={setPoint}
+                  onSwap={swap}
+                  picking={picking}
+                  onPick={setPicking}
+                  places={mapped}
+                  pin={pin}
+                  route={route}
+                  onRoute={setRoute}
+                  onSelectRoute={(index) => setRoute((r) => (r ? { ...r, index } : r))}
+                />
+              ) : (
+                <p className="app-empty">{loadError ? "Directions need the map." : "Loading…"}</p>
+              )}
+            </section>
+          )}
 
           <section className="app-panel loc__history" aria-labelledby="loc-history-title">
             <div className="app-panel__head">

@@ -1,8 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
+import useFocusTrap from '../hooks/useFocusTrap';
 import './app.css';
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function Modal({ title, onClose, children, size }) {
   const titleId = useId();
@@ -13,48 +11,19 @@ export default function Modal({ title, onClose, children, size }) {
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  // Tab stays inside, Escape closes, and focus goes back where it was.
+  useFocusTrap(dialogRef, onClose);
+
   useEffect(() => {
     const dialog = dialogRef.current;
-    const previouslyFocused = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const firstField = dialog.querySelector('input, select, textarea');
     (firstField ?? dialog).focus();
 
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onCloseRef.current();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-
-      const items = [...dialog.querySelectorAll(FOCUSABLE)];
-      if (items.length === 0) {
-        e.preventDefault();
-        return;
-      }
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-
-      if (!dialog.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      } else if (e.shiftKey && (active === first || active === dialog)) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus?.();
     };
   }, []);
 

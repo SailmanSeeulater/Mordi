@@ -5,17 +5,21 @@
 :root {
   color-scheme: light;
 
-  /* Mordi — cream + red modernist palette.
-     Single source of truth: every page (landing.css included) consumes
-     these, none of them redefine their own copies. */
-  --color-bg: #ece7dd;        /* warm cream page background */
-  --color-surface: #e4ddd0;   /* slightly deeper cream for raised surfaces */
-  --color-text: #1a1714;      /* near-black, warm cast */
-  --color-accent: #d2452a;    /* the accent — brick red */
-  --color-accent-700: #a8341f; /* darker red for hover states */
-  --color-on-accent: #ffffff; /* text/icon color for use on top of --color-accent */
-  --color-signal: #b3241c;    /* errors / missed — a deeper red, distinct from accent */
-  --color-divider: rgba(26, 23, 20, 0.18);
+  /* The colour roles before any theme is applied: Sorbet, the default, copied
+     from themes.css so the page is already the right colour while React is
+     still loading. The active combination overrides every one of these on
+     [data-theme]; every page (landing.css included) consumes them and none
+     redefine their own copies. */
+  --color-bg: #fef3f1;
+  --color-surface: #fce2dd;
+  --color-text: #2e1915;
+  --color-accent: #cb3c60;
+  --color-accent-700: #ba2a52;
+  --color-on-accent: #ffffff;
+  --color-pass: #cb3c60;
+  --color-on-pass: #ffffff;
+  --color-signal: #b33832;
+  --color-divider: rgba(46, 25, 21, 0.16);
   /* Secondary text and placeholders: 6:1 on --color-bg, 5.5:1 on --color-surface. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
 
@@ -64,6 +68,9 @@ html, body {
 
 body {
   font-family: var(--font-body);
+  /* Painted from the first frame, so nothing flashes white before the shell
+     mounts and sets the theme. */
+  background: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   font-variant-numeric: tabular-nums;

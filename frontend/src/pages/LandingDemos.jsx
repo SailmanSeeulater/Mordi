@@ -74,7 +74,7 @@ export function HeroWeekDemo() {
               <span className={'lp-pass__count' + (counting ? ' lp-pop' : '')}>{shown}</span>
               <span className="lp-pass__of">of {PLANNED}</span>
             </p>
-            <p className="lp-pass__pace" aria-live="polite">
+            <p className="lp-pass__pace">
               {phase === 0 ? ' ' : paceLabel(pace)}
               <span className="lp-pass__range"> · this week</span>
             </p>
@@ -455,7 +455,7 @@ export function ReminderDemo() {
 
   return (
     <div className="lp-remind" ref={ref}>
-      <p className="lp-remind__when" aria-live="polite">
+      <p className="lp-remind__when">
         {sunday ? DEMO_TEXT.remindSun : DEMO_TEXT.remindThu}
       </p>
       <section className="lp-pass lp-pass--remind" aria-label={DEMO_TEXT.weekCardLabel}>
@@ -577,7 +577,7 @@ export function TogetherDemo() {
           </li>
         ))}
       </ul>
-      <div className="lp-room__thread" aria-live="polite">
+      <div className="lp-room__thread">
         {messages.map((msg) => (
           <div key={msg.text} className={'lp-msg lp-rise' + (msg.who === 'You' ? ' lp-msg--mine' : '')}>
             {msg.who !== 'You' && <span className="lp-disc lp-disc--sm" aria-hidden="true">{msg.who}</span>}

@@ -15,12 +15,13 @@ const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'l
  */
 export default function MonthGrid({ days, month, events, now, onOpenDay, onNew, onOpenEvent }) {
   return (
-    <div className="month" role="grid" aria-label="Month">
-      <div className="month__head" role="row">
+    <div className="month">
+      {/* The day letters are decoration: each date button already says its
+          weekday in full. No grid role either, since arrow keys do not move
+          through the days; the buttons stand on their own. */}
+      <div className="month__head" aria-hidden="true">
         {WEEKDAYS.map((d) => (
-          <span key={d} role="columnheader">
-            {d}
-          </span>
+          <span key={d}>{d}</span>
         ))}
       </div>
       <div className="month__body">
@@ -37,7 +38,6 @@ export default function MonthGrid({ days, month, events, now, onOpenDay, onNew, 
           return (
             <div
               key={day.toISOString()}
-              role="gridcell"
               className={`month__day${outside ? ' month__day--outside' : ''}${today ? ' month__day--today' : ''}`}
               onClick={(e) => {
                 if (e.target === e.currentTarget) onNew(day);

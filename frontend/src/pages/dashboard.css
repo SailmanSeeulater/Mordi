@@ -261,7 +261,7 @@
   from { transform: scaleY(0); }
 }
 .day-chip:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--color-on-pass) 60%, transparent); }
-.day-chip__letter { font-size: 10px; font-weight: 500; opacity: 0.85; }
+.day-chip__letter { font-size: 10px; font-weight: 500; }
 .day-chip__num {
   font-size: 14px;
   font-weight: 700;

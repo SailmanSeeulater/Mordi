@@ -14,7 +14,7 @@ const IconPlus = () => (
  * and the whole thing goes once there is nothing left to add.
  */
 export default function AddToPage({ prefs }) {
-  const offered = MODULES.filter((m) => m.block && !isOn(prefs, m.id));
+  const offered = MODULES.filter((m) => m.block && !m.unavailable && !isOn(prefs, m.id));
   if (offered.length === 0) return null;
 
   return (

@@ -66,19 +66,19 @@ const CHECKS = [
 let failures = 0;
 const rows = [];
 
+// color-mix(in srgb, a <share>, b): the same arithmetic the browser does.
+const mix = (a, b, share) => a.slice(0, 3).map((c, i) => Math.round(c * share + b[i] * (1 - share)));
+
 for (const theme of themes) {
   const bg = parseColor(theme.tokens['--color-bg']);
   const resolve = (token) => {
     if (token === 'chip') {
       // The chip outline: 32% of the on-pass ink over the pass field.
-      const pass = parseColor(theme.tokens['--color-pass']);
-      const ink = parseColor(theme.tokens['--color-on-pass']);
-      return pass.map((c, i) => Math.round(ink[i] * 0.32 + c * 0.68));
+      return mix(parseColor(theme.tokens['--color-on-pass']), parseColor(theme.tokens['--color-pass']), 0.32);
     }
     if (token === 'muted') {
       // Mirrors --color-text-muted: 70% text mixed with the ground.
-      const text = parseColor(theme.tokens['--color-text']);
-      return text.map((c, i) => Math.round(c * 0.7 + bg[i] * 0.3));
+      return mix(parseColor(theme.tokens['--color-text']), bg, 0.7);
     }
     return parseColor(theme.tokens[token]);
   };

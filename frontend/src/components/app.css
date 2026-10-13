@@ -693,6 +693,7 @@
   width: 100%;
   max-width: 430px;
   max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
   overflow-y: auto;
   overscroll-behavior: contain;
   border-radius: var(--r-pass);
@@ -1027,6 +1028,7 @@
   .app-dialog {
     max-width: none;
     max-height: 88vh;
+    max-height: 88dvh;
     border-radius: var(--r-pass) var(--r-pass) 0 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     animation: app-sheet 260ms var(--ease-out);

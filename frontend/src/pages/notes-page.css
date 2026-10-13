@@ -39,7 +39,7 @@
   color: var(--color-text);
   font: inherit;
 }
-.vault__search input:focus { border-color: var(--color-accent-700); outline: none; }
+.vault__search input:focus { border-color: var(--color-accent-700); }
 .vault__tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .vault__tag { cursor: pointer; }
 .vault__tag span { font-family: var(--font-mono); font-size: 0.85em; opacity: 0.75; }

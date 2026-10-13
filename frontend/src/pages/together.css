@@ -98,10 +98,13 @@
   gap: 3px;
   min-width: 0;
 }
+/* A long goal name gets two lines before it is cut, so it can still be read. */
 .room__heading .app-panel__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* Who did it which day: one row per person, one square per day. */

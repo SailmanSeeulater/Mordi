@@ -10,7 +10,16 @@ import { useSyncExternalStore } from 'react';
  * with everything, exactly as before.
  *
  * Kept per browser, like the theme and the block order.
+ *
+ * A module can also be `unavailable` on this site, with a short reason: it
+ * is then never on, the rail and "Add to this page" leave it out, and
+ * Settings shows it switched off with the reason in place of its blurb.
  */
+
+// Places needs a Google Maps key, which a build may not have been given.
+// Read here rather than through lib/maps so the module list stays a plain
+// list without pulling the Maps SDK in with it.
+const MAPS_CONFIGURED = Boolean(import.meta.env.VITE_GOOGLE_MAPS_API_KEY);
 
 export const MODULES = [
   { id: 'plan', label: 'Calendar', blurb: 'Plan the day in blocks, then mark each done or skipped.', page: '/calendar', block: true },
@@ -19,12 +28,19 @@ export const MODULES = [
   { id: 'notes', label: 'Notes', blurb: 'Markdown notes, linked the way Obsidian links them.', page: '/notes', block: true },
   { id: 'activity', label: 'Activity', blurb: 'A year of logging, one square a day.', block: true },
   { id: 'clock', label: 'Clock & weather', blurb: 'The time and today’s weather on the week card.', block: true },
-  { id: 'places', label: 'Places', blurb: 'A map of where you logged, with directions.', page: '/locations' },
+  {
+    id: 'places',
+    label: 'Places',
+    blurb: 'A map of where you logged, with directions.',
+    page: '/locations',
+    unavailable: MAPS_CONFIGURED ? undefined : 'Maps isn’t set up on this site yet.',
+  },
   { id: 'together', label: 'Together', blurb: 'Goals shared with friends, and their threads.', page: '/together' },
   { id: 'history', label: 'History', blurb: 'Goals you archived, and what they came to.', page: '/history' },
 ];
 
 export const MODULE_IDS = MODULES.map((m) => m.id);
+const UNAVAILABLE = new Set(MODULES.filter((m) => m.unavailable).map((m) => m.id));
 const KEY = 'mordi-modules';
 const EVENT = 'mordi:modules';
 
@@ -89,6 +105,7 @@ export function useModules() {
 }
 
 export function isOn(prefs, id) {
+  if (UNAVAILABLE.has(id)) return false;
   return !prefs || prefs.mode === 'everything' || prefs.on.includes(id);
 }
 
