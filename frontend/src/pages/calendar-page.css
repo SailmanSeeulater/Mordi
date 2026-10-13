@@ -86,7 +86,7 @@
   padding-right: 8px;
   text-align: right;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--color-text-muted);
 }
 .planner__allday-cell {
@@ -137,7 +137,7 @@
   right: 8px;
   transform: translateY(-50%);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--color-text-muted);
   white-space: nowrap;
 }
@@ -214,7 +214,7 @@
 .planner__event-line > span {
   overflow: hidden;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: 0.9;
@@ -445,6 +445,9 @@
   gap: 2px;
   min-width: 0;
 }
+/* Without this a chip sized itself to its time and title and ran into the
+   next day on a tablet-width month; now the title ellipsizes instead. */
+.month__events > li { min-width: 0; }
 .month__event {
   display: flex;
   align-items: baseline;
@@ -480,7 +483,7 @@
 .month__time {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   color: var(--color-text-muted);
 }
 .month__title {
@@ -510,6 +513,20 @@
   .month__dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
   .month__dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--ev); }
   .month__date { align-self: center; }
+}
+
+/* Touch: a month's chips measured 20px (an event) and 17px (N more), and the
+   date 28px. The date keeps its circle and its target reaches 44 round it;
+   the chips grow, so a busy day on a tablet runs taller rather than tighter. */
+@media (pointer: coarse) {
+  .month__date { position: relative; }
+  .month__date::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+  .month__event { min-height: 44px; align-items: center; }
+  .month__more { min-height: 44px; }
 }
 
 /* ── Import ────────────────────────────────── */

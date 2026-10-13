@@ -356,3 +356,10 @@ textarea.note-editor__source:focus-visible { outline: none; }
 .notes__all { margin: 0; padding: 0 18px 16px; font-size: var(--t-small); }
 .notes__all a { color: var(--color-accent-700); font-weight: 600; text-decoration: none; }
 .notes__all a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Touch: measured on a phone at 35px (a note's row) and 16px (the link to
+   every note). */
+@media (pointer: coarse) {
+  .note__open { min-height: 44px; }
+  .notes__all a { display: inline-flex; align-items: center; min-height: 44px; }
+}

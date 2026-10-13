@@ -376,3 +376,17 @@ li:last-child > .loc__place { border-bottom: 0; }
   font-weight: 600;
   cursor: pointer;
 }
+
+/* Touch: measured on a phone at 38px (pick A or B on the map), about 24px
+   (Directions here, in the map's info card) and 37px (a route row). The
+   info card is tight, so its button keeps its size and its target grows. */
+@media (pointer: coarse) {
+  .trip__pick { width: 44px; height: 44px; }
+  .trip__route { min-height: 44px; }
+  .loc__info-go { position: relative; }
+  .loc__info-go::before {
+    content: '';
+    position: absolute;
+    inset: -10px -4px;
+  }
+}

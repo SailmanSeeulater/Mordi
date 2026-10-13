@@ -130,6 +130,7 @@
 @media (pointer: coarse) {
   .todo__remove { width: 44px; height: 44px; }
   .todo__check { min-height: 44px; }
+  .todo__input { min-height: 44px; }
 }
 
 .todo__foot {

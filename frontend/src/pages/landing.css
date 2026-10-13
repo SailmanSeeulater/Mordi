@@ -1377,58 +1377,27 @@ body.mordi-landing {
 /* ── Colour combinations ───────────────────────────────── */
 
 .lp-themes {
-  display: grid;
-  gap: 20px;
   padding: 22px;
   border-radius: var(--r-pass);
   background: var(--color-surface);
   box-shadow: var(--edge), var(--lift-2);
 }
-.lp-themes__heading {
-  margin: 0 0 10px;
-  color: var(--color-text-muted);
-  font-family: var(--font-label);
-  font-size: 12px;
-  font-weight: 500;
-}
-.lp-themes__row {
-  display: grid;
+/* The shared picker (components/ThemeGrid), given the room a section has:
+   the rows flow to the width instead of the menu's fixed five. */
+.lp-themes .theme-grid { gap: 20px; }
+.lp-themes .theme-grid__swatches {
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 10px 6px;
 }
-.lp-swatch {
-  display: grid;
-  justify-items: center;
+.lp-themes .theme-swatch {
   gap: 6px;
-  padding: 4px 0;
-  border: 0;
-  background: none;
-  color: var(--color-text);
-  font-family: var(--font-body);
-  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 500;
 }
-.lp-swatch__face {
-  display: grid;
-  place-items: center;
+.lp-themes .theme-swatch__face {
   width: 40px;
   height: 40px;
-  border-radius: var(--r-pill);
-  background: var(--color-bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 16%, transparent);
-  transition: transform 200ms var(--ease-out);
 }
-.lp-swatch__dot {
-  width: 18px;
-  height: 18px;
-  border-radius: var(--r-pill);
-  background: var(--color-accent);
-}
-.lp-swatch:hover .lp-swatch__face { transform: scale(1.08); }
-.lp-swatch[aria-pressed='true'] .lp-swatch__face {
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px currentColor;
-}
-.lp-swatch__label { font-size: 11.5px; font-weight: 500; }
-.lp-swatch[aria-pressed='true'] .lp-swatch__label { font-weight: 700; }
 
 /* ── Your data ─────────────────────────────────────────── */
 
@@ -1641,4 +1610,33 @@ body.mordi-landing {
     transition: none !important;
   }
   [data-reveal] { opacity: 1; transform: none; }
+}
+
+/* ── Type floor and touch ──────────────────────────────── */
+
+/* Nothing on the page sits under the 11px floor. */
+.lp-day__letter { font-size: var(--t-micro); }
+.lp-disc--sm { font-size: var(--t-micro); }
+
+/* Touch pointers get 44px targets. Measured on a phone: footer links and
+   buttons at 17px, the wordmark at 29px, Replay and Pause at 36px, the
+   Terms and Privacy links at 18px, the skip link at 40px. The nav links are
+   hidden on phones but show on a tablet held sideways. Each grows its target
+   rather than its mark: the type stays the size it was. */
+@media (pointer: coarse) {
+  .mordi-nav__brand,
+  .lp-nav__links a,
+  .lp-data__links a,
+  .lp-skip,
+  .mordi-footer__col a,
+  .lp-footer__btn {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .lp-replay { min-height: 44px; }
+  /* The column's 10px gap was spacing between 17px lines; at 44px the
+     targets carry their own. */
+  .mordi-footer__col { gap: 0; }
 }

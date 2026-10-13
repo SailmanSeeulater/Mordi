@@ -91,7 +91,7 @@
 
 .cal__count {
   display: block;
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.04em;
 }

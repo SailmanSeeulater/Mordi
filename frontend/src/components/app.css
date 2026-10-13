@@ -272,7 +272,7 @@
   background: none;
   color: inherit;
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--t-micro);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1008,6 +1008,34 @@
 .app-main > *:nth-child(3) { animation-delay: 120ms; }
 .app-main > *:nth-child(n + 4) { animation-delay: 170ms; }
 
+/* More: the sections past the bar's five, as rows in a bottom sheet. */
+.app-more {
+  list-style: none;
+  margin: 0;
+  padding: 0 10px 14px;
+  display: grid;
+  gap: 2px;
+}
+.app-more__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: var(--r-control);
+  color: var(--color-text);
+  font-size: var(--t-h3);
+  font-weight: 600;
+  text-decoration: none;
+}
+.app-more__link svg { color: color-mix(in srgb, var(--color-text) 70%, var(--color-bg)); }
+.app-more__link:hover { background: color-mix(in srgb, var(--color-text) 6%, transparent); }
+.app-more__link[aria-current='page'] {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent-700);
+}
+.app-more__link[aria-current='page'] svg { color: inherit; }
+
 /* ── Responsive ────────────────────────────── */
 
 @media (max-width: 860px) {
@@ -1016,6 +1044,14 @@
 
   .app-topbar { padding: 12px 16px; }
   .app-main { padding: 16px 16px calc(84px + env(safe-area-inset-bottom, 0px)); gap: 16px; }
+  /* A phone held sideways has its notch at a side edge, and viewport-fit=cover
+     lets the page run under it: the shell's sides clear it. Portrait phones
+     have no side inset, so the narrower paddings under 560px need none. */
+  .app-topbar,
+  .app-main {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
 
   .app-tabbar {
     position: fixed;
@@ -1026,7 +1062,8 @@
     display: flex;
     justify-content: space-around;
     gap: 2px;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px))
+      max(8px, env(safe-area-inset-left, 0px));
     background: var(--color-bg);
     border-top: 1px solid var(--color-divider);
   }
@@ -1038,14 +1075,20 @@
     align-content: center;
     gap: 3px;
     border-radius: var(--r-control);
+    padding: 0;
+    border: 0;
+    background: none;
     color: color-mix(in srgb, var(--color-text) 70%, var(--color-bg));
     text-decoration: none;
-    font-size: 10px;
+    font-family: var(--font-body);
+    font-size: var(--t-micro);
     font-weight: 600;
+    cursor: pointer;
   }
   .app-tabbar__link[aria-current='page'] { color: var(--color-accent-700); }
-  /* Eight tabs share a phone's width: each may shrink below its label, which
-     then clips rather than pushing the bar wider than the screen. */
+  /* Five tabs at most (AppShell), so at 320px each is 62px and the longest
+     label, "Calendar", fits at 11px. The clip stays as a backstop for a
+     longer translated label rather than letting the bar push sideways. */
   .app-tabbar__link { min-width: 0; overflow: hidden; white-space: nowrap; }
 
   .app-whoami__name { display: none; }
@@ -1077,7 +1120,6 @@
    already has it, and the rest tighten. */
 @media (max-width: 560px) {
   .app-tabbar { gap: 0; padding-left: 4px; padding-right: 4px; }
-  .app-tabbar__link { font-size: 9.5px; letter-spacing: -0.01em; }
   .app-topbar {
     gap: 6px;
     padding: 10px 12px;
@@ -1115,6 +1157,12 @@
   .theme-switch__more { min-width: 44px; }
   .app-iconbtn--sm { width: 44px; height: 44px; }
   .theme-switch__more { width: 44px; }
+  /* Measured at 30x44 (the colour chip, its name hidden on a phone) and 44x38
+     (the account). The marks stay their size; the buttons grow round them. */
+  .theme-switch__cycle { min-width: 44px; justify-content: center; }
+  .app-whoami { min-height: 44px; min-width: 44px; }
+  /* A dialog's Close measured 36px wide. */
+  .app-linkbtn { min-width: 44px; justify-content: center; }
   /* Measured at 32px (weather chip) and 16px (footer links) on a phone. */
   .wx--btn { min-height: 44px; }
   .settings__links a { display: inline-flex; align-items: center; min-height: 44px; }

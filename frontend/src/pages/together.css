@@ -71,7 +71,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.together-avatar--sm { width: 24px; height: 24px; font-size: 10px; }
+.together-avatar--sm { width: 24px; height: 24px; font-size: var(--t-micro); }
 
 /* ── The room ─────────────────────────────── */
 

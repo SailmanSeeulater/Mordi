@@ -358,26 +358,30 @@ function WhenBlock({ report }) {
         </p>
       </header>
       {report.timedEntries >= 3 ? (
-        <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
-          <span />
-          {Array.from({ length: 24 }, (_, h) => (
-            <span key={`h${h}`} className="wk-hours__label">
-              {HOUR_LABELS[h] ?? ''}
-            </span>
-          ))}
-          {report.hours.map((row, d) => (
-            <div key={d} className="wk-hours__row">
-              <span className="wk-hours__day">{dayShort.format(report.perDay[d].date)}</span>
-              {row.map((n, h) => (
-                <span
-                  key={h}
-                  className="wk-hours__cell"
-                  style={{ '--a': n ? 0.25 + 0.75 * (n / max) : 0 }}
-                  title={n ? `${dayShort.format(report.perDay[d].date)} ${hourName(h)}: ${n}` : undefined}
-                />
-              ))}
-            </div>
-          ))}
+        // On a phone 24 columns would shrink each hour under 10px, so the grid
+        // keeps 12px cells and scrolls sideways inside its own block.
+        <div className="wk-hours__scroll">
+          <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
+            <span className="wk-hours__corner" />
+            {Array.from({ length: 24 }, (_, h) => (
+              <span key={`h${h}`} className="wk-hours__label">
+                {HOUR_LABELS[h] ?? ''}
+              </span>
+            ))}
+            {report.hours.map((row, d) => (
+              <div key={d} className="wk-hours__row">
+                <span className="wk-hours__day">{dayShort.format(report.perDay[d].date)}</span>
+                {row.map((n, h) => (
+                  <span
+                    key={h}
+                    className="wk-hours__cell"
+                    style={{ '--a': n ? 0.25 + 0.75 * (n / max) : 0 }}
+                    title={n ? `${dayShort.format(report.perDay[d].date)} ${hourName(h)}: ${n}` : undefined}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <p className="wk-empty">Times are recorded for entries logged from now on, and for timer sessions from when they began.</p>

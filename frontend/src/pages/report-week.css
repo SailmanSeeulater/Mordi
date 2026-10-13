@@ -17,6 +17,7 @@
   text-decoration: none;
 }
 .wk-nav__back:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (pointer: coarse) { .wk-nav__back { min-height: 44px; } }
 
 .wk {
   display: grid;
@@ -237,7 +238,7 @@
   right: 0;
   transform: translateY(50%);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--t-micro);
   color: var(--color-text-muted);
 }
 .wk-bars__plot {
@@ -551,7 +552,39 @@
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
   box-shadow: inset 0 0 0 100px color-mix(in oklab, var(--color-accent) calc(var(--a) * 100%), transparent);
 }
+/* On a phone the 24 hours would shrink to 9px cells under 8px labels. The
+   cells hold at 12px and the grid scrolls sideways inside the block, with no
+   scrollbar: the right edge fades while there is more, and the day names
+   stay put as the hours pass under them. The grid's right padding sits under
+   the fade, so the last hour can still be scrolled clear of it. */
+.wk-hours__scroll { min-width: 0; }
 @media (max-width: 560px) {
-  .wk-hours { grid-template-columns: 28px repeat(24, minmax(0, 1fr)); gap: 2px; }
-  .wk-hours__label { font-size: 8px; }
+  .wk-hours__scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+  .wk-hours__scroll::-webkit-scrollbar { display: none; }
+  .wk-hours {
+    grid-template-columns: 30px repeat(24, minmax(12px, 1fr));
+    gap: 2px;
+    width: max-content;
+    min-width: 100%;
+    padding-right: 24px;
+  }
+  /* Zero-width, so "12p" spills over the empty hours beside it instead of
+     widening every column to its own width. */
+  .wk-hours__label { width: 0; font-size: var(--t-micro); }
+  .wk-hours__corner,
+  .wk-hours__day {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    background: var(--color-surface);
+  }
 }

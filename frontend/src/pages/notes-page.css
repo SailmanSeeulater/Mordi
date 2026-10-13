@@ -42,7 +42,7 @@
 .vault__search input:focus { border-color: var(--color-accent-700); }
 .vault__tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .vault__tag { cursor: pointer; }
-.vault__tag span { font-family: var(--font-mono); font-size: 0.85em; opacity: 0.75; }
+.vault__tag span { font-family: var(--font-mono); font-size: max(var(--t-micro), 0.85em); opacity: 0.75; }
 .vault__tag[aria-pressed='true'] {
   background: var(--color-accent);
   color: var(--color-on-accent);
@@ -120,4 +120,24 @@
   .vault__back { display: inline-flex; }
   .vault__title { margin: 8px 16px 12px; }
   .vault__pane .app-form { padding: 0 16px 18px; }
+}
+
+/* Touch: the tag filters measured 19px tall and the search field 42. The
+   pills grow to 32px and their target reaches 44 into a wider row gap, so
+   neighbouring rows never share a tap. */
+@media (pointer: coarse) {
+  .vault__search input { min-height: 44px; }
+  .vault__tags { gap: 12px 8px; }
+  .vault__tag {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+  }
+  .vault__tag::before {
+    content: '';
+    position: absolute;
+    inset: -6px -4px;
+  }
 }
