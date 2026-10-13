@@ -4,7 +4,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
-import Placeholder from './pages/Placeholder';
 
 // The landing page and the dashboard are what almost every visit opens, so
 // they ship in the first bundle. Everything else loads on first visit to its
@@ -24,6 +23,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const About = lazy(() => import("./pages/About"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -62,7 +62,8 @@ function App() {
           {/* Not PublicOnly: the emailed link has to work even in a browser
               that is signed in, and the page signs it out itself. */}
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/about" element={<Placeholder title="About" />} />
+          {/* Public, like the Terms and Privacy pages it sits beside. */}
+          <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route

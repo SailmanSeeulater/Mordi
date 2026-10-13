@@ -97,7 +97,7 @@ export default function useTodos() {
         apply: (list) => [...list, temp],
         undo: (list) => list.filter((t) => t.id !== temp.id),
         request: () => client.post('/api/todos', { text: trimmed }).then((res) => res.data),
-        failure: "Couldn't add that. Check your connection and try again.",
+        failure: 'Couldn’t add that. Check your connection and try again.',
       });
       if (saved) {
         setTodos((list) => sortTodos(list.map((t) => (t.id === temp.id ? saved : t))));
@@ -118,7 +118,7 @@ export default function useTodos() {
         apply: flip,
         undo: flip,
         request: () => client.put(`/api/todos/${todo.id}`, done ? { done, completedOn } : { done }),
-        failure: "Couldn't update that. Check your connection and try again.",
+        failure: 'Couldn’t update that. Check your connection and try again.',
       });
     },
     [run],
@@ -130,7 +130,7 @@ export default function useTodos() {
         apply: (list) => list.filter((t) => t.id !== todo.id),
         undo: (list) => (list.some((t) => t.id === todo.id) ? list : [...list, todo]),
         request: () => client.delete(`/api/todos/${todo.id}`),
-        failure: "Couldn't delete that. Check your connection and try again.",
+        failure: 'Couldn’t delete that. Check your connection and try again.',
       }),
     [run],
   );
@@ -142,7 +142,7 @@ export default function useTodos() {
       apply: (list) => list.filter((t) => !removedIds.has(t.id)),
       undo: (list) => [...list, ...removed.filter((t) => !list.some((x) => x.id === t.id))],
       request: () => client.delete('/api/todos/done'),
-      failure: "Couldn't clear those. Check your connection and try again.",
+      failure: 'Couldn’t clear those. Check your connection and try again.',
     });
   }, [run]);
 

@@ -12,6 +12,7 @@ import LayoutSettings from '../components/LayoutSettings';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteAccount from '../components/DeleteAccount';
 import { toIsoDate } from './dashboardData';
+import { LEGAL } from '../lib/legal';
 import './settings.css';
 
 // Far enough back to cover any account's history.
@@ -65,7 +66,7 @@ export default function Settings() {
         text: `Downloaded ${goals.data.length} goals and ${behaviors.data.length} entries.`,
       });
     } catch {
-      setStatus({ tone: 'error', text: "Couldn't build your export. Try again in a moment." });
+      setStatus({ tone: 'error', text: 'Couldn’t build your export. Try again in a moment.' });
     } finally {
       setExporting(false);
     }
@@ -113,7 +114,8 @@ export default function Settings() {
             <span className="settings__value">{user?.email || '—'}</span>
           </div>
           <p className="settings__note">
-            Changing your name or email isn&rsquo;t supported yet — the API has no endpoint for it.
+            Changing your name or email isn&rsquo;t available here yet. To change either, write to{' '}
+            <a href={`mailto:${LEGAL.contact}`}>{LEGAL.contact}</a>.
           </p>
           <ChangePasswordForm />
         </section>
@@ -153,7 +155,7 @@ export default function Settings() {
             </h2>
           </div>
           <p className="settings__note">
-            Signing out clears your token from this browser. Your data stays on the server.
+            Signs you out in this browser only. Everything in your account stays as it is.
           </p>
           <div className="settings__actions">
             <button

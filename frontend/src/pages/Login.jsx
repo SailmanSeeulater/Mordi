@@ -28,7 +28,7 @@ export default function Login() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate(returnPath(location.state), { replace: true });
     } catch {
-      setError("Invalid email or password");
+      setError("That email and password don’t match. Check both and try again.");
     } finally {
       setSubmitting(false);
     }

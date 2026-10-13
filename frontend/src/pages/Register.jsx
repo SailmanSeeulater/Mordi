@@ -32,7 +32,7 @@ export default function Register() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate(returnPath(location.state), { replace: true });
     } catch {
-      setError("Registration failed. Email may already be in use.");
+      setError("Couldn’t create the account. If you already have one with this email, sign in instead.");
     } finally {
       setSubmitting(false);
     }

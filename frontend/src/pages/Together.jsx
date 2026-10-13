@@ -293,7 +293,7 @@ function Room({ goal, visible, onRead, onChanged, onLeft }) {
         <div className="room__actions">
           {owner ? (
             <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={() => setSharing(true)}>
-              Invite &amp; people
+              Invite and people
             </button>
           ) : (
             <button type="button" className="app-btn app-btn--ghost app-btn--sm" onClick={() => setLeaving(true)}>

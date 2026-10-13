@@ -196,7 +196,7 @@ const STARTERS = [
 const SECTIONS = [
   { id: 'rings', label: 'Goal rings' },
   { id: 'week', label: 'This week' },
-  { id: 'plan', label: "Today's plan" },
+  { id: 'plan', label: 'Today’s plan' },
   { id: 'activity', label: 'Activity' },
   { id: 'notes', label: 'Notes' },
 ];
@@ -374,7 +374,7 @@ export default function Dashboard() {
         },
       });
     } catch {
-      showToast({ message: "Couldn't log that. Check your connection and try again.", undoable: false });
+      showToast({ message: 'Couldn’t log that. Check your connection and try again.', undoable: false });
     } finally {
       setLoggingId(null);
     }
@@ -398,7 +398,7 @@ export default function Dashboard() {
       });
       reload();
     } catch {
-      showToast({ message: "Couldn't add that goal. Check your connection and try again.", undoable: false });
+      showToast({ message: 'Couldn’t add that goal. Check your connection and try again.', undoable: false });
     } finally {
       setStarting('');
     }
@@ -677,7 +677,7 @@ export default function Dashboard() {
             {on('plan') && (
             <Block
               id="plan"
-              label="Today's plan"
+              label="Today’s plan"
               order={blockOrder.indexOf('plan')}
               rearrange={rearrange}
               drag={blockDrag}

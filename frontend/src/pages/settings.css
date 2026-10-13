@@ -81,10 +81,12 @@
   padding: 4px 18px 18px;
   font-size: 14px;
 }
-.settings__links a {
+.settings__links a,
+.settings__note a {
   color: var(--color-accent-700);
   font-weight: 600;
   text-underline-offset: 3px;
+  overflow-wrap: anywhere;
 }
 
 .settings__reminder-hour { min-width: 140px; }
@@ -121,6 +123,11 @@
   transition: background-color 200ms var(--ease-out);
 }
 .app-switch[aria-checked='true'] { background: var(--color-accent); }
+/* A module this site cannot offer: the track goes faint and the cursor says so. */
+.app-switch:disabled {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  cursor: not-allowed;
+}
 .app-switch__knob {
   position: absolute;
   top: 3px;

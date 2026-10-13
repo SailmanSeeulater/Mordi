@@ -134,7 +134,7 @@ describe("Register", () => {
     fillAndSubmit({ email: "taken@example.com" });
 
     const errorMsg = await screen.findByText(
-      "Registration failed. Email may already be in use."
+      "Couldn’t create the account. If you already have one with this email, sign in instead."
     );
     expect(errorMsg).toBeInTheDocument();
 
@@ -149,7 +149,7 @@ describe("Register", () => {
 
     renderRegister();
     fillAndSubmit({ email: "taken@example.com" });
-    await screen.findByText("Registration failed. Email may already be in use.");
+    await screen.findByText("Couldn’t create the account. If you already have one with this email, sign in instead.");
 
     client.post.mockResolvedValueOnce({
       data: { email: "new@example.com", name: "Test User", token: "fake-jwt" },
@@ -158,7 +158,7 @@ describe("Register", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText("Registration failed. Email may already be in use.")
+        screen.queryByText("Couldn’t create the account. If you already have one with this email, sign in instead.")
       ).not.toBeInTheDocument();
     });
   });

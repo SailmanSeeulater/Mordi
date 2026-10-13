@@ -231,7 +231,7 @@ export default function Landing() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate('/dashboard');
     } catch {
-      setError('Invalid email or password');
+      setError('That email and password don’t match. Check both and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -247,7 +247,7 @@ export default function Landing() {
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate('/dashboard');
     } catch {
-      setError('Registration failed. Email may already be in use.');
+      setError('Couldn’t create the account. If you already have one with this email, sign in instead.');
     } finally {
       setSubmitting(false);
     }

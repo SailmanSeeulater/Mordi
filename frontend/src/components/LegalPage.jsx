@@ -5,12 +5,19 @@ import { LEGAL } from '../lib/legal';
 import '../pages/legal.css';
 
 /**
- * The frame for the Terms and the Privacy Policy: the brand, the page as one
- * readable column, and the way to the other page. Public, so it sits outside
- * the signed-in shell, in the person's chosen theme like every other page.
+ * The frame for the Terms, the Privacy Policy and About: the brand, the page
+ * as one readable column, and the way to the other pages. Public, so it sits
+ * outside the signed-in shell, in the person's chosen theme like every other
+ * page. `meta` is the line under the title; the legal pages take the default.
  */
-export default function LegalPage({ title, summary, children }) {
-  useDocumentTitle(title);
+export default function LegalPage({
+  title,
+  documentTitle = title,
+  meta = `Last updated ${LEGAL.updated}`,
+  summary,
+  children,
+}) {
+  useDocumentTitle(documentTitle);
   const { theme } = useTheme();
 
   return (
@@ -23,7 +30,7 @@ export default function LegalPage({ title, summary, children }) {
       <main className="legal__main">
         <article className="legal__article">
           <h1 className="legal__title">{title}</h1>
-          <p className="legal__meta">Last updated {LEGAL.updated}</p>
+          {meta && <p className="legal__meta">{meta}</p>}
           {summary && (
             <section className="legal__summary" aria-label="In short">
               {summary}

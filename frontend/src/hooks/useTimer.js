@@ -122,7 +122,7 @@ export default function useTimer() {
       setSession(IDLE);
       return true;
     } catch {
-      setError("Couldn't save that time. Check your connection and try again.");
+      setError('Couldn’t save that time. Check your connection and try again.');
       return false;
     } finally {
       setSaving(false);

@@ -78,7 +78,7 @@ function Suggestion({ goal, behaviors, today, weekIso, onApply, onArchive }) {
   const text =
     s.kind === 'idle'
       ? `Nothing logged for this in the last ${s.weeks} weeks.`
-      : `You've averaged ${formatAverage(s.average)} days a week for ${s.weeks} weeks, against a target of ${s.target}.`;
+      : `You’ve averaged ${formatAverage(s.average)} days a week for ${s.weeks} weeks, against a target of ${s.target}.`;
 
   return (
     <div className={`goal-suggest goal-suggest--${s.kind}`}>
@@ -139,7 +139,7 @@ export default function Goals() {
       handleSaved();
     } catch {
       setArchiving(false);
-      setArchiveError("Couldn't archive that goal. Check your connection and try again.");
+      setArchiveError('Couldn’t archive that goal. Check your connection and try again.');
     }
   };
 
@@ -152,7 +152,7 @@ export default function Goals() {
       handleSaved();
     } catch {
       setArchiving(false);
-      setArchiveError("Couldn't leave that goal. Check your connection and try again.");
+      setArchiveError('Couldn’t leave that goal. Check your connection and try again.');
     }
   };
 

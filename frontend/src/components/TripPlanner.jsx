@@ -152,7 +152,7 @@ export default function TripPlanner({ trip, onPoint, onSwap, picking, onPick, pl
       } catch {
         if (mine === ticket.current) {
           setBusy(false);
-          setError("Couldn't get your location. Allow location access, or start from a saved place.");
+          setError('Couldn’t get your location. Allow location access, or start from a saved place.');
         }
         return;
       }
@@ -172,7 +172,11 @@ export default function TripPlanner({ trip, onPoint, onSwap, picking, onPick, pl
       setByMode(next);
       setBusy(false);
       if (blocked && Object.keys(next).length === 0) {
-        setError('Routes are blocked for this map key. In Google Cloud Console, open Credentials, pick the key, and add "Routes API" to its API restrictions.');
+        // Nothing the person can do about this one: it is the map key's setup.
+        console.warn(
+          'Routes are blocked for this map key. In Google Cloud Console, open Credentials, pick the key, and add "Routes API" to its API restrictions.',
+        );
+        setError('Directions aren’t available right now. Try again later.');
       }
     };
     run();

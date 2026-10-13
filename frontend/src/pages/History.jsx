@@ -63,11 +63,11 @@ export default function History() {
 
   const restore = (goal) =>
     act(goal, () => client.post(`/api/goals/${goal.id}/restore`),
-      `Couldn't restore “${goal.title}”. Check your connection and try again.`);
+      `Couldn’t restore “${goal.title}”. Check your connection and try again.`);
 
   const remove = (goal) =>
     act(goal, () => client.delete(`/api/goals/${goal.id}`),
-      `Couldn't delete “${goal.title}”. Check your connection and try again.`);
+      `Couldn’t delete “${goal.title}”. Check your connection and try again.`);
 
   return (
     <AppShell title="History">

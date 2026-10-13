@@ -224,7 +224,7 @@ export default function Calendar() {
     try {
       await update(event.id, { startsAt: toLocalIso(s), endsAt: toLocalIso(en) });
     } catch {
-      setError("Couldn't move that event. It's back where it was.");
+      setError('Couldn’t move that event. It’s back where it was.');
     }
   };
 
@@ -241,7 +241,7 @@ export default function Calendar() {
       await remove(editor.event.id);
       setEditor(null);
     } catch {
-      setError("Couldn't delete that event. Check your connection and try again.");
+      setError('Couldn’t delete that event. Check your connection and try again.');
     }
   };
 

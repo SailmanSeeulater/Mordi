@@ -28,6 +28,9 @@ export default function RemindersSettings() {
     Promise.all([client.get('/api/push/config'), currentSubscription().catch(() => null)])
       .then(([res, sub]) => {
         if (!live) return;
+        if (!res.data?.enabled) {
+          console.warn('Reminders are off: /api/push/config reports enabled=false (no push keys configured).');
+        }
         setConfig(res.data);
         setSubscribed(Boolean(sub));
       })
@@ -99,8 +102,8 @@ export default function RemindersSettings() {
     body = (
       <p className="settings__note">
         {config.unreachable
-          ? 'Couldn’t reach the server to check reminders.'
-          : 'Reminders aren’t switched on for this server yet.'}
+          ? 'Couldn’t check whether reminders are available. Check your connection and reload the page.'
+          : 'Reminders aren’t available yet.'}
       </p>
     );
   } else if (!pushSupported()) {

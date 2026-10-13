@@ -47,7 +47,7 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
       });
       onSaved();
     } catch {
-      setError("Couldn't save that entry. Check your connection and try again.");
+      setError('Couldn’t save that entry. Check your connection and try again.');
       setSaving(false);
     }
   };

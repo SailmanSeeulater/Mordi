@@ -45,7 +45,7 @@ export default function PlanToday({ today, goals = [], onChanged, onToast }) {
         },
       });
     } catch {
-      onToast?.({ message: "Couldn't save that. Check your connection and try again.", undoable: false });
+      onToast?.({ message: 'Couldn’t save that. Check your connection and try again.', undoable: false });
     } finally {
       setBusyId(null);
     }

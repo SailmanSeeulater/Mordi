@@ -45,7 +45,7 @@ export default function ImportCalendar({ text, fileName, onDone, onCancel }) {
       );
       onDone(res.data ?? { imported: chosen.length, skipped: 0 });
     } catch (err) {
-      setError(err?.response?.data?.error ?? "Couldn't import those events. Check your connection and try again.");
+      setError(err?.response?.data?.error ?? 'Couldn’t import those events. Check your connection and try again.');
       setBusy(false);
     }
   };
