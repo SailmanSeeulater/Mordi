@@ -13,12 +13,9 @@ import "./locations.css";
 const DEFAULT_CENTER = { lat: 32.7157, lng: -117.1611 };
 const MAP_CONTAINER_STYLE = { width: "100%", height: "100%" };
 
-// Google Maps styles only accept hex, so the active theme's tokens are read off
-// the DOM and converted. The map then changes colour with the rest of the app.
-function readToken(name, fallback) {
-  if (typeof window === "undefined") return fallback;
-  const root = document.querySelector("[data-theme]") ?? document.documentElement;
-  const raw = getComputedStyle(root).getPropertyValue(name).trim();
+// Google Maps styles only accept hex, so the theme's tokens are read off the
+// DOM and converted. The map then changes colour with the rest of the app.
+function toHex(raw, fallback) {
   if (!raw) return fallback;
   if (raw.startsWith("#")) return raw;
   const nums = raw.match(/[\d.]+/g);
@@ -30,6 +27,33 @@ function readToken(name, fallback) {
       .map((n) => Math.round(parseFloat(n)).toString(16).padStart(2, "0"))
       .join("")
   );
+}
+
+const FALLBACK_PALETTE = { bg: "#ece7dd", surface: "#e4ddd0", text: "#1a1714", accent: "#d2452a" };
+
+/**
+ * The four colours the map needs, for one combination. Read from a detached
+ * probe carrying that combination rather than from the page: during the
+ * render that switches combinations, the page's own [data-theme] still holds
+ * the old one. Called once per combination (memoised on `theme`), not on
+ * every render.
+ */
+function readPalette(theme) {
+  if (typeof document === "undefined") return FALLBACK_PALETTE;
+  const probe = document.createElement("div");
+  probe.dataset.theme = theme;
+  probe.hidden = true;
+  document.body.appendChild(probe);
+  const style = getComputedStyle(probe);
+  const read = (name, key) => toHex(style.getPropertyValue(name).trim(), FALLBACK_PALETTE[key]);
+  const palette = {
+    bg: read("--color-bg", "bg"),
+    surface: read("--color-surface", "surface"),
+    text: read("--color-text", "text"),
+    accent: read("--color-accent", "accent"),
+  };
+  probe.remove();
+  return palette;
 }
 
 /** Mixes two hex colors, so roads and water sit either side of the ground. */
@@ -46,10 +70,7 @@ function mix(a, b, weight) {
   );
 }
 
-function buildMapOptions() {
-  const bg = readToken("--color-bg", "#ece7dd");
-  const surface = readToken("--color-surface", "#e4ddd0");
-  const text = readToken("--color-text", "#1a1714");
+function buildMapOptions({ bg, surface, text }) {
   const muted = mix(text, bg, 0.7);
 
   return {
@@ -78,13 +99,13 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
 });
 
-function buildMarkerIcon() {
+function buildMarkerIcon({ accent, text }) {
   return {
     path: window.google.maps.SymbolPath.CIRCLE,
     scale: 7,
-    fillColor: readToken("--color-accent", "#d2452a"),
+    fillColor: accent,
     fillOpacity: 1,
-    strokeColor: readToken("--color-text", "#1a1714"),
+    strokeColor: text,
     strokeWeight: 2,
   };
 }
@@ -127,13 +148,14 @@ export default function Locations() {
   const { theme } = useTheme();
   const { isLoaded, loadError } = useMapsApi();
 
-  // Rebuilt when the combination changes, so the map re-styles with the app.
-  // Both of these read the palette off the DOM, so they have to be recomputed
-  // when the combination changes; `theme` is that trigger.
-  const mapOptions = useMemo(() => {
-    void theme;
-    return isLoaded ? { ...buildMapOptions(), draggableCursor: picking ? "crosshair" : undefined } : null;
-  }, [isLoaded, theme, picking]);
+  // The combination's colours, read once per combination; the map styles,
+  // markers and routes below are all built from them, so the map re-styles
+  // with the app.
+  const palette = useMemo(() => readPalette(theme), [theme]);
+  const mapOptions = useMemo(
+    () => (isLoaded ? { ...buildMapOptions(palette), draggableCursor: picking ? "crosshair" : undefined } : null),
+    [isLoaded, palette, picking],
+  );
 
   // Saved fixes, and every named place entries were logged from. The second
   // is optional: an older server without it still shows the saved places.
@@ -356,10 +378,7 @@ export default function Locations() {
     }
   };
 
-  const markerIcon = useMemo(() => {
-    void theme;
-    return isLoaded ? buildMarkerIcon() : undefined;
-  }, [isLoaded, theme]);
+  const markerIcon = useMemo(() => (isLoaded ? buildMarkerIcon(palette) : undefined), [isLoaded, palette]);
 
   const captureLocation = async () => {
     if (!navigator.geolocation) {
@@ -404,8 +423,7 @@ export default function Locations() {
     if (loc.latitude != null && loc.longitude != null) glideTo({ lat: loc.latitude, lng: loc.longitude });
   };
 
-  const accent = readToken("--color-accent", "#d2452a");
-  const ink = readToken("--color-text", "#1a1714");
+  const { accent, text: ink } = palette;
 
   // A and B markers: shown as soon as each end is known, before any route.
   const endMarker = (letter, position) =>

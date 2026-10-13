@@ -2,13 +2,15 @@ import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 
-// The landing page and the dashboard are what almost every visit opens, so
-// they ship in the first bundle. Everything else loads on first visit to its
-// page: the map, the calendar and the reports each carry weight the
-// dashboard should not pay for.
+// The dashboard is what a returning visit opens, and returning visits are the
+// repeated ones, so it ships in the first bundle. The landing page is the
+// other half of a cold load, but a session only ever renders one of the two:
+// it loads on its own, with its stylesheet, so a signed-in day never pays for
+// it. Everything else loads on first visit to its page: the map, the calendar
+// and the reports each carry weight the dashboard should not pay for.
+const Landing = lazy(() => import("./pages/Landing"));
 const Goals = lazy(() => import("./pages/Goals"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Reports = lazy(() => import("./pages/Reports"));
@@ -27,6 +29,17 @@ const About = lazy(() => import("./pages/About"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
+import { useTheme } from "./context/useTheme";
+
+/**
+ * What shows while a page's code is still arriving: the ground in the
+ * person's own colour combination, so a dark theme never flashes the default
+ * Sorbet the body is painted with before any page sets its theme.
+ */
+function ThemedGround() {
+  const { theme } = useTheme();
+  return <div data-theme={theme} style={{ minHeight: "100svh", background: "var(--color-bg)" }} />;
+}
 
 function PrivateRoute({ children }) {
   const { user, restoring } = useAuth();
@@ -54,7 +67,7 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Suspense fallback={null}>
+        <Suspense fallback={<ThemedGround />}>
         <Routes>
           <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />

@@ -122,20 +122,42 @@ export default function Select({
       const above = rect.top - gap * 2;
       const dropUp = below < Math.min(cap, 160) && above > below;
       const height = Math.max(Math.min(cap, dropUp ? above : below), 96);
-      setBox({
+      const next = {
         left: rect.left,
         width: rect.width,
         top: dropUp ? rect.top - height - gap : rect.bottom + gap,
         height,
-      });
+      };
+      // Same place, same object: no re-render for a scroll that moved
+      // something else.
+      setBox((prev) =>
+        prev &&
+        prev.left === next.left &&
+        prev.width === next.width &&
+        prev.top === next.top &&
+        prev.height === next.height
+          ? prev
+          : next,
+      );
     };
     place();
+    // Scroll fires many times a frame; measure at most once per frame, just
+    // before the browser paints it.
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        place();
+      });
+    };
     // Capture, so scrolling inside a dialog counts too.
-    window.addEventListener('scroll', place, true);
-    window.addEventListener('resize', place);
+    window.addEventListener('scroll', schedule, true);
+    window.addEventListener('resize', schedule);
     return () => {
-      window.removeEventListener('scroll', place, true);
-      window.removeEventListener('resize', place);
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule, true);
+      window.removeEventListener('resize', schedule);
     };
   }, [open]);
 

@@ -108,13 +108,9 @@ export default function Privacy() {
           <dt>Google Maps Platform</dt>
           <dd>
             Draws maps, looks up places and addresses, and plans trips: the coordinates and searches involved,
-            and your IP address. Mordi uses Google Maps features and content, and your use of them is subject
+            and your IP address. On the Places page only, the map also loads its own typeface from Google Fonts. Mordi uses Google Maps features and content, and your use of them is subject
             to the <a href={GOOGLE_PRIVACY} target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.
           </dd>
-        </div>
-        <div>
-          <dt>Google Fonts</dt>
-          <dd>Serves the typefaces: your IP address and browser type when they load.</dd>
         </div>
         <div>
           <dt>Open-Meteo</dt>

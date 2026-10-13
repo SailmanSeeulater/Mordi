@@ -5,7 +5,6 @@ import { weekPace, paceLabel } from './dashboardData';
 import { composeReminder } from '../lib/reminder';
 import { headline } from '../lib/weekReport';
 import { MODULES } from '../lib/modules';
-import { THEMES } from '../context/theme-context-value';
 import { DEMO_GOALS, DEMO_THREAD, DEMO_TEXT } from './landingCopy';
 
 /*
@@ -695,34 +694,4 @@ export function MoreGlyph({ id }) {
     default:
       return null;
   }
-}
-
-/* ── The color combinations, live ───────────────────────── */
-
-export function ThemePicker({ theme, onPick }) {
-  return (
-    <div className="lp-themes">
-      {['light', 'dark'].map((scheme) => (
-        <div key={scheme} className="lp-themes__group" role="group" aria-label={scheme === 'light' ? 'Light' : 'Dark'}>
-          <p className="lp-themes__heading">{scheme === 'light' ? 'Light' : 'Dark'}</p>
-          <div className="lp-themes__row">
-            {THEMES.filter((t) => t.scheme === scheme).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className="lp-swatch"
-                aria-pressed={t.id === theme}
-                onClick={() => onPick(t.id)}
-              >
-                <span className="lp-swatch__face" data-theme={t.id} aria-hidden="true">
-                  <span className="lp-swatch__dot" />
-                </span>
-                <span className="lp-swatch__label">{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }

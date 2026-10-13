@@ -40,9 +40,27 @@ export default function Tour({ steps, onDone, onSkip }) {
     if (!step?.target) return undefined;
     const el = document.querySelector(step.target);
     if (!el) return undefined;
-    const measure = () => setRect(el.getBoundingClientRect());
+    // One measurement per frame however many scroll events land in it.
+    let frame = 0;
+    const measure = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const r = el.getBoundingClientRect();
+        // Unmoved target, same object: no re-render.
+        setRect((prev) =>
+          prev &&
+          prev.top === r.top &&
+          prev.left === r.left &&
+          prev.width === r.width &&
+          prev.height === r.height
+            ? prev
+            : r,
+        );
+      });
+    };
     el.scrollIntoView?.({ block: 'center', behavior: 'auto' });
-    const frame = requestAnimationFrame(measure);
+    measure();
     window.addEventListener('resize', measure);
     window.addEventListener('scroll', measure, true);
     return () => {

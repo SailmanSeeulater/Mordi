@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/useAuth';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../context/useTheme';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { prefersReducedMotion, useInView } from '../hooks/useLandingMotion';
-import client from '../api/client';
 import Modal from '../components/Modal';
-import TermsConsent from '../components/TermsConsent';
+import SignInForm from '../components/SignInForm';
+import RegisterForm from '../components/RegisterForm';
+import ThemeGrid from '../components/ThemeGrid';
 import {
   HeroWeekDemo,
   GoalDemo,
@@ -18,7 +18,6 @@ import {
   TogetherDemo,
   FocusedDemo,
   MoreGlyph,
-  ThemePicker,
 } from './LandingDemos';
 import {
   NAV,
@@ -184,16 +183,8 @@ export default function Landing() {
 
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState('signin'); // 'signin' | 'register'
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const { login } = useAuth();
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
 
   useScrollReveal();
 
@@ -204,57 +195,13 @@ export default function Landing() {
 
   const openAuth = (tab) => {
     setAuthTab(tab);
-    setError('');
     setAuthOpen(true);
   };
 
-  // Declared before the effect that uses it, and memoised, so the listener is
-  // attached to a stable function rather than a new one on every render.
-  const closeAuth = useCallback(() => {
-    setAuthOpen(false);
-    setError('');
-    setName('');
-    setEmail('');
-    setPassword('');
-  }, []);
-
-
-  const switchTab = (tab) => {
-    setAuthTab(tab);
-    setError('');
-  };
-
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-    setError('');
-    try {
-      const res = await client.post('/api/auth/login', { email, password });
-      login({ email: res.data.email, name: res.data.name }, res.data.token);
-      navigate('/dashboard');
-    } catch {
-      setError('That email and password don’t match. Check both and try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-    setError('');
-    try {
-      const res = await client.post('/api/auth/register', { name, email, password });
-      login({ email: res.data.email, name: res.data.name }, res.data.token);
-      navigate('/dashboard');
-    } catch {
-      setError('Couldn’t create the account. If you already have one with this email, sign in instead.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  // The forms own their fields and errors (components/SignInForm and
+  // RegisterForm, shared with /login and /register), so closing the dialog or
+  // switching tabs starts each one fresh.
+  const closeAuth = () => setAuthOpen(false);
 
   return (
     <div className="mordi-page" data-theme={theme}>
@@ -351,7 +298,9 @@ export default function Landing() {
             <p className="lp-lede">{THEMES_COPY.body}</p>
           </div>
           <div className="lp-row__demo" data-reveal>
-            <ThemePicker theme={theme} onPick={setTheme} />
+            <div className="lp-themes">
+              <ThemeGrid theme={theme} onPick={setTheme} idPrefix="lp-themes" />
+            </div>
           </div>
         </section>
 
@@ -452,7 +401,7 @@ export default function Landing() {
                 type="button"
                 className="app-segment"
                 aria-pressed={authTab === 'signin'}
-                onClick={() => switchTab('signin')}
+                onClick={() => setAuthTab('signin')}
               >
                 Sign in
               </button>
@@ -460,101 +409,14 @@ export default function Landing() {
                 type="button"
                 className="app-segment"
                 aria-pressed={authTab === 'register'}
-                onClick={() => switchTab('register')}
+                onClick={() => setAuthTab('register')}
               >
                 Create account
               </button>
             </div>
           </div>
 
-          {authTab === 'signin' ? (
-            <form className="app-form" onSubmit={handleSignIn}>
-              {error && (
-                <p className="app-form__error" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="app-field">
-                <label htmlFor="signin-email">Email</label>
-                <input
-                  id="signin-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="app-field">
-                <label htmlFor="signin-password">Password</label>
-                <input
-                  id="signin-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="app-form__actions">
-                <button type="submit" className="app-btn app-btn--block" disabled={submitting}>
-                  {submitting ? 'Signing in…' : 'Sign in'}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form className="app-form" onSubmit={handleRegister}>
-              {error && (
-                <p className="app-form__error" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="app-field">
-                <label htmlFor="register-name">Name</label>
-                <input
-                  id="register-name"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Ada Lovelace"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="app-field">
-                <label htmlFor="register-email">Email</label>
-                <input
-                  id="register-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="app-field">
-                <label htmlFor="register-password">Password</label>
-                <input
-                  id="register-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
-                <p className="app-field__hint">At least 8 characters.</p>
-              </div>
-              <TermsConsent />
-              <div className="app-form__actions">
-                <button type="submit" className="app-btn app-btn--block" disabled={submitting}>
-                  {submitting ? 'Creating account…' : 'Create account'}
-                </button>
-              </div>
-            </form>
-          )}
+          {authTab === 'signin' ? <SignInForm /> : <RegisterForm />}
         </Modal>
       )}
     </div>
