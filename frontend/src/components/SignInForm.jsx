@@ -32,8 +32,18 @@ export default function SignInForm({ notice }) {
       const res = await client.post('/api/auth/login', { email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate(returnPath(location.state), { replace: true });
-    } catch {
-      setError('That email and password don’t match. Check both and try again.');
+    } catch (err) {
+      // Only a 401 means the email and password don't match. A 429 is the
+      // rate limit, and anything else (a 502 while the server restarts, no
+      // connection) is not the person's fault and shouldn't read as if it were.
+      const status = err?.response?.status;
+      setError(
+        status === 401
+          ? 'That email and password don’t match. Check both and try again.'
+          : status === 429
+            ? 'Too many tries. Wait a minute, then try again.'
+            : 'Couldn’t sign in just now. Check your connection and try again in a moment.',
+      );
     } finally {
       setSubmitting(false);
     }

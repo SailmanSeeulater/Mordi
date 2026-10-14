@@ -129,7 +129,6 @@ jobs:
             # unnoticed. A crash loop trips RestartCount and fails the job with
             # the log that explains it.
             stamp "check"
-            sleep 20
             docker-compose ps
 
             # The right version, not merely a running one. A container that
@@ -149,11 +148,28 @@ jobs:
               fi
             done
 
-            running=$(docker inspect -f '{{.State.Running}}' mordi-backend)
+            # Running is not the same as answering: on this VM the backend
+            # takes well over a minute to start, and a fixed 20-second wait
+            # once reported a green deploy while the site returned 502. Ask it
+            # until it says UP, for up to four minutes, and stop early if the
+            # container dies.
+            stamp "wait for backend"
+            up=""
+            for i in $(seq 1 48); do
+              if curl -fs -m 3 http://127.0.0.1:8080/actuator/health >/dev/null; then
+                up=yes
+                break
+              fi
+              if [ "$(docker inspect -f '{{.State.Running}}' mordi-backend)" != "true" ]; then
+                break
+              fi
+              sleep 5
+            done
+
             restarts=$(docker inspect -f '{{.RestartCount}}' mordi-backend)
-            if [ "$running" != "true" ] || [ "$restarts" != "0" ]; then
-              echo "backend is not up (running=$running restarts=$restarts):"
-              docker-compose logs --tail=60 backend
+            if [ -z "$up" ] || [ "$restarts" != "0" ]; then
+              echo "backend is not answering (restarts=$restarts):"
+              docker-compose logs --tail=80 backend
               exit 1
             fi
             stamp "done"

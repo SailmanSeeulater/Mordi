@@ -43,7 +43,9 @@ export default function ChangePasswordForm() {
       setError(
         err?.response?.status === 400
           ? (data?.fieldErrors?.newPassword ?? data?.error ?? 'That didn’t work. Check the current password.')
-          : 'Couldn’t change the password. Check your connection and try again.',
+          : err?.response?.status === 429
+            ? 'Too many tries. Wait a minute, then try again.'
+            : 'Couldn’t change the password. Check your connection and try again.',
       );
     } finally {
       setBusy(false);

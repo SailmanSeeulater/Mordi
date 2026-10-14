@@ -54,6 +54,8 @@ export default function ResetPassword() {
         setExpired(true);
       } else if (status === 400) {
         setError(err.response.data?.fieldErrors?.password ?? "That password can’t be used. Try another.");
+      } else if (status === 429) {
+        setError("Too many tries. Wait a minute, then try again.");
       } else {
         setError("Couldn’t change the password. Check your connection and try again.");
       }

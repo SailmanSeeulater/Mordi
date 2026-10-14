@@ -173,6 +173,30 @@ describe("Login", () => {
     expect(errorMsg).toBeInTheDocument();
   });
 
+  it("says to wait when the rate limit answers, not that the password is wrong", async () => {
+    client.post.mockRejectedValueOnce({ response: { status: 429 } });
+
+    renderLogin();
+    fillAndSubmit();
+
+    expect(await screen.findByText("Too many tries. Wait a minute, then try again.")).toBeInTheDocument();
+    expect(screen.queryByText(/don’t match/)).not.toBeInTheDocument();
+  });
+
+  it("blames the connection, not the password, when the server can't be reached", async () => {
+    for (const failure of [{ response: { status: 502 } }, { message: "Network Error" }]) {
+      client.post.mockRejectedValueOnce(failure);
+      const view = renderLogin();
+      fillAndSubmit();
+
+      expect(
+        await screen.findByText("Couldn’t sign in just now. Check your connection and try again in a moment."),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/don’t match/)).not.toBeInTheDocument();
+      view.unmount();
+    }
+  });
+
   it("clears a previous error on a new submit attempt", async () => {
     client.post.mockRejectedValueOnce({ response: { status: 401 } });
 
