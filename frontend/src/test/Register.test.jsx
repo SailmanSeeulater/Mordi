@@ -144,6 +144,27 @@ describe("Register", () => {
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
+  it("says to wait when the rate limit answers", async () => {
+    client.post.mockRejectedValueOnce({ response: { status: 429 } });
+
+    renderRegister();
+    fillAndSubmit();
+
+    expect(await screen.findByText("Too many tries. Wait a minute, then try again.")).toBeInTheDocument();
+  });
+
+  it("blames the connection, not an existing account, when the server can't be reached", async () => {
+    client.post.mockRejectedValueOnce({ response: { status: 502 } });
+
+    renderRegister();
+    fillAndSubmit();
+
+    expect(
+      await screen.findByText("Couldn’t create the account just now. Check your connection and try again in a moment."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/already have one/)).not.toBeInTheDocument();
+  });
+
   it("clears a previous error on a new submit attempt", async () => {
     client.post.mockRejectedValueOnce({ response: { status: 409 } });
 

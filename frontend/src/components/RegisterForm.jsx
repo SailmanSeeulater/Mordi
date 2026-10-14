@@ -31,8 +31,17 @@ export default function RegisterForm() {
       const res = await client.post('/api/auth/register', { name, email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
       navigate(returnPath(location.state), { replace: true });
-    } catch {
-      setError('Couldn’t create the account. If you already have one with this email, sign in instead.');
+    } catch (err) {
+      const status = err?.response?.status;
+      setError(
+        status === 409
+          ? 'Couldn’t create the account. If you already have one with this email, sign in instead.'
+          : status === 429
+            ? 'Too many tries. Wait a minute, then try again.'
+            : status === 400
+              ? 'Check the name, email and password, then try again.'
+              : 'Couldn’t create the account just now. Check your connection and try again in a moment.',
+      );
     } finally {
       setSubmitting(false);
     }
