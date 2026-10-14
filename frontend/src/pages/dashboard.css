@@ -323,51 +323,8 @@
 }
 .pass__cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px -8px color-mix(in srgb, #000 45%, transparent);
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--color-text) 45%, transparent);
 }
-
-.pass__cta--quiet {
-  background: color-mix(in srgb, var(--color-on-pass) 18%, transparent);
-  color: var(--color-on-pass);
-  font-weight: 600;
-}
-
-/* Dims everything behind the open deck. Fixed, so it covers the whole page,
-   and inert: dismissal lives in the component's own listeners. */
-
-/* Open, the layer is a panel floating over the page, and its position and
-   height are set inline from a measurement — see GoalDeck. It prefers to grow
-   upward from the collapsed deck so it never pushes past the bottom of the
-   screen, but it is clamped to the viewport so it cannot walk off the top
-   either. Above the top bar, because a popover that is half hidden behind the
-   chrome is worse than one that covers it. */
-
-/* Only a deck taller than the cap gets the fade: with the scrollbar gone it
-   is the only thing saying there is more below, and on a deck that fits it
-   would be a gradient over the first card for no reason. The class is set
-   from a measurement, not guessed from the number of goals, because the cap
-   is a share of the viewport height. */
-
-/* Collapsed, the deck is one object: one target, one hover. */
-
-/* The grip sits after the layer in the DOM, so this has to look forwards
-   from the layer rather than backwards from the grip. */
-
-/* Switching combination re-deals the deck in the new colours. The keyed
-   remount re-runs this once; it starts from a visible state, so nothing
-   fades in. */
-
-/* A matte card: the surface color, a hairline edge, one shadow. Every pass is
-   opaque, collapsed or open, because an open deck floats over the week card
-   and anything translucent lets that color through the text. */
-
-/* The title sits on the same line as its mark. */
-
-/* The pass's own tile, the way a Wallet pass carries its issuer's mark. */
-
-/* Category reads as an icon plus its name. */
-
-/* The week's dots sit under the Log button, on the right. */
 
 .week-dot {
   width: 9px;
@@ -386,7 +343,7 @@
 
 /* ── First run ─────────────────────────────── */
 
-/* Surface and elevation come from .app-glass, which this carries alongside. */
+/* Surface and elevation come from .app-card, which this carries alongside. */
 .onboard {
   display: grid;
   gap: 16px;
@@ -396,7 +353,7 @@
 .onboard__title {
   margin: 0;
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: clamp(26px, 4vw, 34px);
   line-height: 1.1;
 }

@@ -265,10 +265,10 @@
   animation: wk-grow 700ms var(--ease-out) both;
   animation-delay: calc(var(--i) * 45ms + 150ms);
 }
-.wk-bar--done { background: var(--color-accent); border-radius: 4px 4px 0 0; }
-.wk-bar--open { background: color-mix(in srgb, var(--color-text) 22%, var(--color-surface)); border-radius: 4px 4px 0 0; }
-.wk-bar--done + .wk-bar--open { border-radius: 4px 4px 0 0; }
-.wk-bars__col:has(.wk-bar--open[style*='height: 0%']) .wk-bar--done { border-radius: 4px 4px 0 0; }
+.wk-bar--done,
+.wk-bar--open { border-radius: var(--r-chip) var(--r-chip) 0 0; }
+.wk-bar--done { background: var(--color-accent); }
+.wk-bar--open { background: color-mix(in srgb, var(--color-text) 22%, var(--color-surface)); }
 .wk-bars__prev {
   position: absolute;
   left: 4%;

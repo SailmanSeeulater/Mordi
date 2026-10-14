@@ -47,7 +47,6 @@ export default function ThemeSwitcher({ align = 'end' }) {
         type="button"
         className="theme-switch__more"
         aria-expanded={open}
-        aria-haspopup="true"
         aria-controls={open ? menuId : undefined}
         aria-label="Choose a color combination"
         onClick={() => setOpen((v) => !v)}

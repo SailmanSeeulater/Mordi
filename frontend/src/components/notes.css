@@ -11,7 +11,7 @@
   gap: 6px;
   padding: 4px 4px 4px 10px;
   border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 55%, var(--color-surface));
 }
 
 /* A pinned note is marked by its filled pin and a faint accent tint. Not a
@@ -127,14 +127,26 @@
   width: 1em;
   height: 1em;
   margin: 0 0.55em 0 0;
-  border: 1.5px solid color-mix(in srgb, var(--color-text) 35%, transparent);
-  border-radius: 4px;
+  border: 1.5px solid color-mix(in srgb, var(--color-text) 35%, var(--color-surface));
+  border-radius: var(--r-chip);
   vertical-align: -0.12em;
   background: var(--color-surface);
+  display: inline-grid;
+  place-content: center;
 }
 .md li.task-list-item input:checked {
   border-color: var(--color-accent);
-  background: var(--color-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / 80% no-repeat;
+  background: var(--color-accent);
+}
+/* The tick is a mask, so it takes the theme's on-accent ink instead of a
+   baked-in white that goes muddy on dark themes. */
+.md li.task-list-item input:checked::after {
+  content: "";
+  width: 0.8em;
+  height: 0.8em;
+  background-color: var(--color-on-accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 .md li.task-list-item:has(input:checked) { color: var(--color-text-muted); text-decoration: line-through; text-decoration-color: var(--color-divider); }
 .md blockquote {
@@ -148,7 +160,7 @@
 }
 .md code {
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
   font-family: var(--font-mono);
   font-size: 0.84em;

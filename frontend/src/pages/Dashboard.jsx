@@ -47,10 +47,6 @@ import './dashboard.css';
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-
-
-
-
 /**
  * One goal's ring. A tap logs it done today: logging is the one thing this
  * page is for, so it takes one action, with an Undo right after in case the
@@ -135,8 +131,6 @@ const IconRearrange = () => (
     <path d="M17 5.5L20.5 9M20.5 9L17 12.5" />
   </svg>
 );
-
-
 
 /* One tap from an empty dashboard to a working one. */
 /* The first-run tour, in two parts: the welcome and the first goal, then,
@@ -275,7 +269,6 @@ export default function Dashboard() {
 
   const [modal, setModal] = useState(null);
   const [logGoalId, setLogGoalId] = useState('');
-
 
   const summary = useMemo(
     () => weekSummary(goals, behaviors, weekStart, today),
@@ -472,7 +465,7 @@ export default function Dashboard() {
       )}
 
       {loadState === 'ready' && goals.length === 0 && (
-        <section className="onboard app-glass" aria-labelledby="dash-onboard-title">
+        <section className="onboard app-card" aria-labelledby="dash-onboard-title">
           <h2 className="onboard__title" id="dash-onboard-title">
             Start with one goal.
           </h2>

@@ -201,7 +201,7 @@ export default function Goals() {
       )}
 
       {loadState === 'ready' && goals.length === 0 && (
-        <section className="onboard app-glass" aria-labelledby="goals-empty-title">
+        <section className="onboard app-card" aria-labelledby="goals-empty-title">
           <h2 className="onboard__title" id="goals-empty-title">
             No goals yet.
           </h2>

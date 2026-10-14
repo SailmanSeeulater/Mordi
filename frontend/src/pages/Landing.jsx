@@ -179,7 +179,7 @@ function useScrollReveal() {
 }
 
 export default function Landing() {
-  useDocumentTitle(); 
+  useDocumentTitle();
 
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState('signin'); // 'signin' | 'register'

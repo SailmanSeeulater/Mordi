@@ -45,7 +45,7 @@
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 11px;
+  border-radius: var(--r-pill);
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-mono);
@@ -376,7 +376,7 @@
     gap: 4px;
   }
   .room__who .together-avatar { display: none; }
-  .room__cell { height: 18px; border-radius: 5px; }
+  .room__cell { height: 18px; border-radius: var(--r-chip); }
   .room__composer { padding: 10px 12px 12px; }
   .msg__body { padding-left: 0; }
 }

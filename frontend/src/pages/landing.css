@@ -1164,7 +1164,7 @@ body.mordi-landing {
   max-width: 78%;
   margin: 0;
   padding: 9px 13px;
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
   font-size: 14px;
   line-height: 1.4;

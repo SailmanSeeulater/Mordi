@@ -1,19 +1,16 @@
 /**
  * Weather glyphs, drawn rather than imported.
  *
- * Each one is a filled shape with a lit top edge, so it sits in the same
- * material language as the glass panels instead of looking like a line icon
- * borrowed from a different set. The pieces are plain functions returning
- * markup, not nested components: a component declared during render is a new
- * type on every render.
- *
- * Gradient ids are namespaced per instance, because two of these can be on
- * the page at once.
+ * Each one is a flat filled shape in currentColor, so it sits in the same
+ * matte material as the cards instead of looking like a line icon borrowed
+ * from a different set. The pieces are plain functions returning markup, not
+ * nested components: a component declared during render is a new type on
+ * every render.
  */
-function disc(sunId, isDay) {
+function disc(isDay) {
   return (
     <>
-      <circle cx="9.5" cy="9.5" r="5.4" fill={`url(#${sunId})`} />
+      <circle cx="9.5" cy="9.5" r="5.4" fill="currentColor" fillOpacity="0.9" />
       {isDay && (
         <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.85">
           <path d="M9.5 1v1.8M9.5 16.2V18M1 9.5h1.8M16.2 9.5H18M3.5 3.5l1.3 1.3M14.2 14.2l1.3 1.3M15.5 3.5l-1.3 1.3M4.8 14.2L3.5 15.5" />
@@ -23,12 +20,13 @@ function disc(sunId, isDay) {
   );
 }
 
-function cloud(cloudId, y = 0) {
+function cloud(y = 0) {
   return (
     <path
       transform={`translate(0 ${y})`}
       d="M7.4 21.5h11.1a4.1 4.1 0 00.3-8.2 6.2 6.2 0 00-11.7-1.3 3.8 3.8 0 00.3 9.5z"
-      fill={`url(#${cloudId})`}
+      fill="currentColor"
+      fillOpacity="0.85"
     />
   );
 }
@@ -59,10 +57,7 @@ const bolt = (
   />
 );
 
-export default function WeatherGlyph({ kind, isDay = true, size = 34, idSuffix = '' }) {
-  const sunId = `wg-sun${idSuffix}`;
-  const cloudId = `wg-cloud${idSuffix}`;
-
+export default function WeatherGlyph({ kind, isDay = true, size = 34 }) {
   return (
     <svg
       width={size}
@@ -72,52 +67,41 @@ export default function WeatherGlyph({ kind, isDay = true, size = 34, idSuffix =
       aria-hidden="true"
       focusable="false"
     >
-      <defs>
-        <linearGradient id={sunId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.62" />
-        </linearGradient>
-        <linearGradient id={cloudId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.92" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.55" />
-        </linearGradient>
-      </defs>
-
-      {kind === 'clear' && <g transform="translate(5.5 5.5)">{disc(sunId, isDay)}</g>}
+      {kind === 'clear' && <g transform="translate(5.5 5.5)">{disc(isDay)}</g>}
 
       {kind === 'partly' && (
         <>
-          <g transform="translate(9 0)">{disc(sunId, isDay)}</g>
-          {cloud(cloudId, 2)}
+          <g transform="translate(9 0)">{disc(isDay)}</g>
+          {cloud(2)}
         </>
       )}
 
-      {kind === 'cloud' && cloud(cloudId, 1)}
+      {kind === 'cloud' && cloud(1)}
 
       {kind === 'fog' && (
         <>
-          {cloud(cloudId, -2)}
+          {cloud(-2)}
           {fogLines}
         </>
       )}
 
       {kind === 'rain' && (
         <>
-          {cloud(cloudId, -2)}
+          {cloud(-2)}
           {drops}
         </>
       )}
 
       {kind === 'snow' && (
         <>
-          {cloud(cloudId, -2)}
+          {cloud(-2)}
           {flakes}
         </>
       )}
 
       {kind === 'storm' && (
         <>
-          {cloud(cloudId, -2)}
+          {cloud(-2)}
           {bolt}
         </>
       )}

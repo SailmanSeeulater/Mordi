@@ -2,7 +2,7 @@
 
 /* The palette. Names are stored with each event; the hue is decided here, and
    every tint is mixed against the theme's own surface and ink, so the same
-   event reads on all twenty-five themes. */
+   event reads on all twenty-six themes. */
 .ev--accent { --ev: var(--color-accent); }
 .ev--sky { --ev: #3b82c4; }
 .ev--sage { --ev: #4f9a6a; }
@@ -35,7 +35,6 @@
   color: var(--color-text-muted);
   font-weight: 500;
 }
-.planner__views { width: 150px; }
 
 .planner__panel {
   --gutter: 56px;
@@ -414,7 +413,7 @@
 }
 .month__day:nth-child(7n) { border-right: 0; }
 .month__day:nth-last-child(-n + 7) { border-bottom: 0; }
-.month__day--outside { background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+.month__day--outside { background: color-mix(in srgb, var(--color-bg) 55%, var(--color-surface)); }
 .month__day--outside .month__date { color: var(--color-text-muted); }
 .month__date {
   align-self: flex-start;

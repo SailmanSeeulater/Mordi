@@ -358,8 +358,9 @@ function WhenBlock({ report }) {
         </p>
       </header>
       {report.timedEntries >= 3 ? (
-        // On a phone 24 columns would shrink each hour under 10px, so the grid
-        // keeps 12px cells and scrolls sideways inside its own block.
+        <>
+        {/* On a phone 24 columns would shrink each hour under 10px, so the grid
+            keeps 12px cells and scrolls sideways inside its own block. */}
         <div className="wk-hours__scroll">
           <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
             <span className="wk-hours__corner" />
@@ -383,6 +384,27 @@ function WhenBlock({ report }) {
             ))}
           </div>
         </div>
+        <table className="app-sr">
+          <caption>Entries each day, by the hour they were logged</caption>
+          <thead>
+            <tr><th scope="col">Day</th><th scope="col">Entries</th><th scope="col">Hours</th></tr>
+          </thead>
+          <tbody>
+            {report.hours.map((row, d) => (
+              <tr key={d}>
+                <th scope="row">{dayLong.format(report.perDay[d].date)}</th>
+                <td>{row.reduce((sum, n) => sum + n, 0)}</td>
+                <td>
+                  {row
+                    .map((n, h) => (n ? `${hourName(h)}: ${n}` : null))
+                    .filter(Boolean)
+                    .join(', ') || 'None'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </>
       ) : (
         <p className="wk-empty">Times are recorded for entries logged from now on, and for timer sessions from when they began.</p>
       )}

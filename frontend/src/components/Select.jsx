@@ -52,8 +52,8 @@ const IconTick = () => (
  *
  * It is portalled to the nearest [data-theme] ancestor, not to document.body.
  * The theme's custom properties are declared on that element, so a popup
- * outside it loses them: --glass-fill-strong stops resolving and the list
- * renders see-through, and the colours that do still resolve come from the
+ * outside it loses them: --color-surface stops resolving and the list
+ * loses its fill, and the colours that do still resolve come from the
  * defaults on :root rather than from the theme the person picked. That
  * element is still outside the dialog, so the overflow problem stays fixed.
  *

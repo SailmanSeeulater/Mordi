@@ -1,9 +1,9 @@
 /* Signed-in app: shell, passes, panels, controls, dialogs.
    World: Apple Wallet crossed with Instagram — full-bleed color passes with
-   soft corners, gradient progress rings, one shadow system, no square edges.
+   soft corners, conic progress rings, one matte shadow system, no square edges.
    Colors come from the active theme in src/themes.css; nothing here hardcodes one. */
 
-/* Radii, elevation, easing and the accent gradient come from the [data-theme]
+/* Radii, elevation and easing come from the [data-theme]
    block in src/themes.css, which every themed root carries. */
 .app {
   position: relative;
@@ -29,6 +29,9 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* A table ignores the 1px width and sizes to its text; letting that text wrap
+   keeps a hidden data table from widening the page. */
+table.app-sr { white-space: normal; }
 
 .app-body { min-width: 0; }
 
@@ -59,7 +62,7 @@
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-heading);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 22px;
   line-height: 1;
   text-decoration: none;
@@ -218,7 +221,7 @@
   top: calc(100% + 10px);
   z-index: 40;
   width: min(340px, calc(100vw - 32px));
-  /* Twenty-five swatches outgrow a short phone screen, so the menu scrolls
+  /* Twenty-six swatches outgrow a short phone screen, so the menu scrolls
      inside itself — without a visible scrollbar, like every dropdown here. */
   max-height: min(70dvh, 520px);
   overflow-y: auto;
@@ -419,9 +422,6 @@
   padding: 10px 20px;
   border: 0;
   border-radius: var(--r-control);
-  /* A specular band across the top, the way a lit physical control catches
-     light. It is a second background layer rather than a pseudo-element, so
-     it composites over the accent gradient and stays behind the label. */
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-body);
@@ -802,7 +802,7 @@
 /* A matte card, for anything that is not an .app-panel: the surface color, a
    hairline edge so a surface one step off the ground still has a boundary,
    and one soft shadow. */
-.app-glass {
+.app-card {
   background: var(--color-surface);
   box-shadow: var(--edge), var(--lift-1);
 }
@@ -1166,7 +1166,6 @@
   /* Measured at 32px (weather chip) and 16px (footer links) on a phone. */
   .wx--btn { min-height: 44px; }
   .settings__links a { display: inline-flex; align-items: center; min-height: 44px; }
-  .cal__nav .app-iconbtn,
   .note-editor__mark { min-width: 44px; min-height: 44px; }
 }
 

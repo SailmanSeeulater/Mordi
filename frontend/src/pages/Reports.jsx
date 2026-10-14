@@ -85,7 +85,7 @@ function Trend({ reports }) {
 
 function ReportCard({ report, delta }) {
   return (
-    <li className="rep-card app-glass">
+    <li className="rep-card app-card">
       <div className="rep-card__head">
         <h3 className="rep-card__week">
           {/* The whole card is the link: its ::after covers the card. */}
@@ -236,7 +236,7 @@ export default function Reports() {
 
       {loadState === 'ready' && (
         <>
-          <section className="rep-make app-glass" aria-labelledby="rep-make-title">
+          <section className="rep-make app-card" aria-labelledby="rep-make-title">
             <h2 className="rep-make__title" id="rep-make-title">
               Every week writes itself up
             </h2>
