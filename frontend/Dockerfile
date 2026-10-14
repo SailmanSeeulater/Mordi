@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 # The lockfile alone decides this layer, so packages are only installed again
 # when a dependency actually changes. npm ci, not install: it installs exactly
