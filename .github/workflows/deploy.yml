@@ -114,6 +114,15 @@ jobs:
             # MORDI_TAG is this commit, so the VPS runs exactly what CI built
             # instead of whatever :latest happens to mean by the time it pulls.
             export MORDI_TAG
+
+            # And it is written into .env, which compose reads on its own, so a
+            # plain `docker-compose up -d` run by hand later (after editing
+            # .env, say) starts this version too. Without it compose falls
+            # back to the local :latest, an old image, and quietly rolls the
+            # site back: that is how a restart once undid a release.
+            touch .env
+            sed -i '/^MORDI_TAG=/d' .env
+            echo "MORDI_TAG=$MORDI_TAG" >> .env
             stamp "pull images ($MORDI_TAG)"
             docker-compose pull backend frontend
 
