@@ -4,7 +4,7 @@
 # dependency tree — minutes of it, on every push, for a one-line change.
 # Here only a change to pom.xml costs that download.
 # 21 is the LTS the pom targets (java.version); the JRE below must match it.
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 COPY .mvn ./.mvn
 COPY mvnw pom.xml ./
@@ -15,7 +15,7 @@ COPY src ./src
 # should fetch it rather than fail.
 RUN ./mvnw -B package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 # The app runs as its own user, not root: a hole in it then gives a shell
 # that owns nothing writable. The jar stays root's and world-readable, which
