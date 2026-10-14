@@ -1,4 +1,5 @@
 import { useTheme } from '../context/useTheme';
+import './app.css';
 
 const GROUPS = [
   { key: 'light', label: 'Light', has: (t) => !t.custom && t.scheme === 'light' },

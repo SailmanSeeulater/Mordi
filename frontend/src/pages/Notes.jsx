@@ -229,7 +229,7 @@ export default function Notes() {
                 />
               </>
             )}
-            {mode === 'read' && !selected && <p className="app-empty">Pick a note, or start a new one.</p>}
+            {mode === 'read' && !selected && <p className="app-empty app-empty--fill">Pick a note, or start a new one.</p>}
           </section>
         </div>
       )}

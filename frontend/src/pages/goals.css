@@ -105,18 +105,14 @@
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   color: var(--color-accent-700);
-  letter-spacing: 0.04em;
 }
 
-/* The goal's usual place, in sentence case rather than the meta row's caps. */
 .goal-card__place {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
   max-width: 26ch;
-  text-transform: none;
-  letter-spacing: 0;
 }
 
 .goal-card__actions {
@@ -205,11 +201,11 @@
 .goal-card__together:hover { text-decoration: underline; }
 .goal-card__unread {
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   font-weight: 700;
 }
 .goals__history {

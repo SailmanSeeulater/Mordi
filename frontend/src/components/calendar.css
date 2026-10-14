@@ -1,5 +1,5 @@
 /* Month calendar, opened from the dashboard's week strip.
-   Same corner language and gradient accent as the rest of the app. */
+   Same corner language and flat accent as the rest of the app. */
 
 .cal {
   padding: 4px 18px 18px;
@@ -59,7 +59,7 @@
 
 .cal__day--outside { opacity: 0.4; }
 
-/* A day with something logged carries the accent gradient. */
+/* A day with something logged carries the accent fill. */
 .cal__day--done {
   background: var(--color-accent);
   color: var(--color-on-accent);
@@ -91,7 +91,7 @@
 
 .cal__count {
   display: block;
-  font-size: 9px;
+  font-size: var(--t-micro);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -145,7 +145,7 @@
   gap: 2px;
   padding: 10px 12px;
   border-radius: var(--r-control);
-  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 55%, var(--color-surface));
   font-size: 13px;
 }
 .cal__entry-top {

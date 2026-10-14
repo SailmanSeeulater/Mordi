@@ -45,7 +45,7 @@
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 11px;
+  border-radius: var(--r-pill);
   background: var(--color-accent);
   color: var(--color-on-accent);
   font-family: var(--font-mono);
@@ -71,7 +71,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.together-avatar--sm { width: 24px; height: 24px; font-size: 10px; }
+.together-avatar--sm { width: 24px; height: 24px; font-size: var(--t-micro); }
 
 /* ── The room ─────────────────────────────── */
 
@@ -98,10 +98,13 @@
   gap: 3px;
   min-width: 0;
 }
+/* A long goal name gets two lines before it is cut, so it can still be read. */
 .room__heading .app-panel__title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* Who did it which day: one row per person, one square per day. */
@@ -373,7 +376,7 @@
     gap: 4px;
   }
   .room__who .together-avatar { display: none; }
-  .room__cell { height: 18px; border-radius: 5px; }
+  .room__cell { height: 18px; border-radius: var(--r-chip); }
   .room__composer { padding: 10px 12px 12px; }
   .msg__body { padding-left: 0; }
 }

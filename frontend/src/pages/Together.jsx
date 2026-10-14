@@ -92,7 +92,7 @@ export default function Together() {
       )}
 
       {goals && shared.length === 0 && !current && (
-        <section className="onboard app-glass" aria-labelledby="together-empty">
+        <section className="onboard app-card" aria-labelledby="together-empty">
           <h2 className="onboard__title" id="together-empty">
             Nothing shared yet.
           </h2>
@@ -155,7 +155,7 @@ export default function Together() {
           )}
           {!goalId && (
             <section className="together__room together__room--idle app-panel">
-              <p className="app-empty">Pick a goal to see the week and the thread.</p>
+              <p className="app-empty app-empty--fill">Pick a goal to see the week and the thread.</p>
             </section>
           )}
         </div>
@@ -293,7 +293,7 @@ function Room({ goal, visible, onRead, onChanged, onLeft }) {
         <div className="room__actions">
           {owner ? (
             <button type="button" className="app-btn app-btn--quiet app-btn--sm" onClick={() => setSharing(true)}>
-              Invite &amp; people
+              Invite and people
             </button>
           ) : (
             <button type="button" className="app-btn app-btn--ghost app-btn--sm" onClick={() => setLeaving(true)}>
@@ -497,16 +497,27 @@ function Composer({ goalId, disabled, onSent, onError }) {
       />
       <div className="room__send">
         {left < 60 && (
-          <span className={`room__left${left < 0 ? ' room__left--over' : ''}`} aria-live="polite">
+          <span className={`room__left${left < 0 ? ' room__left--over' : ''}`} aria-hidden="true">
             {left}
           </span>
         )}
+        {/* Announced only as the count crosses a step, not on every keystroke. */}
+        <span className="app-sr" role="status">{leftAnnouncement(left)}</span>
         <button type="submit" className="app-btn app-btn--sm" disabled={disabled || sending || !text.trim() || left < 0}>
           {sending ? 'Sending…' : 'Send'}
         </button>
       </div>
     </form>
   );
+}
+
+function leftAnnouncement(left) {
+  if (left < 0) return 'Message is over the limit';
+  if (left === 0) return 'No characters left';
+  if (left <= 10) return 'Fewer than 10 characters left';
+  if (left <= 20) return 'Fewer than 20 characters left';
+  if (left <= 50) return 'Fewer than 50 characters left';
+  return '';
 }
 
 function LeaveDialog({ goal, onClose, onLeft }) {

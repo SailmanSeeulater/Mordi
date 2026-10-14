@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# A stray copy of the packaged classes once landed here; the real ones live
+# under target/.
+BOOT-INF/

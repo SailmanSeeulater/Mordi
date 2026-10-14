@@ -33,9 +33,12 @@ describe('Privacy', () => {
     inRouter(<Privacy />);
     expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: LEGAL.contact })[0]).toHaveAttribute('href', `mailto:${LEGAL.contact}`);
-    for (const service of ['Oracle Cloud', 'Resend', 'Google Maps Platform', 'Google Fonts', 'Open-Meteo']) {
+    for (const service of ['Oracle Cloud', 'Resend', 'Google Maps Platform', 'Open-Meteo']) {
       expect(screen.getByText(service)).toBeInTheDocument();
     }
+    // Mordi's typefaces are served from its own origin, so Google Fonts is no
+    // longer its own entry; the map's font load sits under Google Maps Platform.
+    expect(screen.queryByText('Google Fonts')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Google Privacy Policy' })).toHaveAttribute('href', GOOGLE_PRIVACY);
   });
 

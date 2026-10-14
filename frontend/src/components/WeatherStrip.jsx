@@ -24,7 +24,7 @@ export default function WeatherStrip() {
         onClick={enable}
         title="Uses your location once, and remembers it on this device"
       >
-        <WeatherGlyph kind="partly" size={16} idSuffix="-offer" />
+        <WeatherGlyph kind="partly" size={16} />
         <span className="wx__label">{state === 'error' ? 'Retry' : 'Weather'}</span>
       </button>
     );
@@ -46,7 +46,7 @@ export default function WeatherStrip() {
 
   return (
     <span className="wx" title={detail}>
-      <WeatherGlyph kind={weather.kind} isDay={weather.isDay} size={18} idSuffix="-pass" />
+      <WeatherGlyph kind={weather.kind} isDay={weather.isDay} size={18} />
       <span className="wx__label" aria-hidden="true">
         {weather.temperature}
         <small>°</small>

@@ -5,7 +5,6 @@ import { weekPace, paceLabel } from './dashboardData';
 import { composeReminder } from '../lib/reminder';
 import { headline } from '../lib/weekReport';
 import { MODULES } from '../lib/modules';
-import { THEMES } from '../context/theme-context-value';
 import { DEMO_GOALS, DEMO_THREAD, DEMO_TEXT } from './landingCopy';
 
 /*
@@ -13,7 +12,8 @@ import { DEMO_GOALS, DEMO_THREAD, DEMO_TEXT } from './landingCopy';
  * HTML and CSS and plays once when it scrolls into view. Wherever the app has
  * the logic (the pace line, the report headline, the module list, the color
  * combinations) the demo calls it, so the page cannot drift from the product.
- * The figures are illustrative and every demo says so.
+ * The figures are illustrative. The page says so once, for every demo, under
+ * the first one (the hero's week card), rather than under each.
  *
  * Under reduced motion each demo shows its last frame and nothing moves.
  */
@@ -23,8 +23,8 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 const TODAY = 3; // Thursday
 const PLANNED = DEMO_GOALS.reduce((s, g) => s + g.target, 0);
 
-function Illustrative({ children = DEMO_TEXT.illustrative }) {
-  return <p className="lp-illus">{children}</p>;
+function Illustrative() {
+  return <p className="lp-illus">{DEMO_TEXT.illustrative}</p>;
 }
 
 function Replay({ onClick, hidden }) {
@@ -74,7 +74,7 @@ export function HeroWeekDemo() {
               <span className={'lp-pass__count' + (counting ? ' lp-pop' : '')}>{shown}</span>
               <span className="lp-pass__of">of {PLANNED}</span>
             </p>
-            <p className="lp-pass__pace" aria-live="polite">
+            <p className="lp-pass__pace">
               {phase === 0 ? ' ' : paceLabel(pace)}
               <span className="lp-pass__range"> · this week</span>
             </p>
@@ -426,7 +426,6 @@ export function ReportDemo() {
           </div>
         </dl>
       </div>
-      <Illustrative />
     </div>
   );
 }
@@ -455,7 +454,7 @@ export function ReminderDemo() {
 
   return (
     <div className="lp-remind" ref={ref}>
-      <p className="lp-remind__when" aria-live="polite">
+      <p className="lp-remind__when">
         {sunday ? DEMO_TEXT.remindSun : DEMO_TEXT.remindThu}
       </p>
       <section className="lp-pass lp-pass--remind" aria-label={DEMO_TEXT.weekCardLabel}>
@@ -484,10 +483,7 @@ export function ReminderDemo() {
           </div>
         </div>
       </section>
-      <div className="lp-demo-foot">
-        <Illustrative />
-        <Replay onClick={replay} hidden={!done} />
-      </div>
+      <Replay onClick={replay} hidden={!done} />
     </div>
   );
 }
@@ -577,7 +573,7 @@ export function TogetherDemo() {
           </li>
         ))}
       </ul>
-      <div className="lp-room__thread" aria-live="polite">
+      <div className="lp-room__thread">
         {messages.map((msg) => (
           <div key={msg.text} className={'lp-msg lp-rise' + (msg.who === 'You' ? ' lp-msg--mine' : '')}>
             {msg.who !== 'You' && <span className="lp-disc lp-disc--sm" aria-hidden="true">{msg.who}</span>}
@@ -588,7 +584,6 @@ export function TogetherDemo() {
           </div>
         ))}
       </div>
-      <Illustrative />
     </div>
   );
 }
@@ -699,34 +694,4 @@ export function MoreGlyph({ id }) {
     default:
       return null;
   }
-}
-
-/* ── The color combinations, live ───────────────────────── */
-
-export function ThemePicker({ theme, onPick }) {
-  return (
-    <div className="lp-themes">
-      {['light', 'dark'].map((scheme) => (
-        <div key={scheme} className="lp-themes__group" role="group" aria-label={scheme === 'light' ? 'Light' : 'Dark'}>
-          <p className="lp-themes__heading">{scheme === 'light' ? 'Light' : 'Dark'}</p>
-          <div className="lp-themes__row">
-            {THEMES.filter((t) => t.scheme === scheme).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className="lp-swatch"
-                aria-pressed={t.id === theme}
-                onClick={() => onPick(t.id)}
-              >
-                <span className="lp-swatch__face" data-theme={t.id} aria-hidden="true">
-                  <span className="lp-swatch__dot" />
-                </span>
-                <span className="lp-swatch__label">{t.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }

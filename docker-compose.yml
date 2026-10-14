@@ -27,8 +27,12 @@ services:
     image: ghcr.io/sailmanseeulater/mordi-backend:${MORDI_TAG:-latest}
     build: ./backend
     container_name: mordi-backend
+    # Loopback only. The host's nginx proxies to these ports on localhost,
+    # and a port Docker publishes on 0.0.0.0 bypasses ufw entirely, so
+    # without the address the API would be reachable from the internet
+    # directly, TLS and rate limits skipped.
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mordi
       SPRING_DATASOURCE_USERNAME: mordi_user
@@ -60,8 +64,9 @@ services:
       args:
         VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     container_name: mordi-frontend
+    # Loopback for the same reason as the backend's port.
     ports:
-      - "3000:80"
+      - "127.0.0.1:3000:80"
     depends_on:
       - backend
     restart: unless-stopped

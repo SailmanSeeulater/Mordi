@@ -69,19 +69,29 @@ export function localTimeZone() {
  * Why turning on failed, as specifically as the error allows: the server's
  * own reason when it refused, the browser's when the push service did, and a
  * plain line for everything else. One sentence for every case hid the cause.
+ *
+ * The person reads what happened and what to do; the status code or the
+ * browser's error name goes to the console, where it helps whoever is fixing
+ * it and nobody else.
  */
 export function turnOnFailure(err) {
   if (err?.message === 'denied') {
     return 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.';
   }
   const server = err?.response?.data?.error;
-  if (server) return `The server said: ${server}`;
-  if (err?.response?.status) return `The server answered ${err.response.status}. Try again in a moment.`;
+  if (server) return server;
+  if (err?.response?.status) {
+    console.warn(`Turning reminders on failed: the server answered ${err.response.status}.`);
+    return 'Couldn’t turn reminders on. Try again in a moment.';
+  }
   if (err?.name === 'AbortError' || err?.name === 'NotAllowedError' || err?.name === 'InvalidAccessError') {
-    return `This browser’s push service refused (${err.name}). On an iPhone, add Mordi to your home screen first; otherwise try again after reloading the page.`;
+    console.warn(`Turning reminders on failed: the push service refused (${err.name}).`);
+    return 'This browser wouldn’t allow reminders. On an iPhone, add Mordi to your home screen first; otherwise reload the page and try again.';
   }
   if (err?.name === 'SecurityError' || /service ?worker/i.test(err?.message ?? '')) {
-    return 'The reminder helper (service worker) couldn’t start. Reload the page and try again.';
+    console.warn(`Turning reminders on failed: the service worker could not start (${err?.message ?? err?.name}).`);
+    return 'Reminders couldn’t start in this browser. Reload the page and try again.';
   }
-  return `Couldn’t turn reminders on: ${err?.message || 'unknown error'}.`;
+  console.warn(`Turning reminders on failed: ${err?.message || 'unknown error'}.`);
+  return 'Couldn’t turn reminders on. Check your connection and try again.';
 }

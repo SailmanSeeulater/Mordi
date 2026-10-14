@@ -143,6 +143,10 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
   const firstRef = useRef(null);
   const secondRef = useRef(null);
   const offset = useRef(0);
+  // The length of one loop: from the top of the first copy to the top of the
+  // second. Measured when the boxes change size, never inside the drift's
+  // frame loop, so playing does no layout reads.
+  const loop = useRef(0);
 
   const [overflowing, setOverflowing] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -151,14 +155,15 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
 
   const playing = overflowing && !paused && !reduced && visible;
 
-  // Whether one copy of the list is taller than the window. Measured before
-  // paint, and again whenever either box changes size.
+  // Whether one copy of the list is taller than the window, and how long one
+  // loop is. Measured before paint, and again whenever either box changes size.
   useLayoutEffect(() => {
     const measure = () => {
       const viewport = viewportRef.current;
       const first = firstRef.current;
       if (!viewport || !first) return;
       setOverflowing(first.offsetHeight > viewport.clientHeight + 4);
+      loop.current = (secondRef.current?.offsetTop ?? 0) - first.offsetTop;
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return undefined;
@@ -183,19 +188,22 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
     const track = trackRef.current;
     if (!playing || !viewport || !track) return undefined;
 
-    // Take over from wherever the list was scrolled to by hand.
+    // Take over from wherever the list was scrolled to by hand. The second
+    // copy has only just been rendered, so the loop is measured here once;
+    // the observer above keeps it current from then on.
     offset.current = viewport.scrollTop;
     viewport.scrollTop = 0;
+    loop.current = (secondRef.current?.offsetTop ?? 0) - (firstRef.current?.offsetTop ?? 0);
 
     let frame;
     let last = performance.now();
     const step = (now) => {
-      const loop = (secondRef.current?.offsetTop ?? 0) - (firstRef.current?.offsetTop ?? 0);
+      const length = loop.current;
       // Capped, so returning to a background tab does not jump the list.
       const dt = Math.min(now - last, 64);
       last = now;
       offset.current += (SPEED * dt) / 1000;
-      if (loop > 0 && offset.current >= loop) offset.current -= loop;
+      if (length > 0 && offset.current >= length) offset.current -= length;
       track.style.transform = `translate3d(0, ${-offset.current}px, 0)`;
       frame = requestAnimationFrame(step);
     };

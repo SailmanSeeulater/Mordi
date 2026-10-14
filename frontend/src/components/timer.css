@@ -175,7 +175,7 @@
     0 0 0 2px var(--color-surface),
     0 0 0 3.5px color-mix(in oklab, var(--tone) 30%, var(--color-surface));
   /* 50/50 with the ink: the amber Pause label measured 4.2:1 at 60% on the
-     light themes; at 50% every tone clears 4.5:1 on all twenty-five. */
+     light themes; at 50% every tone clears 4.5:1 on all twenty-six. */
   color: color-mix(in oklab, var(--tone) 50%, var(--color-text));
   font-family: var(--font-body);
   font-size: 14px;

@@ -18,21 +18,49 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
+          # The JVM is a plain process in the image; nothing here needs root
+          # or a capability, so it gets neither. The image's USER is a name
+          # (mordi), which the kubelet cannot check against runAsNonRoot, so
+          # the UID is spelled out: the first one alpine's adduser -S hands
+          # out. Confirm with `docker run --rm mordi-backend:latest id -u`.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 100
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
           env:
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres:5432/mordi
             - name: SPRING_DATASOURCE_USERNAME
               value: mordi_user
+            # The password and the signing secret live in the mordi-secrets
+            # Secret, created by hand once per cluster (see k8s/SECRETS.md),
+            # so neither is in this file.
             - name: SPRING_DATASOURCE_PASSWORD
-              value: mordi_password
+              valueFrom:
+                secretKeyRef:
+                  name: mordi-secrets
+                  key: db-password
             - name: SPRING_DATA_REDIS_HOST
               value: redis
             - name: SPRING_DATA_REDIS_PORT
               value: "6379"
             - name: MORDI_JWT_SECRET
-              value: mordi_super_secret_key_that_is_long_enough_for_hs256
+              valueFrom:
+                secretKeyRef:
+                  name: mordi-secrets
+                  key: jwt-secret
+            # 15 minutes, the same as Compose.
             - name: MORDI_JWT_EXPIRATION
-              value: "86400000"
+              value: "900000"
 ---
 apiVersion: v1
 kind: Service

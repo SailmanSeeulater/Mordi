@@ -75,14 +75,13 @@ A step-by-step walkthrough, including which values are yours to fill in, is in
 Copy the template and fill in real values:
 
 ```bash
-cp .env.example .env
+cp env.example .env
 ```
 
-Compose reads three values from `.env`: `DB_PASSWORD` (add it — it is missing
-from the template), `JWT_SECRET`, and `VITE_GOOGLE_MAPS_API_KEY`. The database
-name and user are hardcoded in `docker-compose.yml` (`mordi` / `mordi_user`),
-so the `POSTGRES_USER`, `SPRING_DATASOURCE_*` and `VITE_API_BASE_URL` lines in
-`.env.example` are leftovers that nothing reads.
+Compose reads three values from `.env`: `DB_PASSWORD`, `JWT_SECRET`, and
+`VITE_GOOGLE_MAPS_API_KEY`. The database name and user are hardcoded in
+`docker-compose.yml` (`mordi` / `mordi_user`), so the `POSTGRES_DB` and
+`POSTGRES_USER` lines in the template are only there for reference.
 
 Optional, also read by Compose: `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` for
 push reminders, and `RESEND_API_KEY` / `MAIL_FROM` / `APP_URL` for email.
@@ -132,10 +131,8 @@ same-origin base URL (`frontend/src/api/client.js`), and the Vite dev server has
 no `/api` proxy, so calls to `/api/...` return 404 until you add one — see
 `RUNNING-LOCALLY.txt` for the snippet. Without it you can still browse the
 landing page, sign-in and create-account screens; anything behind login needs an
-API to talk to.
-
-`VITE_API_BASE_URL` appears in `.env.example` but is not read by the frontend
-today; the base URL is the empty string in `client.js`.
+API to talk to. The base URL is the empty string in `client.js`; there is no
+environment variable for it.
 
 ### Running tests
 

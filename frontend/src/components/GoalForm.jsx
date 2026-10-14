@@ -50,8 +50,8 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
     } catch {
       setError(
         editing
-          ? "Couldn't save your changes. Check your connection and try again."
-          : "Couldn't create that goal. Check your connection and try again.",
+          ? 'Couldn’t save your changes. Check your connection and try again.'
+          : 'Couldn’t create that goal. Check your connection and try again.',
       );
       setSaving(false);
     }

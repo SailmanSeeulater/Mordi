@@ -19,9 +19,11 @@ import org.springframework.stereotype.Component;
 /**
  * Sends email through Resend's HTTP API.
  *
- * Off unless RESEND_API_KEY is set. Then nothing goes out and each message is
- * logged in full instead, link included, which is how a password reset is
- * exercised on a laptop with no mail account behind it.
+ * Off unless RESEND_API_KEY is set. Then nothing goes out: each message is
+ * dropped with a one-line warning, and logged in full, link included, only at
+ * DEBUG. That is how a password reset is exercised on a laptop with no mail
+ * account behind it, without a production log that happens to have no key
+ * filling up with working reset links.
  */
 @Slf4j
 @Component
@@ -67,8 +69,9 @@ public class ResendMailer {
 
     Result deliver(Email email) {
         if (!enabled()) {
-            log.info("Mail is off (no RESEND_API_KEY). Not sent to {}: \"{}\"\n{}",
-                email.to(), email.subject(), email.text());
+            log.warn("Mail is not configured (no RESEND_API_KEY); \"{}\" to {} dropped",
+                email.subject(), email.to());
+            log.debug("The dropped message:\n{}", email.text());
             return Result.SKIPPED;
         }
         try {

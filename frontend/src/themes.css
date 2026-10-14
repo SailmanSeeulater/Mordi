@@ -1,4 +1,4 @@
-/* Twenty-five matte color combinations: sixteen light, nine dark.
+/* Twenty-six matte color combinations: sixteen light, ten dark.
    The active one is set as data-theme on the app shell and on the landing
    page, so the whole site follows the person's pick.
 
@@ -280,7 +280,6 @@
   --color-signal: #b43933;
   --color-divider: rgba(37, 31, 13, 0.16);
 }
-
 
 [data-theme='graphite'] {
   color-scheme: dark;

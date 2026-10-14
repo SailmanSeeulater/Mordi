@@ -82,7 +82,7 @@ export default function NoteForm({ note, notes = [], initialTitle = '', onSave, 
       // than replacing it with something vaguer.
       setError(
         err?.response?.data?.error ??
-          "Couldn't save that note. Check your connection and try again.",
+          'Couldn’t save that note. Check your connection and try again.',
       );
       setSaving(false);
     }
@@ -107,9 +107,13 @@ export default function NoteForm({ note, notes = [], initialTitle = '', onSave, 
           id="note-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Optional: left empty, the first line is the title"
+          aria-describedby="note-title-hint"
+          placeholder="Physio"
           maxLength={120}
         />
+        <p id="note-title-hint" className="app-field__hint">
+          Optional. Left empty, the first line of the note is the title.
+        </p>
       </div>
 
       {/* One framed editor: the mode switch and formatting sit inside the

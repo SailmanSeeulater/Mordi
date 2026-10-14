@@ -55,13 +55,19 @@ export default function LayoutSettings() {
                 <span className="settings__module-label" id={`mod-${m.id}`}>
                   {m.label}
                 </span>
-                <span className="settings__module-blurb">{m.blurb}</span>
+                {/* A module this site cannot offer says why, in place of
+                    what it would do, and its switch cannot be moved. */}
+                <span className="settings__module-blurb" id={`mod-${m.id}-why`}>
+                  {m.unavailable ?? m.blurb}
+                </span>
               </span>
               <button
                 type="button"
                 role="switch"
                 aria-checked={on}
                 aria-labelledby={`mod-${m.id}`}
+                aria-describedby={m.unavailable ? `mod-${m.id}-why` : undefined}
+                disabled={Boolean(m.unavailable)}
                 className="app-switch"
                 onClick={() => setModule(m.id, !on)}
               >

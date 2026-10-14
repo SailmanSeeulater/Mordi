@@ -2,70 +2,150 @@
   "schema": "impeccable.design/1",
   "product": "Mordi",
   "surface": "signed-in app and landing page",
-  "world": "Apple Wallet crossed with Instagram (user-pinned)",
+  "world": "Matte: Apple Wallet crossed with Instagram (user-pinned), with no gradients, gloss or translucency",
   "buildPath": "code",
   "sources": {
     "structuralTokens": "frontend/src/index.css",
     "derivedTokens": "frontend/src/themes.css ([data-theme] block)",
     "themes": "frontend/src/themes.css",
-    "contrastCheck": "frontend/scripts/check-theme-contrast.mjs"
+    "contrastCheck": "frontend/scripts/check-theme-contrast.mjs",
+    "customThemes": "frontend/src/lib/customTheme.js"
   },
   "themes": {
     "default": "sorbet",
-    "appliedOn": ["[data-theme] on .app", ".mordi-page", ".auth", ".wip"],
+    "appliedOn": [
+      "[data-theme] on .app",
+      ".mordi-page",
+      ".auth",
+      ".wip"
+    ],
     "storageKey": "mordi-theme",
     "roles": [
       "--color-bg",
       "--color-surface",
       "--color-text",
       "--color-accent",
-      "--color-accent-2",
       "--color-accent-700",
       "--color-on-accent",
+      "--color-pass",
+      "--color-on-pass",
       "--color-signal",
       "--color-divider"
     ],
     "derived": {
-      "--color-text-muted": "color-mix(in srgb, var(--color-text) 70%, var(--color-bg))",
-      "--accent-gradient": "linear-gradient(135deg, var(--color-accent), var(--color-accent-2))"
+      "--color-text-muted": "color-mix(in srgb, var(--color-text) 70%, var(--color-bg))"
     },
-    "light": ["paper", "sorbet", "mint", "lagoon", "lilac", "sand"],
-    "dark": ["graphite", "midnight", "forest", "ember"]
+    "light": [
+      "paper",
+      "sorbet",
+      "mint",
+      "lagoon",
+      "lilac",
+      "sand",
+      "linen",
+      "slate",
+      "sage",
+      "clover",
+      "harbor",
+      "cobalt",
+      "orchid",
+      "rose",
+      "clay",
+      "marigold"
+    ],
+    "dark": [
+      "graphite",
+      "midnight",
+      "forest",
+      "ember",
+      "dusk",
+      "ocean",
+      "cocoa",
+      "ink",
+      "moss",
+      "swiss"
+    ],
+    "custom": [
+      "custom-1",
+      "custom-2",
+      "custom-3"
+    ]
   },
   "radii": {
-    "--r-pass": "22px",
-    "--r-panel": "16px",
-    "--r-control": "12px",
+    "--r-pass": "14px",
+    "--r-panel": "10px",
+    "--r-control": "8px",
+    "--r-chip": "6px",
     "--r-pill": "999px",
-    "rule": "no square corners in the signed-in app"
+    "rule": "--r-pill only on genuinely circular things: rings, dots, the colour chip"
   },
   "elevation": {
-    "tokens": ["--lift-1", "--lift-2", "--lift-3"],
-    "rule": "offset plus soft blur, tinted by the ink; declared once per element, shadow only"
+    "tokens": [
+      "--lift-1",
+      "--lift-2",
+      "--lift-3"
+    ],
+    "rule": "offset plus soft blur, tinted by the ink, paired with --edge (a 1px inset hairline); shadow only, no lit edge"
   },
   "type": {
-    "display": { "family": "Gambarino", "selfHosted": "frontend/public/fonts/gambarino/Gambarino-Regular.woff2" },
-    "body": { "family": "Archivo", "sizes": ["15px", "14px", "13px", "11px"], "weights": [400, 600, 700] },
-    "mono": { "family": "IBM Plex Mono", "use": "dates, counts, small labels", "numerals": "tabular-nums" },
-    "bans": ["kicker or eyebrow above a heading"]
+    "display": {
+      "family": "Source Serif 4",
+      "stack": "ui-serif (New York) first",
+      "selfHosted": "frontend/public/fonts/source-serif-4-latin.woff2",
+      "weights": [
+        500,
+        600
+      ],
+      "use": "titles at 600"
+    },
+    "body": {
+      "family": "Inter",
+      "stack": "-apple-system (San Francisco) first",
+      "selfHosted": "frontend/public/fonts/inter-latin.woff2",
+      "preloaded": true,
+      "sizes": [
+        "21px",
+        "18px",
+        "15px",
+        "14px",
+        "13px",
+        "11px"
+      ],
+      "weights": [
+        400,
+        500,
+        600,
+        700
+      ]
+    },
+    "mono": "none: digits, dates, counts and the clock are the sans with tabular numerals",
+    "bans": [
+      "kicker or eyebrow above a heading"
+    ]
   },
   "motion": {
     "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
-    "durations": "140-320ms",
-    "properties": ["transform", "opacity"],
-    "signature": "the goal deck fans from an overlapped stack and restacks when the combination changes (45ms per-card stagger)",
-    "reducedMotion": "every duration collapses to 1ms; the deck defaults to fanned"
+    "durations": "140-320ms; the theme crossfade is a 280ms view transition",
+    "properties": [
+      "transform",
+      "opacity"
+    ],
+    "signature": "blocks inside main fade and rise in, staggered, once on arrival",
+    "reducedMotion": "app.css collapses animation and transition durations to 1ms and index.css drops the theme crossfade; landing.css disables animation and transition outright"
   },
   "components": {
-    "pass": ".pass — the week, full-bleed accent gradient, display figure, day strip opening the month calendar",
-    "goalPass": ".goal-pass / .goal-card — per-goal accent tint in four steps, gradient mark tile, 7-dot week",
-    "ring": ".app-ring — conic-gradient progress; dashed outline when empty; count repeated as text",
-    "shell": ".app — 76px labelled rail on desktop, bottom tab bar under 860px, sticky translucent top bar",
+    "pass": ".pass — the week, on the theme's pass field, count against target, day strip opening the month calendar",
+    "goalCard": ".goal-card — matte card, title, category, usual place, 7-dot week",
+    "ring": ".app-ring — conic progress; dashed outline when empty; count repeated as text",
+    "shell": ".app — 76px labelled rail on desktop, bottom tab bar under 860px holding at most five tabs with a More sheet, solid top bar",
     "dialog": ".app-dialog — centred card, bottom sheet under 860px, focus trap and scroll lock",
-    "calendar": ".cal — six Monday-led weeks, gradient for logged days, dashed for past empty days"
+    "calendar": ".cal — six Monday-led weeks, accent fill for logged days, dashed for past empty days",
+    "themeGrid": "ThemeGrid — one shared picker in the top bar, Settings and the landing page; Light, Dark, then Your themes",
+    "timer": ".timer — two fixed semantic colours outside the tokens: --go #2f9e55 and --pause #d9861a",
+    "emptyStates": ".onboard / .app-status — one centred block at a 40rem measure"
   },
   "accessibility": {
-    "contrast": "140 checks across 10 themes, all passing at 4.5:1 for text and 3:1 for fills",
+    "contrast": "338 checks across 26 themes, all passing at 4.5:1 for text and 3:1 for fills; custom themes are derived to the same minimums",
     "targets": "44px on coarse pointers; 36px minimum with spacing on fine pointers",
     "focus": "never suppressed; inverts to --color-on-accent inside the pass",
     "headings": "one h1 per page (top bar title); regions labelled by h2",

@@ -1,4 +1,4 @@
-/* Weekly report. Glass cards over the ambient ground, one per week, newest
+/* Weekly report. Matte cards on the ground, one per week, newest
    first. Shell, buttons and the mood chip come from components/app.css. */
 
 .rep-make {
@@ -78,9 +78,9 @@
   align-items: baseline;
   gap: 2px;
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: clamp(38px, 6vw, 50px);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 0.9;
   letter-spacing: var(--tracking-display);
   font-variant-numeric: tabular-nums;
@@ -237,7 +237,7 @@
   right: 0;
   z-index: 1;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: var(--t-micro);
   font-weight: 600;
   text-align: center;
   color: var(--color-text);

@@ -72,7 +72,7 @@
   row-gap: var(--cell-gap);
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--t-micro);
   line-height: 1;
   color: var(--color-text-muted);
 }

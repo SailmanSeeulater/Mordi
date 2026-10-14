@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import useFocusTrap from '../hooks/useFocusTrap';
 import './tour.css';
 
 const PAD = 8;
@@ -12,7 +13,8 @@ const CARD_ROOM = 230;
  * a frame after mount, once the surfaces the tour points at are drawn.
  *
  * Escape or Skip ends it. Done after the last step. The page underneath keeps
- * its layout; only the spotlight moves.
+ * its layout; only the spotlight moves. Tab stays inside the card, and when
+ * the tour ends focus goes back to whatever had it before.
  */
 export default function Tour({ steps, onDone, onSkip }) {
   const [shown, setShown] = useState(null);
@@ -38,9 +40,27 @@ export default function Tour({ steps, onDone, onSkip }) {
     if (!step?.target) return undefined;
     const el = document.querySelector(step.target);
     if (!el) return undefined;
-    const measure = () => setRect(el.getBoundingClientRect());
+    // One measurement per frame however many scroll events land in it.
+    let frame = 0;
+    const measure = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const r = el.getBoundingClientRect();
+        // Unmoved target, same object: no re-render.
+        setRect((prev) =>
+          prev &&
+          prev.top === r.top &&
+          prev.left === r.left &&
+          prev.width === r.width &&
+          prev.height === r.height
+            ? prev
+            : r,
+        );
+      });
+    };
     el.scrollIntoView?.({ block: 'center', behavior: 'auto' });
-    const frame = requestAnimationFrame(measure);
+    measure();
     window.addEventListener('resize', measure);
     window.addEventListener('scroll', measure, true);
     return () => {
@@ -50,20 +70,13 @@ export default function Tour({ steps, onDone, onSkip }) {
     };
   }, [step]);
 
+  // Declared before the card is focused, so the trap remembers what had
+  // focus before the tour and can hand it back.
+  useFocusTrap(cardRef, onSkip);
+
   useEffect(() => {
     cardRef.current?.focus();
   }, [i, shown]);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onSkip();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onSkip]);
 
   if (!step) return null;
 

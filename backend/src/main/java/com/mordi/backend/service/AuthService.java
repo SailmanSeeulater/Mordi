@@ -21,7 +21,15 @@ public class AuthService {
      * Bump together with LEGAL.version in frontend/src/lib/legal.js whenever
      * either page changes in substance.
      */
-    public static final String TERMS_VERSION = "2026-10-02";
+    public static final String TERMS_VERSION = "2026-10-13";
+
+    /**
+     * A bcrypt hash of nothing in particular, checked against when the
+     * address is unknown. Without it a sign-in with a wrong address answers
+     * in a millisecond and one with a wrong password in a hundred, and the
+     * difference tells which addresses have accounts.
+     */
+    static final String DUMMY_HASH = "$2a$10$1Li0KXXd9HiJdsGDAoTGEukDblsOnt8pwdynaBNjMWIfHKm6IzrZW";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -49,7 +57,10 @@ public class AuthService {
     public AuthResponse login(AuthRequest request) {
         User user = userRepository
             .findByEmail(EmailAddresses.normalize(request.getEmail()))
-            .orElseThrow(() -> new InvalidCredentialsException("Invalid email or password"));
+            .orElseThrow(() -> {
+                passwordEncoder.matches(request.getPassword(), DUMMY_HASH);
+                return new InvalidCredentialsException("Invalid email or password");
+            });
 
         if (
             !passwordEncoder.matches(request.getPassword(), user.getPassword())

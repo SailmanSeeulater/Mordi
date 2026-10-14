@@ -68,7 +68,7 @@ export default function Join() {
       )}
 
       {state === 'invalid' && (
-        <section className="onboard app-glass join" aria-labelledby="join-title">
+        <section className="onboard app-card join" aria-labelledby="join-title">
           <h2 className="onboard__title" id="join-title">
             This invite has expired.
           </h2>
@@ -93,7 +93,7 @@ export default function Join() {
       )}
 
       {state === 'ready' && preview && (
-        <section className="onboard app-glass join" aria-labelledby="join-title">
+        <section className="onboard app-card join" aria-labelledby="join-title">
           <h2 className="onboard__title" id="join-title">
             {preview.goalTitle}
           </h2>

@@ -75,6 +75,17 @@ class PasswordServiceTest {
         }
 
         @Test
+        void aSecondAskWithinTheCooldownSendsNothingAndIssuesNothing() {
+            when(users.findByEmail("me@mordi.com")).thenReturn(Optional.of(me));
+            when(tokens.issuedWithin(me, PASSWORD_RESET, PasswordService.RESET_COOLDOWN)).thenReturn(true);
+
+            service.requestReset("me@mordi.com");
+
+            verify(tokens, never()).issue(any(), any(), any());
+            verifyNoInteractions(mailer);
+        }
+
+        @Test
         void theAddressIsMatchedRegardlessOfCaseAndSpacing() {
             when(users.findByEmail("me@mordi.com")).thenReturn(Optional.empty());
 

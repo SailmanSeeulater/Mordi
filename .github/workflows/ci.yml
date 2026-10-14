@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Nothing here writes to the repo, so the token gets read access and no more.
+permissions:
+  contents: read
+
+# Actions are pinned to a commit rather than a tag: a tag can be moved to
+# point at different code, a SHA cannot. The comment says which release it is.
 jobs:
   backend:
     name: Backend - build & test
@@ -14,16 +20,16 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
           cache-dependency-path: backend/pom.xml
-      
+
       - name: Run tests
         run: ./mvnw --batch-mode --no-transfer-progress test
 
@@ -37,10 +43,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
           cache: npm
@@ -48,6 +54,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # Only what ships in the bundle: a high-severity advisory in a dev tool
+      # is worth knowing about, not worth blocking a deploy over.
+      - name: Audit shipped dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lint
         run: npm run lint

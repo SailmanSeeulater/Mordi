@@ -1,5 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readCachedPlace, round, shortPlace, writeCachedPlace } from '../lib/geo';
+import { readCachedPlace, reverseGeocode, round, shortPlace, writeCachedPlace } from '../lib/geo';
+import { loadMapsLibrary } from '../lib/maps';
+
+vi.mock('../lib/maps', () => ({ loadMapsLibrary: vi.fn() }));
+
+describe('reverseGeocode', () => {
+  beforeEach(() => {
+    loadMapsLibrary.mockReset();
+  });
+
+  it('asks the Maps SDK, never a URL with the key in it', async () => {
+    const geocode = vi.fn().mockResolvedValue({ results: [{ formatted_address: '1200 Harbor Dr, San Diego, CA 92101, USA' }] });
+    loadMapsLibrary.mockResolvedValue({ Geocoder: class { geocode = geocode; } });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    await expect(reverseGeocode(32.7157, -117.1611)).resolves.toBe('1200 Harbor Dr, San Diego, CA 92101, USA');
+    expect(loadMapsLibrary).toHaveBeenCalledWith('geocoding');
+    expect(geocode).toHaveBeenCalledWith({ location: { lat: 32.7157, lng: -117.1611 } });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('is empty when the SDK cannot load', async () => {
+    loadMapsLibrary.mockRejectedValue(new Error('no Maps key'));
+    await expect(reverseGeocode(1, 2)).resolves.toBe('');
+  });
+
+  it('is empty when Google has no answer', async () => {
+    loadMapsLibrary.mockResolvedValue({ Geocoder: class { geocode = vi.fn().mockResolvedValue({ results: [] }); } });
+    await expect(reverseGeocode(1, 2)).resolves.toBe('');
+  });
+});
 
 describe('shortPlace', () => {
   it('keeps the street line and the town', () => {

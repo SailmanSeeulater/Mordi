@@ -2,7 +2,8 @@
 
 Written from the built app, not from intentions. Tokens live in
 `frontend/src/index.css` (type, structural roles) and `frontend/src/themes.css`
-(the twenty-six color combinations).
+(the twenty-six color combinations) and `frontend/src/lib/customTheme.js`
+(the three the person mixes themselves).
 
 ## World
 
@@ -15,7 +16,7 @@ same active theme.
 ## Color
 
 Twenty-six combinations, sixteen light and ten dark, picked by the person and
-saved per browser. **Sorbet is the default.**
+saved per browser, plus three custom slots. **Sorbet is the default.**
 
 - Light: paper, sorbet, mint, lagoon, lilac, sand, linen, slate, sage, clover,
   harbor, cobalt, orchid, rose, clay, marigold.
@@ -40,6 +41,14 @@ Each sets eleven roles:
 
 `--color-text-muted` is derived: 70% ink mixed with the ground.
 
+**Three themes are the person's own.** In Settings, under "Your themes", each
+custom slot is mixed with a colour wheel from four picks: background, cards,
+text and accent. Every other role is derived from those four in
+`lib/customTheme.js` and pushed toward the ink until it clears the same WCAG
+minimums as the built-in themes, so a hand-picked pair that would fail still
+ends up legible. A custom theme is written out as an ordinary `[data-theme]`
+block, so it paints everything a built-in one does, swatches included.
+
 **The week card is not always the accent.** On light themes it is. On dark
 themes it is a deep, accent-tinted field with light ink, because a large light
 block on a dark ground was what made the earlier dark themes read as harsh.
@@ -52,7 +61,7 @@ Lightness is then tuned until each pair clears its WCAG minimum with headroom
 mid-chroma accents rather than neon.
 
 **Contrast is verified, not estimated.** `frontend/scripts/check-theme-contrast.mjs`
-re-parses `themes.css` as written and asserts 13 pairs per theme — 325 checks —
+re-parses `themes.css` as written and asserts 13 pairs per theme — 338 checks across the 26 —
 including on-pass ink over the pass field. A test (`theme.test.jsx`) fails if
 the picker's list and the CSS blocks ever disagree.
 
@@ -62,7 +71,9 @@ the picker's list and the CSS blocks ever disagree.
   Francisco** on Apple devices (`-apple-system`), with **Inter** standing in
   on Windows and Android. Titles, the landing headline and the notes reading
   view take the platform's serif, **New York** (`ui-serif`), with **Source
-  Serif 4** standing in. Serif titles are semibold (600) and tracked a touch
+  Serif 4** standing in. Both stand-ins are self-hosted in `public/fonts`
+  (no font host is called for them), and Inter is preloaded in `index.html`
+  so the body face arrives with the stylesheet. Serif titles are semibold (600) and tracked a touch
   tighter; every number, label and control stays in the sans, and the week
   card's figure is the sans at 700 with tabular numerals.
 - Small word labels beside the data ("4× weekly", a day's name, "Edited
@@ -94,13 +105,13 @@ where content can overflow, the edges fade instead.
 page. Transform and opacity only.
 
 - **Page arrival:** blocks inside `<main>` fade and rise in, staggered.
-- **Goal deck:** opens as a viewport-fitted panel that grows upward from the
-  collapsed stack; passes travel on transform, staggered from the top card in
-  both directions. Reordering marks the drop slot and commits on release.
 - **Segmented control:** one thumb slides between options.
-- **Theme change:** every colour eases across over 520ms. A class on `<html>`
-  (`theme-easing`) carries the transition only for the length of the switch,
-  so hover and press feedback stay instant the rest of the time.
+- **Theme change:** a view-transition crossfade. `ThemeContext` wraps the
+  switch in `document.startViewTransition`, the browser snapshots the old and
+  new page and fades between them for 280ms on the compositor, so nothing is
+  restyled frame by frame. Without view transitions, or under reduced motion,
+  the switch is instant. Editing a custom theme does not crossfade: it runs
+  on every drag frame.
 - **Week report:** bars grow from their baseline and grid cells settle in,
   staggered, once on arrival. Nothing loops.
 - **Places:** the map is centred once and then moved with `panTo`, so a new
@@ -110,8 +121,11 @@ page. Transform and opacity only.
   scroll the moment it stops, so a paused feed scrolls normally from where it
   stopped. Stops on click, wheel, touch, keyboard focus, or its pause button.
 
-Under `prefers-reduced-motion` every duration collapses, the deck starts open,
-and the feed never moves.
+Under `prefers-reduced-motion` there are two mechanisms. In the signed-in app,
+`components/app.css` collapses every animation and transition duration to 1ms
+(and `index.css` turns off the theme crossfade), and the feed never moves. On
+the landing page, `pages/landing.css` disables animation and transition
+outright and shows every revealed block in its final position.
 
 ## Components
 
@@ -127,7 +141,9 @@ shows": the Focused/Everything segments and a switch per module. The page you
 are on always shows in the rail, whatever the modules say.
 
 - **Shell** (`.app`) — 76px labelled rail on desktop, bottom tab bar under
-  860px, a solid top bar with the page title, rearrange toggle, primary action,
+  860px (at most five tabs: Today, Goals and Report stay, the first other
+  section that is on joins them, and the rest sit behind a More sheet, which
+  is the marked tab when the page you are on is in it), a solid top bar with the page title, rearrange toggle, primary action,
   the clock (hidden under 560px), colour button and the account, which opens
   Settings. Log out lives in Settings only.
 - **Week card** (`.pass`) — the count against the target ("8 of 24"), which
@@ -142,13 +158,18 @@ are on always shows in the rail, whatever the modules say.
   so it never sits over the facts beside it; the clock lives in the top bar.
 - **Goal rings** — conic progress per goal, dashed when nothing is logged;
   draggable, arrow keys to move.
-- **Goal deck** — matte passes, grip-to-reorder when open.
+- **Goal cards** — matte cards on the Goals page: title, category, usual
+  place, target, and the week as seven dots.
 - **Timer** — the Clock app's timer in Mordi's materials: a ring that fills
-  over an hour with a dot orbiting each minute, large mono digits, and two
+  over an hour with a dot orbiting each minute, large tabular digits, and two
   round buttons that keep their places (quiet action left, forward action
   right). Start, pause, resume, finish, then save or discard. Lives under To do
   in the side card. Stored as timestamps (`accumulatedMs`, `resumedAt`), so it
-  survives reloads and sleeping tabs. No discard while on the clock.
+  survives reloads and sleeping tabs. No discard while on the clock. Its
+  two state colours are the only fixed colours outside the theme tokens: `--go`
+  (#2f9e55, running) and `--pause` (#d9861a, paused), the same in every theme
+  so a running timer always reads the same, and each mixed 50/50 with the ink
+  for its label so it clears 4.5:1 on all twenty-six themes.
 - **Activity** — a year of logging, one square per day, Monday-led weeks. Four
   accent steps mixed into the surface: one to four logs map straight to a step,
   and only a heavier day stretches the scale. Clicking a day opens the calendar.
@@ -188,8 +209,19 @@ are on always shows in the rail, whatever the modules say.
   scroll lock, Escape, focus restored. The landing page's Sign in / Create
   account uses the same dialog, fields and segmented switch as the app.
 - **Select** — a listbox portalled into the themed root, opaque, no scrollbar.
-- **Colour picker** — twenty-six swatches grouped Light then Dark, in the top
-  bar menu and in Settings, from one shared component.
+- **Colour picker** — one shared `ThemeGrid`: twenty-six swatches grouped
+  Light then Dark, then "Your themes" for the three custom slots. The same
+  component is the top bar menu, the Appearance panel in Settings and the
+  landing page's picker, so they cannot disagree about order or grouping. The
+  top bar button opens it as a group (not a menu).
+- **Empty and first-run states** — one centred block at a 40rem measure
+  (`.onboard` / `.app-status` directly in `.app-main`): a title, a line, the
+  action. Loading, error and first run share the placement, so nothing jumps as
+  one becomes the next.
+- **Landing** — the same tokens and the active theme as the app. From 1000px
+  the hero is two columns, left-aligned: the headline and its actions beside
+  the week card, with Lately under the card. Below that it is one centred
+  column with the demo under the actions.
 
 ## Accessibility
 

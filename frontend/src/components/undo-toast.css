@@ -21,10 +21,14 @@
   from { opacity: 0; transform: translate(-50%, 12px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+/* The message wraps to a second line rather than losing its end. */
 .undo-toast__text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
 }
 .undo-toast__undo {
   flex: 0 0 auto;

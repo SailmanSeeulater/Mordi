@@ -24,15 +24,18 @@
 }
 
 /* While it drifts, the transform does the moving and native scroll is off, so
-   the two can never fight. */
+   the two can never fight. The track gets its own layer only then: a paused
+   or short feed is a plain list and holds no extra GPU memory. */
 .lately__viewport--playing {
   overflow: hidden;
+}
+.lately__viewport--playing .lately__track {
+  will-change: transform;
 }
 
 .lately__track {
   display: grid;
   gap: var(--day-gap);
-  will-change: transform;
 }
 
 .lately__copy {

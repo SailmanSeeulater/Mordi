@@ -1,6 +1,7 @@
 package com.mordi.backend.push;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mordi.backend.exception.PushEndpointTakenException;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.PushSubscription;
 import com.mordi.backend.model.User;
@@ -107,6 +108,22 @@ class PushServiceTest {
 
         verify(subscriptions).save(any(PushSubscription.class));
         assertThat(me.getTimeZone()).isEqualTo("America/Los_Angeles");
+    }
+
+    @Test
+    void refusesToTakeOverAnotherAccountsBrowser() {
+        User someoneElse = new User();
+        someoneElse.setId(2L);
+        PushSubscription theirs = new PushSubscription();
+        theirs.setUser(someoneElse);
+        theirs.setEndpoint("https://fcm.googleapis.com/fcm/send/abc");
+        when(subscriptions.findByEndpoint("https://fcm.googleapis.com/fcm/send/abc")).thenReturn(Optional.of(theirs));
+
+        assertThatThrownBy(() -> service.subscribe(ME, request("https://fcm.googleapis.com/fcm/send/abc", validP256dh(),
+            WebPushCrypto.encode(new byte[16])))).isInstanceOf(PushEndpointTakenException.class);
+
+        verify(subscriptions, never()).save(any());
+        assertThat(theirs.getUser()).isSameAs(someoneElse);
     }
 
     @Test

@@ -23,9 +23,24 @@ self.addEventListener('push', (event) => {
   );
 });
 
+/*
+ * Where a tapped reminder may go: a page of this app, never anywhere else.
+ * The url arrives in the push payload, so it is treated as untrusted and
+ * resolved against this origin; anything that lands on another one, or does
+ * not parse, falls back to the dashboard.
+ */
+function sameOriginUrl(url) {
+  try {
+    const resolved = new URL(url || '/dashboard', self.location.origin);
+    return resolved.origin === self.location.origin ? resolved.href : '/dashboard';
+  } catch {
+    return '/dashboard';
+  }
+}
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/dashboard';
+  const url = sameOriginUrl(event.notification.data && event.notification.data.url);
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
       for (const w of windows) {

@@ -1,0 +1,29 @@
+# Weekly bumps for everything that is pinned: the actions in the workflows,
+# the frontend's npm packages, the backend's Maven dependencies, and the base
+# images in the two Dockerfiles. Each opens a PR that CI checks like any other.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: maven
+    directory: /backend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly

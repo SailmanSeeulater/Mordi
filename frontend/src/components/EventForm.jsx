@@ -46,7 +46,7 @@ export default function EventForm({ event, draft, onSave, onDelete, onCancel }) 
     try {
       await onSave({ title: title.trim(), allDay, startsAt, endsAt, color, placeName, notes });
     } catch (err) {
-      setError(err?.response?.data?.error ?? "Couldn't save that. Check your connection and try again.");
+      setError(err?.response?.data?.error ?? 'Couldn’t save that. Check your connection and try again.');
       setSaving(false);
     }
   };

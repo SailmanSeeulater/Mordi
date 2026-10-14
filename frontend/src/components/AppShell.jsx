@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useTheme } from '../context/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
 import ClockChip from './ClockChip';
+import Modal from './Modal';
 import { isOn, useModules } from '../lib/modules';
 import './app.css';
 
@@ -83,18 +85,44 @@ const NAV = [
   { to: '/goals', label: 'Goals', Icon: IconGoals },
   { to: '/notes', label: 'Notes', Icon: IconNotes, module: 'notes' },
   { to: '/together', label: 'Together', Icon: IconTogether, module: 'together' },
-  // Off the phone tab bar, which fits eight; Goals links to it there.
-  { to: '/history', label: 'History', Icon: IconHistory, phone: false, module: 'history' },
+  { to: '/history', label: 'History', Icon: IconHistory, module: 'history' },
   { to: '/locations', label: 'Places', Icon: IconPlaces, module: 'places' },
   { to: '/reports', label: 'Report', Icon: IconReport },
   { to: '/settings', label: 'Settings', Icon: IconSettings },
 ];
+
+/*
+ * The phone tab bar holds five. Eight labelled tabs at 320px came to 39px
+ * each, under a touch target and too narrow for "Calendar" at the 11px type
+ * floor. Past five, the bar keeps the loop (Today, Goals, Report) and the
+ * first other section that is on, and the rest go behind More, which opens a
+ * sheet. The bar's order never shifts as you move between pages: when the
+ * page you are on is behind More, More is the tab marked as current.
+ */
+const PHONE_SLOTS = 5;
+const PHONE_CORE = ['/dashboard', '/goals', '/reports'];
+
+const IconMore = () => (
+  <svg {...svgProps}>
+    <circle cx="5.5" cy="12" r="1.4" />
+    <circle cx="12" cy="12" r="1.4" />
+    <circle cx="18.5" cy="12" r="1.4" />
+  </svg>
+);
+
+function splitForPhone(nav) {
+  if (nav.length <= PHONE_SLOTS) return { bar: nav, more: [] };
+  const extra = nav.find((item) => !PHONE_CORE.includes(item.to));
+  const bar = nav.filter((item) => PHONE_CORE.includes(item.to) || item === extra);
+  return { bar, more: nav.filter((item) => !bar.includes(item)) };
+}
 
 export default function AppShell({ title, action, children }) {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { pathname } = useLocation();
   const modules = useModules();
+  const [moreOpen, setMoreOpen] = useState(false);
   const name = user?.name?.trim() || '';
 
   // Sections that belong to a module show once it is on, and the page you
@@ -102,6 +130,8 @@ export default function AppShell({ title, action, children }) {
   const nav = NAV.filter(
     (item) => !item.module || isOn(modules, item.module) || pathname.startsWith(item.to),
   );
+  const phone = splitForPhone(nav);
+  const onMorePage = phone.more.some((item) => pathname.startsWith(item.to));
 
   return (
     <div className="app" data-theme={theme}>
@@ -144,13 +174,40 @@ export default function AppShell({ title, action, children }) {
       </div>
 
       <nav className="app-tabbar" aria-label="Sections">
-        {nav.filter((item) => item.phone !== false).map((item) => (
+        {phone.bar.map((item) => (
           <NavLink key={item.to} to={item.to} className="app-tabbar__link">
             <item.Icon />
             {item.label}
           </NavLink>
         ))}
+        {phone.more.length > 0 && (
+          <button
+            type="button"
+            className="app-tabbar__link"
+            aria-haspopup="dialog"
+            aria-current={onMorePage ? 'page' : undefined}
+            onClick={() => setMoreOpen(true)}
+          >
+            <IconMore />
+            More
+          </button>
+        )}
       </nav>
+
+      {moreOpen && (
+        <Modal title="More" onClose={() => setMoreOpen(false)}>
+          <ul className="app-more">
+            {phone.more.map((item) => (
+              <li key={item.to}>
+                <NavLink to={item.to} className="app-more__link" onClick={() => setMoreOpen(false)}>
+                  <item.Icon />
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </Modal>
+      )}
     </div>
   );
 }

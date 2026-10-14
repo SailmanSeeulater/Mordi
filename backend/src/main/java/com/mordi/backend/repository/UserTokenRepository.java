@@ -15,6 +15,11 @@ public interface UserTokenRepository extends JpaRepository<UserToken, Long> {
 
     Optional<UserToken> findByTokenHash(String tokenHash);
 
+    /** The newest live token of one kind for one person, if there is one. */
+    Optional<UserToken> findFirstByUserAndPurposeAndUsedAtIsNullOrderByCreatedAtDesc(
+        User user,
+        UserToken.Purpose purpose);
+
     /** Retires every live token of one kind for one person. */
     @Modifying
     @Query("update UserToken t set t.usedAt = :now "

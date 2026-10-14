@@ -22,6 +22,19 @@ body.mordi-landing {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
+
+  /* Spacing, on a 4px base, named by the relationship each step expresses.
+     The page reads in acts: the week card and how it works; what the week
+     gives back (report, reminders, to-dos, together); making it yours
+     (focused, more, colours); trust (data, questions); the close. A new act
+     gets the long interval, a section that continues the same thought gets
+     the shorter one, and a heading always sits closer to what it introduces
+     than to what came before it. */
+  --lp-gap-text: 16px;                          /* heading → its lede */
+  --lp-gap-block: 24px;                         /* lede → points, actions, a note */
+  --lp-gap-head: clamp(32px, 4vw, 48px);        /* section head → its content */
+  --lp-gap-related: clamp(56px, 7vw, 88px);     /* section → section, same act */
+  --lp-gap-act: clamp(88px, 11vw, 136px);       /* a new act begins */
 }
 
 .mordi-container {
@@ -177,14 +190,14 @@ body.mordi-landing {
 }
 .lp-lede {
   max-width: 52ch;
-  margin: 16px 0 0;
+  margin: var(--lp-gap-text) 0 0;
   color: var(--color-text-muted);
   font-size: 17px;
   line-height: 1.6;
   text-wrap: pretty;
 }
 .lp-aside {
-  margin: 14px 0 0;
+  margin: var(--lp-gap-text) 0 0;
   color: var(--color-text-muted);
   font-size: 14px;
   line-height: 1.5;
@@ -192,7 +205,7 @@ body.mordi-landing {
 .lp-points {
   display: grid;
   gap: 10px;
-  margin: 22px 0 0;
+  margin: var(--lp-gap-block) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -216,47 +229,57 @@ body.mordi-landing {
 /* ── Sections ──────────────────────────────────────────── */
 
 .lp-section {
-  padding: clamp(72px, 10vw, 128px) 0 0;
+  padding: var(--lp-gap-related) 0 0;
   scroll-margin-top: 72px;
 }
+.lp-section--act { padding-top: var(--lp-gap-act); }
 .lp-head {
   max-width: 720px;
-  margin: 0 auto clamp(36px, 5vw, 56px);
+  margin: 0 auto var(--lp-gap-head);
   text-align: center;
 }
 .lp-head .lp-lede { margin-inline: auto; }
 
+/* Words beside a demo. The heading starts level with the top of the demo
+   rather than floating at its middle: centring a short block against a tall
+   one left a dead band above every heading that read as a gap between
+   sections. */
 .lp-row {
   display: grid;
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: 40px clamp(32px, 6vw, 88px);
-  align-items: center;
+  gap: var(--lp-gap-head) clamp(32px, 6vw, 88px);
+  align-items: start;
 }
+.lp-row__text { padding-top: clamp(0px, 2vw, 24px); }
 .lp-row--flip .lp-row__text { order: 2; }
 
 /* ── Hero ──────────────────────────────────────────────── */
 
+/* The product's object belongs in the first viewport. On a wide screen the
+   words take the left column and the live week card the right, so the card
+   is whole above the fold; narrower, the card follows the actions. */
 .lp-hero {
-  padding: clamp(56px, 9vw, 112px) 0 0;
+  padding: clamp(40px, 7vw, 72px) 0 0;
   text-align: center;
 }
 .lp-hero__title {
   margin: 0 auto;
   max-width: 14ch;
   font-family: var(--font-heading);
-  font-size: clamp(44px, 7.4vw, 96px);
+  font-size: clamp(44px, 7.4vw, 88px);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 .lp-hero__line {
   display: block;
+  text-wrap: balance;
   animation: lp-rise 900ms var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 140ms);
 }
 .lp-hero__sub {
   max-width: 54ch;
-  margin: 26px auto 0;
+  margin: var(--lp-gap-block) auto 0;
   color: var(--color-text-muted);
   font-size: 18px;
   line-height: 1.6;
@@ -273,19 +296,46 @@ body.mordi-landing {
 }
 .lp-hero__stage {
   max-width: 920px;
-  margin: clamp(48px, 7vw, 80px) auto 0;
+  margin: clamp(40px, 6vw, 56px) auto 0;
   text-align: left;
   animation: lp-rise 1100ms var(--ease-out) 480ms both;
 }
 
+@media (min-width: 1000px) {
+  .lp-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(40px, 5vw, 72px);
+    /* Top-aligned, not centred: Lately grows as the demo logs its entries,
+       and a centred column would drift down the screen with it. */
+    align-items: start;
+    padding-top: clamp(32px, 4vw, 56px);
+    text-align: left;
+  }
+  .lp-hero__copy { padding-top: clamp(16px, 3vw, 40px); }
+  .lp-hero__title {
+    margin: 0;
+    max-width: none;
+    font-size: clamp(48px, 5vw, 64px);
+  }
+  .lp-hero__sub { margin-left: 0; font-size: 17px; }
+  .lp-hero__actions { justify-content: flex-start; }
+  .lp-hero__stage { max-width: none; margin: 0; }
+  /* In its column the card takes the full width and Lately sits under it. */
+  .lp-hero .lp-hero-demo { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ── Shared demo materials ─────────────────────────────── */
 
+/* Said once for the whole page, under the first demo: a sentence, so it is
+   set as one rather than as a label. */
 .lp-illus {
-  margin: 12px 0 0;
+  max-width: 60ch;
+  margin: 0;
   color: var(--color-text-muted);
-  font-family: var(--font-label);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
 .lp-demo-foot {
   display: flex;
@@ -294,7 +344,6 @@ body.mordi-landing {
   gap: 12px;
   grid-column: 1 / -1;
 }
-.lp-demo-foot .lp-illus { margin: 0; }
 
 .lp-replay {
   display: inline-flex;
@@ -797,7 +846,6 @@ body.mordi-landing {
   box-shadow: var(--edge), var(--lift-2);
   overflow: hidden;
 }
-.lp-report > .lp-illus { margin: 0; padding: 0 22px 18px; }
 .lp-report__headline {
   margin: 0;
   padding: 22px;
@@ -949,6 +997,7 @@ body.mordi-landing {
 /* ── Reminders ─────────────────────────────────────────── */
 
 .lp-remind { display: grid; gap: 10px; }
+.lp-remind > .lp-replay { justify-self: start; }
 .lp-remind__when {
   margin: 0;
   color: var(--color-text-muted);
@@ -1056,7 +1105,6 @@ body.mordi-landing {
   background: var(--color-surface);
   box-shadow: var(--edge), var(--lift-2);
 }
-.lp-room > .lp-illus { margin: 0; }
 .lp-room__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .lp-room__title { font-family: var(--font-heading); font-size: 19px; font-weight: 600; }
 .lp-room__meta { color: var(--color-text-muted); font-family: var(--font-label); font-size: 12px; font-weight: 500; }
@@ -1116,7 +1164,7 @@ body.mordi-landing {
   max-width: 78%;
   margin: 0;
   padding: 9px 13px;
-  border-radius: 12px;
+  border-radius: var(--r-panel);
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
   font-size: 14px;
   line-height: 1.4;
@@ -1183,7 +1231,7 @@ body.mordi-landing {
   display: grid;
   place-items: center;
   height: 160px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   border-radius: var(--r-pass);
   background: var(--color-surface);
   box-shadow: var(--edge);
@@ -1211,8 +1259,11 @@ body.mordi-landing {
   height: calc(var(--h) * 25% - 4px);
   padding: 4px 8px;
   border-radius: var(--r-chip);
-  background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface));
-  box-shadow: inset 3px 0 0 var(--color-accent);
+  /* The planner's own event: a tint of the colour with a 1px edge of it all
+     the way round, and ink mixed toward the colour. */
+  background: color-mix(in oklab, var(--color-accent) 22%, var(--color-surface));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-accent) 45%, var(--color-surface));
+  color: color-mix(in oklab, var(--color-accent) 40%, var(--color-text));
   font-size: 11px;
   font-weight: 600;
   opacity: 0;
@@ -1326,58 +1377,27 @@ body.mordi-landing {
 /* ── Colour combinations ───────────────────────────────── */
 
 .lp-themes {
-  display: grid;
-  gap: 20px;
   padding: 22px;
   border-radius: var(--r-pass);
   background: var(--color-surface);
   box-shadow: var(--edge), var(--lift-2);
 }
-.lp-themes__heading {
-  margin: 0 0 10px;
-  color: var(--color-text-muted);
-  font-family: var(--font-label);
-  font-size: 12px;
-  font-weight: 500;
-}
-.lp-themes__row {
-  display: grid;
+/* The shared picker (components/ThemeGrid), given the room a section has:
+   the rows flow to the width instead of the menu's fixed five. */
+.lp-themes .theme-grid { gap: 20px; }
+.lp-themes .theme-grid__swatches {
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 10px 6px;
 }
-.lp-swatch {
-  display: grid;
-  justify-items: center;
+.lp-themes .theme-swatch {
   gap: 6px;
-  padding: 4px 0;
-  border: 0;
-  background: none;
-  color: var(--color-text);
-  font-family: var(--font-body);
-  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 500;
 }
-.lp-swatch__face {
-  display: grid;
-  place-items: center;
+.lp-themes .theme-swatch__face {
   width: 40px;
   height: 40px;
-  border-radius: var(--r-pill);
-  background: var(--color-bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 16%, transparent);
-  transition: transform 200ms var(--ease-out);
 }
-.lp-swatch__dot {
-  width: 18px;
-  height: 18px;
-  border-radius: var(--r-pill);
-  background: var(--color-accent);
-}
-.lp-swatch:hover .lp-swatch__face { transform: scale(1.08); }
-.lp-swatch[aria-pressed='true'] .lp-swatch__face {
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px currentColor;
-}
-.lp-swatch__label { font-size: 11.5px; font-weight: 500; }
-.lp-swatch[aria-pressed='true'] .lp-swatch__label { font-weight: 700; }
 
 /* ── Your data ─────────────────────────────────────────── */
 
@@ -1403,7 +1423,7 @@ body.mordi-landing {
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin: 36px 0 0;
+  margin: 32px 0 0;
 }
 .lp-data__links a {
   color: var(--color-accent-700);
@@ -1414,7 +1434,9 @@ body.mordi-landing {
 
 /* ── FAQ ───────────────────────────────────────────────── */
 
-.lp-faq { padding-bottom: clamp(72px, 10vw, 120px); }
+/* The close band's colour marks the turn, so the space before it is the
+   shorter interval. */
+.lp-faq { padding-bottom: var(--lp-gap-related); }
 .lp-faq__list {
   max-width: 760px;
   margin: 0 auto;
@@ -1588,4 +1610,33 @@ body.mordi-landing {
     transition: none !important;
   }
   [data-reveal] { opacity: 1; transform: none; }
+}
+
+/* ── Type floor and touch ──────────────────────────────── */
+
+/* Nothing on the page sits under the 11px floor. */
+.lp-day__letter { font-size: var(--t-micro); }
+.lp-disc--sm { font-size: var(--t-micro); }
+
+/* Touch pointers get 44px targets. Measured on a phone: footer links and
+   buttons at 17px, the wordmark at 29px, Replay and Pause at 36px, the
+   Terms and Privacy links at 18px, the skip link at 40px. The nav links are
+   hidden on phones but show on a tablet held sideways. Each grows its target
+   rather than its mark: the type stays the size it was. */
+@media (pointer: coarse) {
+  .mordi-nav__brand,
+  .lp-nav__links a,
+  .lp-data__links a,
+  .lp-skip,
+  .mordi-footer__col a,
+  .lp-footer__btn {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .lp-replay { min-height: 44px; }
+  /* The column's 10px gap was spacing between 17px lines; at 44px the
+     targets carry their own. */
+  .mordi-footer__col { gap: 0; }
 }

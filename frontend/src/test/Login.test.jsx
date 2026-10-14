@@ -152,7 +152,7 @@ describe("Login", () => {
     renderLogin();
     fillAndSubmit({ email: "nouser@example.com", password: "wrongpass" });
 
-    const errorMsg = await screen.findByText("Invalid email or password");
+    const errorMsg = await screen.findByText("That email and password don’t match. Check both and try again.");
     expect(errorMsg).toBeInTheDocument();
 
     // Ensure backend-provided detail never reaches the DOM.
@@ -169,7 +169,7 @@ describe("Login", () => {
     renderLogin();
     fillAndSubmit({ email: "realuser@example.com", password: "wrongpass" });
 
-    const errorMsg = await screen.findByText("Invalid email or password");
+    const errorMsg = await screen.findByText("That email and password don’t match. Check both and try again.");
     expect(errorMsg).toBeInTheDocument();
   });
 
@@ -178,7 +178,7 @@ describe("Login", () => {
 
     renderLogin();
     fillAndSubmit({ password: "wrong" });
-    await screen.findByText("Invalid email or password");
+    await screen.findByText("That email and password don’t match. Check both and try again.");
 
     client.post.mockResolvedValueOnce({
       data: { email: "user@example.com", name: "Test User", token: "fake-jwt" },
@@ -186,7 +186,7 @@ describe("Login", () => {
     fillAndSubmit({ password: "correcthorse" });
 
     await waitFor(() => {
-      expect(screen.queryByText("Invalid email or password")).not.toBeInTheDocument();
+      expect(screen.queryByText("That email and password don’t match. Check both and try again.")).not.toBeInTheDocument();
     });
   });
 

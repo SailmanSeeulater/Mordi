@@ -63,7 +63,7 @@ function GoalMatrix({ report }) {
                 const pct = Math.min(100, Math.round((row.done / row.target) * 100));
                 return (
                   <tr key={row.goal.id} style={{ '--row': r }}>
-                    <th scope="row" className="wk-matrix__goal">
+                    <th scope="row" className="wk-matrix__goal" title={row.goal.title}>
                       {row.goal.title}
                     </th>
                     {row.cells.map((cell) => {
@@ -358,27 +358,53 @@ function WhenBlock({ report }) {
         </p>
       </header>
       {report.timedEntries >= 3 ? (
-        <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
-          <span />
-          {Array.from({ length: 24 }, (_, h) => (
-            <span key={`h${h}`} className="wk-hours__label">
-              {HOUR_LABELS[h] ?? ''}
-            </span>
-          ))}
-          {report.hours.map((row, d) => (
-            <div key={d} className="wk-hours__row">
-              <span className="wk-hours__day">{dayShort.format(report.perDay[d].date)}</span>
-              {row.map((n, h) => (
-                <span
-                  key={h}
-                  className="wk-hours__cell"
-                  style={{ '--a': n ? 0.25 + 0.75 * (n / max) : 0 }}
-                  title={n ? `${dayShort.format(report.perDay[d].date)} ${hourName(h)}: ${n}` : undefined}
-                />
-              ))}
-            </div>
-          ))}
+        <>
+        {/* On a phone 24 columns would shrink each hour under 10px, so the grid
+            keeps 12px cells and scrolls sideways inside its own block. */}
+        <div className="wk-hours__scroll">
+          <div className="wk-hours" role="img" aria-label={`Entries by day and hour. Most often around ${busiestHour ? hourName(busiestHour.h) : ''}.`}>
+            <span className="wk-hours__corner" />
+            {Array.from({ length: 24 }, (_, h) => (
+              <span key={`h${h}`} className="wk-hours__label">
+                {HOUR_LABELS[h] ?? ''}
+              </span>
+            ))}
+            {report.hours.map((row, d) => (
+              <div key={d} className="wk-hours__row">
+                <span className="wk-hours__day">{dayShort.format(report.perDay[d].date)}</span>
+                {row.map((n, h) => (
+                  <span
+                    key={h}
+                    className="wk-hours__cell"
+                    style={{ '--a': n ? 0.25 + 0.75 * (n / max) : 0 }}
+                    title={n ? `${dayShort.format(report.perDay[d].date)} ${hourName(h)}: ${n}` : undefined}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
+        <table className="app-sr">
+          <caption>Entries each day, by the hour they were logged</caption>
+          <thead>
+            <tr><th scope="col">Day</th><th scope="col">Entries</th><th scope="col">Hours</th></tr>
+          </thead>
+          <tbody>
+            {report.hours.map((row, d) => (
+              <tr key={d}>
+                <th scope="row">{dayLong.format(report.perDay[d].date)}</th>
+                <td>{row.reduce((sum, n) => sum + n, 0)}</td>
+                <td>
+                  {row
+                    .map((n, h) => (n ? `${hourName(h)}: ${n}` : null))
+                    .filter(Boolean)
+                    .join(', ') || 'None'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </>
       ) : (
         <p className="wk-empty">Times are recorded for entries logged from now on, and for timer sessions from when they began.</p>
       )}
@@ -528,7 +554,7 @@ export default function ReportWeek() {
       await client.post('/api/reports/generate', null, { params: { week: mondayIso } });
       await load();
     } catch {
-      setWriteError("Couldn't write up this week. Check your connection and try again.");
+      setWriteError('Couldn’t write up this week. Check your connection and try again.');
     }
     setWriting(false);
   };
