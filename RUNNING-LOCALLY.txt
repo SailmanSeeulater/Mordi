@@ -17,8 +17,9 @@ Pick one. Route A first if you have never run it locally before.
  0. THE VALUES THAT ARE YOURS TO CHOOSE
 ===============================================================================
 
-docker-compose.yml reads exactly THREE values from .env. Everything else in
-it is hardcoded, so the other lines in env.example are not used by Compose:
+docker-compose.yml needs THREE values from .env and reads a few optional
+ones (listed after these). Everything else in it is hardcoded, so the other
+lines in env.example are not used by Compose:
 
   DB_PASSWORD
       Any password for the local Postgres user. Local only, so it can be
@@ -49,6 +50,16 @@ Optional, and fine to leave blank locally:
       Compose, http://localhost:5173 for the Vite dev server. Production has
       its own value in the VPS .env.
 
+  VITE_UMAMI_WEBSITE_ID
+      The Umami Cloud website id. Page visits are only counted when it is
+      set, so leave it empty locally. In production it is a public value,
+      set as a GitHub repository variable of the same name (not a secret).
+
+  MORDI_ADMIN_EMAILS
+      Comma-separated sign-in addresses that may open /admin/usage, the
+      page of usage counts. Empty (the default) means nobody. To look at it
+      locally, put your own test account's address here.
+
 For the record, the database identity is fixed in docker-compose.yml, not in
 .env: database "mordi", user "mordi_user". The POSTGRES_DB and POSTGRES_USER
 lines in env.example are there for reference only - changing them has no
@@ -73,7 +84,8 @@ Never commit real values. .env is gitignored; env.example is the template.
         JWT_SECRET=<paste your long random string>
         VITE_GOOGLE_MAPS_API_KEY=<your Google key>
 
-    You can leave the rest of the template as it is; Compose ignores it.
+    You can leave the rest of the template as it is; the optional values
+    above are fine blank, and Compose ignores the rest.
 
  3. Build and start:
 

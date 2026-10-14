@@ -10,8 +10,8 @@ export const LEGAL = {
   state: 'California',
   contact: 'privacy@latesailor.dev',
   site: 'mordi.latesailor.dev',
-  version: '2026-10-13',
-  updated: 'October 13, 2026',
+  version: '2026-10-14',
+  updated: 'October 14, 2026',
   minimumAge: 13,
 };
 

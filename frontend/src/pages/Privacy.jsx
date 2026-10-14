@@ -65,6 +65,13 @@ export default function Privacy() {
         messages for it.
       </p>
 
+      <h3>How often you use Mordi</h3>
+      <p>
+        The date you last used Mordi, and nothing more exact: no time of day and no list of past visits.
+        Each day you use it replaces the date before. It is used only to count how many people are active,
+        and it is never shared. Those counts are kept as daily totals that identify no one.
+      </p>
+
       <h3>Technical records</h3>
       <p>
         Like most websites, our web server keeps access logs: your IP address, the time, the page or API
@@ -84,6 +91,7 @@ export default function Privacy() {
         <li>To run Mordi for you: show your week, keep your devices in step, send the reminders you asked for, and carry messages in shared goals.</li>
         <li>To send account email: password reset links, and confirmation when an account is deleted. No newsletters or marketing.</li>
         <li>To keep Mordi secure and working: stop abuse, limit repeated attempts and fix bugs.</li>
+        <li>To see how many people use Mordi and how often, as totals and page-visit counts, never as a record of anyone in particular.</li>
       </ul>
       <p>
         We do not sell your personal information or share it for targeted advertising, and we do not use it
@@ -117,6 +125,15 @@ export default function Privacy() {
           <dd>Provides the weather: rounded coordinates only, with no account and no cookies.</dd>
         </div>
         <div>
+          <dt>Umami</dt>
+          <dd>
+            Counts visits to Mordi&rsquo;s pages (cloud.umami.is) without cookies or personal identifiers: the
+            page address, the site that referred you, your browser and device type, and your country, which it
+            works out from your IP address without storing it. It honors Do Not Track and skips visitors whose
+            browser sends it.
+          </dd>
+        </div>
+        <div>
           <dt>Your browser&rsquo;s push service</dt>
           <dd>
             Google, Mozilla, Apple or Microsoft, depending on your browser, delivers reminders. The message
@@ -135,6 +152,10 @@ export default function Privacy() {
         <li>
           When you delete your account, everything in it is deleted straight away. Nightly backups are kept
           for 7 days and then overwritten, so it is gone from those within a week.
+        </li>
+        <li>
+          The date you last used Mordi goes with your account when you delete it. The daily totals hold no
+          personal information and are kept.
         </li>
         <li>Web server logs are kept for about two weeks.</li>
         <li>Password reset links stop working after 30 minutes, and sign-in sessions end after 30 days.</li>
@@ -162,7 +183,8 @@ export default function Privacy() {
       </p>
       <p>
         Because Mordi does not track you across other sites or let anyone else do so, it works the same whether
-        or not your browser sends a Do Not Track or Global Privacy Control signal.
+        or not your browser sends a Global Privacy Control signal. The page-visit counter, Umami, also stands
+        aside for Do Not Track.
       </p>
 
       <h2>Security</h2>

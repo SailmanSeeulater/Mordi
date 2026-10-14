@@ -26,6 +26,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const About = lazy(() => import("./pages/About"));
+const AdminUsage = lazy(() => import("./pages/AdminUsage"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -172,6 +173,16 @@ function App() {
             element={
               <PrivateRoute>
                 <Join />
+              </PrivateRoute>
+            }
+          />
+          {/* Linked from nowhere: the owner types the address. The page
+              answers anyone else the way an unknown address is answered. */}
+          <Route
+            path="/admin/usage"
+            element={
+              <PrivateRoute>
+                <AdminUsage />
               </PrivateRoute>
             }
           />

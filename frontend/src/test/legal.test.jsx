@@ -33,7 +33,7 @@ describe('Privacy', () => {
     inRouter(<Privacy />);
     expect(screen.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: LEGAL.contact })[0]).toHaveAttribute('href', `mailto:${LEGAL.contact}`);
-    for (const service of ['Oracle Cloud', 'Resend', 'Google Maps Platform', 'Open-Meteo']) {
+    for (const service of ['Oracle Cloud', 'Resend', 'Google Maps Platform', 'Open-Meteo', 'Umami']) {
       expect(screen.getByText(service)).toBeInTheDocument();
     }
     // Mordi's typefaces are served from its own origin, so Google Fonts is no
@@ -47,7 +47,19 @@ describe('Privacy', () => {
     expect(screen.getByText(/overwritten, so it is gone from those within a week/i)).toBeInTheDocument();
     expect(screen.getByText(/California residents/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Children' })).toBeInTheDocument();
-    expect(screen.getByText(/Do Not Track/)).toBeInTheDocument();
+    // Do Not Track is mentioned twice: where Umami is described, and in the
+    // closing note on signals.
+    expect(screen.getAllByText(/Do Not Track/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Global Privacy Control/)).toBeInTheDocument();
+  });
+
+  it('says what the last-used date is and that usage is kept only as totals', () => {
+    inRouter(<Privacy />);
+    expect(screen.getByRole('heading', { name: 'How often you use Mordi' })).toBeInTheDocument();
+    expect(screen.getByText(/The date you last used Mordi, and nothing more exact/)).toBeInTheDocument();
+    expect(screen.getByText(/daily totals that identify no one/)).toBeInTheDocument();
+    // Umami is described without cookies or stored IP addresses.
+    expect(screen.getByText(/without cookies or personal identifiers/)).toBeInTheDocument();
   });
 });
 

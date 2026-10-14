@@ -54,6 +54,12 @@ public class User {
     @Column(name = "terms_accepted_at")
     private LocalDateTime termsAcceptedAt;
 
+    // The last UTC day the person used Mordi: a date, never a time, and only
+    // ever the latest one. Counts how many people are active, nothing more.
+    @JsonIgnore
+    @Column(name = "last_active_on")
+    private LocalDate lastActiveOn;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

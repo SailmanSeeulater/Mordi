@@ -6,6 +6,7 @@ import com.mordi.backend.dto.AuthResponse;
 import com.mordi.backend.dto.ForgotPasswordRequest;
 import com.mordi.backend.dto.ResetPasswordRequest;
 import com.mordi.backend.exception.InvalidRefreshTokenException;
+import com.mordi.backend.service.ActivityService;
 import com.mordi.backend.service.AuthService;
 import com.mordi.backend.service.PasswordService;
 import com.mordi.backend.service.RefreshTokenService;
@@ -30,6 +31,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
     private final SessionCookies cookies;
+    private final ActivityService activityService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
@@ -55,6 +57,9 @@ public class AuthController {
             @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
         try {
             RefreshTokenService.Rotation rotation = refreshTokenService.rotate(refreshToken);
+            // A returning visit starts here, before any request carries the
+            // new token, so it counts as the day's use.
+            activityService.markActive(rotation.user());
             AuthResponse body = new AuthResponse(
                 jwtUtil.generateToken(rotation.user().getEmail(), rotation.user().getId()),
                 rotation.user().getEmail(),

@@ -2,6 +2,7 @@ package com.mordi.backend.config;
 
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.UserRepository;
+import com.mordi.backend.service.ActivityService;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,13 +15,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /** A real JwtUtil signing real tokens; only the user table is a stand-in. */
 class JwtFilterTest {
 
     private final UserRepository users = mock(UserRepository.class);
+    private final ActivityService activity = mock(ActivityService.class);
     private JwtUtil jwt;
     private JwtFilter filter;
 
@@ -29,7 +34,7 @@ class JwtFilterTest {
         jwt = new JwtUtil();
         ReflectionTestUtils.setField(jwt, "secret", "a-test-secret-that-is-at-least-thirty-two-bytes-long");
         ReflectionTestUtils.setField(jwt, "expiration", 60_000L);
-        filter = new JwtFilter(jwt, users);
+        filter = new JwtFilter(jwt, users, activity);
         SecurityContextHolder.clearContext();
     }
 
@@ -62,6 +67,27 @@ class JwtFilterTest {
 
         assertThat(auth).isNotNull();
         assertThat(auth.getPrincipal()).isEqualTo("me@mordi.com");
+    }
+
+    @Test
+    void aSignedInRequestMarksTheAccountActive() throws Exception {
+        User me = account(7L, "me@mordi.com");
+        when(users.findByEmail("me@mordi.com")).thenReturn(Optional.of(me));
+
+        run(jwt.generateToken("me@mordi.com", 7L));
+
+        verify(activity).markActive(me);
+    }
+
+    @Test
+    void aRefusedTokenMarksNobodyActive() throws Exception {
+        when(users.findByEmail("me@mordi.com")).thenReturn(Optional.of(account(8L, "me@mordi.com")));
+
+        run(jwt.generateToken("me@mordi.com", 7L));
+        run("not.a.jwt");
+        run(null);
+
+        verify(activity, never()).markActive(any());
     }
 
     @Test

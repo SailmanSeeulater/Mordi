@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { returnPath } from '../lib/returnTo';
+import { track } from '../lib/analytics';
 import { useAuth } from '../context/useAuth';
 import client from '../api/client';
 import TermsConsent from './TermsConsent';
@@ -30,6 +31,7 @@ export default function RegisterForm() {
     try {
       const res = await client.post('/api/auth/register', { name, email, password });
       login({ email: res.data.email, name: res.data.name }, res.data.token);
+      track('Sign up');
       navigate(returnPath(location.state), { replace: true });
     } catch (err) {
       const status = err?.response?.status;
