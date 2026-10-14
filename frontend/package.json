@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "1.16.8",
+    "@googlemaps/js-api-loader": "2.1.3",
     "@react-google-maps/api": "^2.20.8",
     "axios": "^1.16.1",
     "react": "^19.2.6",
