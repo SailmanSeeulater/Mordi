@@ -1,0 +1,98 @@
+/* Usage: counts for whoever runs Mordi. Matte cards, the app's two faces,
+   every number in the sans with tabular figures, no colour beyond the tokens. */
+
+.usage {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.usage__today,
+.usage__days {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 22px 22px;
+  border-radius: var(--r-panel);
+}
+
+.usage__head { display: grid; gap: 2px; }
+.usage__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.usage__meta {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
+/* The facts read like the week report's: a small serif word above, the
+   figure below in the sans. */
+.usage__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 36px;
+  margin: 0;
+}
+.usage__facts div { display: grid; gap: 2px; }
+.usage__facts dt {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.usage__facts dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.usage__empty {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: var(--r-control);
+  background: var(--color-bg);
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
+/* Wide on a phone: it scrolls sideways rather than squeezing, and draws no
+   scrollbar. */
+.usage__scroll { overflow-x: auto; scrollbar-width: none; }
+.usage__scroll::-webkit-scrollbar { display: none; }
+
+.usage__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+}
+.usage__table th,
+.usage__table td {
+  padding: 9px 12px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-divider);
+}
+.usage__table thead th {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.usage__table th:first-child,
+.usage__table td:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+.usage__table tbody th {
+  font-weight: 500;
+  color: var(--color-text);
+}
+.usage__table tbody tr:last-child th,
+.usage__table tbody tr:last-child td { border-bottom: 0; }

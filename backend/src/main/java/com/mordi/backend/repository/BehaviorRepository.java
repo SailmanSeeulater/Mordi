@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,6 +31,10 @@ public interface BehaviorRepository extends JpaRepository<Behavior, Long> {
         + "from Behavior b where b.user = :user and b.placeName is not null "
         + "group by b.placeName order by count(b) desc")
     List<Object[]> summarizePlaces(@Param("user") User user);
+
+    /** Entries saved in [from, to): the day's logging, for the usage totals. */
+    @Query("select count(b) from Behavior b where b.createdAt >= :from and b.createdAt < :to")
+    long countCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     java.util.Optional<Behavior> findByIdAndUser(Long id, User user);
 

@@ -9,6 +9,10 @@ RUN npm ci
 COPY . .
 ARG VITE_GOOGLE_MAPS_API_KEY
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+# The Umami Cloud website id; public, and optional: with none, no analytics
+# script is added.
+ARG VITE_UMAMI_WEBSITE_ID
+ENV VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID
 RUN npm run build
 
 FROM nginx:alpine

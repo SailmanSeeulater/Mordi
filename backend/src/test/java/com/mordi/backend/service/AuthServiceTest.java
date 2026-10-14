@@ -47,11 +47,14 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private ActivityService activityService;
+
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, passwordEncoder, jwtUtil);
+        authService = new AuthService(userRepository, passwordEncoder, jwtUtil, activityService);
     }
 
     // ---- register() ------------------------------------------------------
@@ -143,6 +146,7 @@ class AuthServiceTest {
         assertThat(response.getToken()).isEqualTo("valid-token");
         assertThat(response.getEmail()).isEqualTo("existing@mordi.com");
         assertThat(response.getName()).isEqualTo("Existing User");
+        verify(activityService).markActive(existingUser);
     }
 
     @Test
@@ -165,6 +169,7 @@ class AuthServiceTest {
             .hasMessageContaining("Invalid email or password");
 
         verify(jwtUtil, never()).generateToken(anyString(), any());
+        verify(activityService, never()).markActive(any());
     }
 
     @Test

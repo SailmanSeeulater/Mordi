@@ -50,6 +50,9 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:hello@latesailor.dev}
+      # Who may open the usage numbers; comma-separated sign-in addresses.
+      # Empty means nobody.
+      MORDI_ADMIN_EMAILS: ${MORDI_ADMIN_EMAILS:-}
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       SPRING_FLYWAY_BASELINE_VERSION: "1"
     depends_on:
@@ -63,6 +66,7 @@ services:
       context: ./frontend
       args:
         VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
+        VITE_UMAMI_WEBSITE_ID: ${VITE_UMAMI_WEBSITE_ID:-}
     container_name: mordi-frontend
     # Loopback for the same reason as the backend's port.
     ports:

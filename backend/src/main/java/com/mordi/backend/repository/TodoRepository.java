@@ -38,4 +38,8 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
         @Param("user") User user,
         @Param("start") LocalDate start,
         @Param("end") LocalDate end);
+
+    /** Everyone's to-dos finished on this day, for the usage totals. */
+    @Query("select count(t) from Todo t where t.done = true and t.completedOn = :day")
+    long countFinishedOn(@Param("day") LocalDate day);
 }

@@ -21,7 +21,7 @@ public class AuthService {
      * Bump together with LEGAL.version in frontend/src/lib/legal.js whenever
      * either page changes in substance.
      */
-    public static final String TERMS_VERSION = "2026-10-13";
+    public static final String TERMS_VERSION = "2026-10-14";
 
     /**
      * A bcrypt hash of nothing in particular, checked against when the
@@ -34,6 +34,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ActivityService activityService;
 
     public AuthResponse register(AuthRequest request) {
         String email = EmailAddresses.normalize(request.getEmail());
@@ -50,6 +51,7 @@ public class AuthService {
         user.setTermsVersion(TERMS_VERSION);
         user.setTermsAcceptedAt(LocalDateTime.now());
         userRepository.save(user);
+        activityService.markActive(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getId());
         return new AuthResponse(token, user.getEmail(), user.getName());
     }
@@ -68,6 +70,7 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
+        activityService.markActive(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getId());
         return new AuthResponse(token, user.getEmail(), user.getName());
     }

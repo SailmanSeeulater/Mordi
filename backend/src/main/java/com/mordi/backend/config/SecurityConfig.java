@@ -35,6 +35,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Signed in like everything else; whether the person may see
+                // it is the controller's call, which answers 404 to anyone
+                // else rather than admit the page exists.
+                .requestMatchers("/api/admin/**").authenticated()
                 .anyRequest().authenticated())
             // Without an entry point, a missing or expired token is answered
             // with 403, which reads as "you may not" rather than "you are not

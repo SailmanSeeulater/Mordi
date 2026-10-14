@@ -81,6 +81,28 @@ describe("Register", () => {
     ).toBeInTheDocument();
   });
 
+  it("counts the sign-up once, with no properties, only when the account was made", async () => {
+    const track = vi.fn();
+    window.umami = { track };
+    try {
+      client.post.mockRejectedValueOnce({ response: { status: 409 } });
+      renderRegister();
+      fillAndSubmit({ email: "taken@example.com" });
+      await screen.findByRole("alert");
+      expect(track).not.toHaveBeenCalled();
+
+      client.post.mockResolvedValueOnce({
+        data: { email: "new@example.com", name: "Test User", token: "fake-jwt" },
+      });
+      fillAndSubmit({ email: "new@example.com" });
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith("Sign up");
+    } finally {
+      delete window.umami;
+    }
+  });
+
   it("renders a link to the login page", () => {
     renderRegister();
     const link = screen.getByRole("link", { name: /sign in/i });
