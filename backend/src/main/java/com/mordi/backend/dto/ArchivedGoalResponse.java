@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 /**
  * An archived goal as History shows it: what it was, when it ran, and what it
  * amounted to. Dates are null for a goal archived before anything was logged.
- * categoryName and categoryIcon are filled in only for a custom category.
+ * categoryName and categoryIcon are filled in only for a custom category;
+ * plannedDays is the goal's weekday mask, null when it had none.
  */
 public record ArchivedGoalResponse(
     Long id,
@@ -16,6 +17,7 @@ public record ArchivedGoalResponse(
     String categoryName,
     String categoryIcon,
     int targetPerWeek,
+    Short plannedDays,
     String placeName,
     LocalDateTime createdAt,
     LocalDateTime archivedAt,

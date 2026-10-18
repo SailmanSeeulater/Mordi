@@ -6,6 +6,8 @@ import CategoryEditor from './CategoryEditor';
 import useCategories, { MAX_CATEGORIES } from '../hooks/useCategories';
 import { capturePlace } from '../lib/geo';
 import { CATEGORY_OPTIONS, ICONS, ICON_LABELS, goalCategory, goalIconKey } from '../lib/categories';
+import { DAY_LETTERS, DAY_NAMES, daysToMask, isoDayOrder, plannedDays } from '../lib/plannedDays';
+import { useWeekStart } from '../lib/weekStart';
 
 const TARGETS = [1, 2, 3, 4, 5, 6, 7];
 
@@ -21,7 +23,11 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
   const [making, setMaking] = useState(false);
   const [choosingIcon, setChoosingIcon] = useState(false);
   const { categories, create: createCategory } = useCategories();
-  const [target, setTarget] = useState(goal?.targetPerWeek ?? 3);
+  const [chosenTarget, setTarget] = useState(goal?.targetPerWeek ?? 3);
+  // Optional weekdays, ISO indexes (0 is Monday). Picked days set the target.
+  const [days, setDays] = useState(() => plannedDays(goal));
+  const dayOrder = isoDayOrder(useWeekStart());
+  const target = days.length > 0 ? days.length : chosenTarget;
   const [placeName, setPlaceName] = useState(goal?.placeName ?? '');
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,6 +54,8 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
       // Empty goes back to the category's icon, as category does.
       icon: icon ?? '',
       targetPerWeek: target,
+      // 0 clears them; the backend keeps the target equal to the days.
+      plannedDays: daysToMask(days),
       placeName: placeName.trim() || null,
       // Keeps the frontend's target fallback accurate on older backends.
       frequency: target === 7 ? 'daily' : 'weekly',
@@ -100,6 +108,13 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
     setCategory(value);
   };
 
+  const toggleDay = (d) => {
+    const next = days.includes(d) ? days.filter((x) => x !== d) : [...days, d].sort((a, b) => a - b);
+    // Clearing the last day leaves the segments on the count it had.
+    if (next.length === 0) setTarget(days.length);
+    setDays(next);
+  };
+
   const makeCategory = async (body) => {
     const made = await createCategory(body);
     if (made?.key) setCategory(made.key);
@@ -124,7 +139,12 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
         <span className="app-field__label" id="goal-target-label">
           Times a week
         </span>
-        <div className="app-segments" role="group" aria-labelledby="goal-target-label">
+        <div
+          className={'app-segments' + (days.length > 0 ? ' app-segments--locked' : '')}
+          role="group"
+          aria-labelledby="goal-target-label"
+          aria-describedby="goal-target-hint"
+        >
           {/* The sliding fill. It is one element positioned by index rather
               than a background on each option, so changing the target moves
               it instead of repainting two of them. */}
@@ -139,6 +159,7 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
               type="button"
               className="app-segment"
               aria-pressed={n === target}
+              disabled={days.length > 0}
               onClick={() => setTarget(n)}
             >
               {n === 7 ? 'Daily' : n}
@@ -146,10 +167,37 @@ export default function GoalForm({ goal, onSaved, onCancel }) {
             </button>
           ))}
         </div>
-        <p className="app-field__hint">
-          {target === 7
-            ? 'A day with nothing logged counts as missed.'
-            : `Any ${target} day${target > 1 ? 's' : ''} of the week counts.`}
+        <p className="app-field__hint" id="goal-target-hint">
+          {days.length > 0
+            ? 'Set by the days you picked. Clear the days to choose freely.'
+            : target === 7
+              ? 'A day with nothing logged counts as missed.'
+              : `Any ${target} day${target > 1 ? 's' : ''} of the week counts.`}
+        </p>
+      </div>
+
+      <div className="app-field">
+        <span className="app-field__label" id="goal-days-label">
+          On these days
+        </span>
+        <div className="app-daypick" role="group" aria-labelledby="goal-days-label" aria-describedby="goal-days-hint">
+          {dayOrder.map((d) => (
+            <button
+              key={d}
+              type="button"
+              className="app-daypick__day"
+              aria-pressed={days.includes(d)}
+              aria-label={DAY_NAMES[d]}
+              onClick={() => toggleDay(d)}
+            >
+              {DAY_LETTERS[d]}
+            </button>
+          ))}
+        </div>
+        <p className="app-field__hint" id="goal-days-hint">
+          {days.length > 0
+            ? 'They repeat every week. A picked day with nothing done counts as missed.'
+            : 'Optional. Picked days repeat every week.'}
         </p>
       </div>
 

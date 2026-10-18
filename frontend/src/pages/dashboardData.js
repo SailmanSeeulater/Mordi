@@ -2,6 +2,7 @@
 // calendar days and compared as YYYY-MM-DD strings, matching the backend's LocalDate.
 
 import { startOfCalendarWeek } from '../lib/weekStart';
+import { hasPlannedDays, isPlannedOn, plannedDueByIndex } from '../lib/plannedDays';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -80,12 +81,18 @@ export function targetLabel(goal) {
   return target === 7 ? 'daily' : `${target}× weekly`;
 }
 
+/**
+ * One goal on one day: 'done', 'missed' or 'empty'. An empty past day reads
+ * as missed only when the person said the goal was due that day: a daily
+ * goal, or one planned for that weekday. Any other empty day is a rest day.
+ */
 export function dayStatus(goal, dayBehaviors, dayIso, todayIso) {
   if (dayIso > todayIso) return 'empty';
   if (dayBehaviors.some((b) => b.completed)) return 'done';
   if (dayBehaviors.length > 0) return 'missed';
   const createdIso = goal.createdAt ? goal.createdAt.slice(0, 10) : null;
-  if (dayIso < todayIso && goalTarget(goal) === 7 && (!createdIso || dayIso >= createdIso)) {
+  const due = hasPlannedDays(goal) ? isPlannedOn(goal, dayIso) : goalTarget(goal) === 7;
+  if (dayIso < todayIso && due && (!createdIso || dayIso >= createdIso)) {
     return 'missed';
   }
   return 'empty';
@@ -180,15 +187,37 @@ export function recentEntries(behaviors, count) {
 }
 
 /**
- * How the week stands against its own target, as of today. The target is
- * spread evenly over the seven days; "expected" is the share due by the end
- * of today, and "delta" is how far ahead (+) or behind (-) the count is.
- * Sunday night, expected is the whole target.
+ * What is due by the end of the day in column `todayIndex` (0 for Monday),
+ * summed over the week summary's rows and rounded once. A goal with planned
+ * days owes the planned days so far; any other goal's target is spread
+ * evenly over the seven days. With no planned days anywhere this is exactly
+ * the even spread of the whole week's target.
  */
-export function weekPace(planned, achieved, todayIndex) {
+export function expectedBy(rows, todayIndex) {
+  const dayIndex = Math.min(6, Math.max(0, todayIndex));
+  const total = rows.reduce(
+    (sum, r) =>
+      sum + (hasPlannedDays(r.goal) ? plannedDueByIndex(r.goal, dayIndex) : (r.target * (dayIndex + 1)) / 7),
+    0,
+  );
+  return Math.round(total);
+}
+
+/**
+ * How the week stands against its own target, as of today. "expected" is
+ * what is due by the end of today, and "delta" is how far ahead (+) or
+ * behind (-) the count is. Sunday night, expected is the whole target.
+ *
+ * Given the week summary's `rows`, a goal planned for particular days counts
+ * those days (see expectedBy). Without them, or for goals without planned
+ * days, the target is spread evenly over the seven days.
+ */
+export function weekPace(planned, achieved, todayIndex, rows) {
   if (!planned) return { expected: 0, delta: 0, state: 'none' };
   const dayIndex = Math.min(6, Math.max(0, todayIndex));
-  const expected = Math.round((planned * (dayIndex + 1)) / 7);
+  const expected = Array.isArray(rows)
+    ? expectedBy(rows, dayIndex)
+    : Math.round((planned * (dayIndex + 1)) / 7);
   const delta = achieved - expected;
   if (achieved >= planned) return { expected, delta, state: 'done' };
   if (delta > 0) return { expected, delta, state: 'ahead' };

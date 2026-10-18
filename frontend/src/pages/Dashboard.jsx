@@ -31,6 +31,8 @@ import { sharedGoals } from '../lib/together';
 import { goalIcon } from '../lib/categories';
 import { mergeFeed } from '../lib/feed';
 import { doneOnDay, entryName, restoreRequest } from '../lib/entries';
+import { plannedDaysLabel } from '../lib/plannedDays';
+import { useWeekStart } from '../lib/weekStart';
 import {
   addDays,
   bestDay,
@@ -60,9 +62,10 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
  * useDragSort's threshold, so a tap is still a tap, and `touch-action: pan-y`
  * leaves the page free to scroll vertically under a finger.
  */
-function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, loggedToday }) {
+function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, loggedToday, calendarStart }) {
   const percent = Math.min(row.done / row.target, 1) * 100;
   const empty = row.done === 0;
+  const planned = plannedDaysLabel(row.goal, calendarStart);
   return (
     <button
       type="button"
@@ -101,6 +104,7 @@ function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, l
       <span className="ring-item__label">{row.goal.title}</span>
       <span className="app-sr">
         {row.done} of {row.target} logged this week.{' '}
+        {planned && `Planned for ${planned === 'Every day' ? 'every day' : planned}. `}
         {loggedToday
           ? 'Done today. It counts once a day, so tapping again won’t log it twice.'
           : 'Logs it done today in one tap.'}{' '}
@@ -253,6 +257,8 @@ export default function Dashboard() {
   const today = useToday();
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
   const user = useAuth()?.user;
+  // Only orders the planned days in words; the week itself is Monday to Sunday.
+  const calendarStart = useWeekStart();
 
   // The first-run tour, kept per account in this browser. Someone who has
   // already logged entries has found their way around and never sees it.
@@ -501,7 +507,9 @@ export default function Dashboard() {
   const reminder = useMemo(() => composeReminder(summary.rows, todayColumn), [summary.rows, todayColumn]);
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
   const achieved = summary.rows.reduce((sum, r) => sum + Math.min(r.done, r.target), 0);
-  const pace = weekPace(planned, achieved, todayColumn);
+  // A goal planned for particular days owes those days so far; the rest
+  // spread their target over the week.
+  const pace = weekPace(planned, achieved, todayColumn, summary.rows);
   const [shownAchieved, counting] = useCountUp(achieved);
   const perDay = useMemo(() => entriesPerDay(behaviors, summary.days), [behaviors, summary.days]);
   const busiest = bestDay(perDay);
@@ -620,6 +628,7 @@ export default function Dashboard() {
                     onClick={() => tapRing(row)}
                     busy={loggingId === row.goal.id}
                     loggedToday={loggedToday.has(row.goal.id)}
+                    calendarStart={calendarStart}
                     order={goalOrder.indexOf(row.id)}
                     held={goalDrag.dragId === row.id}
                     over={goalDrag.overId === row.id}
@@ -839,6 +848,7 @@ export default function Dashboard() {
       )}
       {modal === 'calendar' && (
         <CalendarModal
+          goals={goals}
           behaviors={behaviors}
           today={today}
           initialSelected={calendarDay}

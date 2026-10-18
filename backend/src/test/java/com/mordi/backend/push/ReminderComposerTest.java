@@ -18,6 +18,43 @@ class ReminderComposerTest {
         return new ReminderComposer.GoalProgress(title, target, Set.of(done));
     }
 
+    // Monday, Wednesday and Friday: bits 0, 2 and 4.
+    private static final short MON_WED_FRI = 0b001_0101;
+    private static final LocalDate WED = LocalDate.of(2026, 9, 16);
+    private static final LocalDate FRI = LocalDate.of(2026, 9, 18);
+
+    private static ReminderComposer.GoalProgress planned(String title, short days, LocalDate... done) {
+        return new ReminderComposer.GoalProgress(title, Integer.bitCount(days), Set.of(done), days);
+    }
+
+    @Test
+    void aGoalWithPlannedDaysIsMentionedOnlyOnAPlannedDayNotYetDone() {
+        // Thursday is not one of its days: nothing to say about it today.
+        assertThat(ReminderComposer.compose(List.of(planned("Run", MON_WED_FRI, MON)), THURSDAY)).isNull();
+
+        // Friday is, and it is not done yet.
+        ReminderComposer.Reminder friday = ReminderComposer.compose(List.of(planned("Run", MON_WED_FRI, MON)), FRI);
+        assertThat(friday.body()).isEqualTo("Run: 2 of 3 left");
+
+        // Done on Wednesday already, so Wednesday's reminder leaves it out.
+        assertThat(ReminderComposer.compose(List.of(planned("Run", MON_WED_FRI, MON, WED)), WED)).isNull();
+    }
+
+    @Test
+    void aPlannedGoalWhoseTargetIsMetIsNotMentionedOnItsDay() {
+        // Three runs by Thursday (one moved to Tuesday): Friday has nothing left.
+        assertThat(ReminderComposer.compose(List.of(planned("Run", MON_WED_FRI, MON, TUE, WED)), FRI)).isNull();
+    }
+
+    @Test
+    void goalsWithoutPlannedDaysAreMentionedOnAnyDayAsBefore() {
+        ReminderComposer.Reminder r = ReminderComposer.compose(List.of(
+            planned("Run", MON_WED_FRI, MON),
+            new ReminderComposer.GoalProgress("Read", 7, Set.of(MON), null)), THURSDAY);
+        assertThat(r.body()).isEqualTo("Read: 6 of 7 left");
+        assertThat(ReminderComposer.dueToday(goal("Read", 7), THURSDAY)).isTrue();
+    }
+
     @Test
     void countsDaysLeftIncludingToday() {
         assertThat(ReminderComposer.daysLeft(MON)).isEqualTo(7);

@@ -112,6 +112,56 @@
   cursor: pointer;
 }
 
+/* Goals planned for the weekday: outlined until done that day, then filled.
+   A day still to come shows the plan in a fainter outline and can't be
+   tapped, since nothing can be logged for it yet. */
+.planner__goal {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-700);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+button.planner__goal:not(.planner__goal--done):hover {
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+}
+.planner__goal-icon {
+  display: grid;
+  flex: 0 0 auto;
+  color: var(--color-accent-700);
+}
+.planner__goal-icon svg { width: 12px; height: 12px; }
+.planner__goal-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.planner__goal--done {
+  background: var(--color-accent);
+  box-shadow: none;
+  color: var(--color-on-accent);
+}
+.planner__goal--done .planner__goal-icon { color: var(--color-on-accent); }
+.planner__goal--ahead {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 24%, transparent);
+  cursor: default;
+}
+@media (pointer: coarse) {
+  button.planner__goal { min-height: 44px; }
+}
+
 /* The hours scroll; the head and all-day row stay put above them.
    No drawn scrollbar: it took 10px from the grid but not from the head above
    it, so the day columns drifted left of their headings, a pixel and a half
@@ -504,6 +554,30 @@
 .month__more:hover { color: var(--color-text); background: var(--color-bg); }
 .month__dots { display: none; }
 
+/* Goals planned for the weekday: a ring with the goal's icon, filled once
+   done that day. On a phone, like the events, they shrink to dots. */
+.month__goals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 0 2px;
+}
+.month__goal {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px var(--color-accent-700);
+  color: var(--color-accent-700);
+}
+.month__goal svg { width: 11px; height: 11px; }
+.month__goal--done {
+  background: var(--color-accent);
+  box-shadow: none;
+  color: var(--color-on-accent);
+}
+
 /* On a phone the month is a grid of dots: one per event, coloured. */
 @media (max-width: 720px) {
   .month__day { min-height: 64px; padding: 4px 2px; align-items: center; }
@@ -511,6 +585,9 @@
   .month__more { display: none; }
   .month__dots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
   .month__dot { width: 6px; height: 6px; border-radius: var(--r-pill); background: var(--ev); }
+  .month__goals { justify-content: center; gap: 2px; padding: 0; }
+  .month__goal { width: 8px; height: 8px; }
+  .month__goal svg { display: none; }
   .month__date { align-self: center; }
 }
 

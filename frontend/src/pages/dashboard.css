@@ -351,6 +351,13 @@
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-signal) 48%, transparent);
 }
 .week-dot--today { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 48%, transparent); }
+/* A planned day still to do: an accent ring, so the plan shows before it is
+   done or missed. Outline, so it never fights today's ring for box-shadow. */
+.week-dot--planned:not(.week-dot--done):not(.week-dot--missed) {
+  background: none;
+  outline: 1.5px solid var(--color-accent-700);
+  outline-offset: -1.5px;
+}
 
 /* ── First run ─────────────────────────────── */
 

@@ -1,4 +1,5 @@
 import { addDays, goalTarget, startOfWeek, toIsoDate } from '../pages/dashboardData';
+import { hasPlannedDays } from './plannedDays';
 
 /**
  * A suggested weekly target, from what actually happened.
@@ -14,6 +15,9 @@ import { addDays, goalTarget, startOfWeek, toIsoDate } from '../pages/dashboardD
  *
  * A goal younger than the window gets no suggestion: two weeks of a new habit
  * is not a pattern. Suggestions are only ever offered, never applied.
+ *
+ * A goal planned for particular weekdays takes its target from the days, so
+ * it is never offered a new number, only the "nothing logged" note.
  */
 export function suggestTarget(goal, behaviors, today, weeks = 4) {
   const target = goalTarget(goal);
@@ -37,6 +41,7 @@ export function suggestTarget(goal, behaviors, today, weeks = 4) {
   const rounded = Math.min(7, Math.max(1, Math.round(average)));
 
   if (average === 0) return { kind: 'idle', weeks, average, target };
+  if (hasPlannedDays(goal)) return null;
   if (average >= target + 1 && rounded > target) return { kind: 'raise', to: rounded, weeks, average, target };
   if (average <= target - 1.5 && rounded < target) return { kind: 'lower', to: rounded, weeks, average, target };
   return null;

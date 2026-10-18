@@ -422,6 +422,115 @@ class GoalServiceTest {
         }
     }
 
+    @Nested
+    class PlannedDaysOnAGoal {
+
+        // Monday, Wednesday and Friday: bits 0, 2 and 4.
+        private static final int MON_WED_FRI = 0b001_0101;
+
+        @Test
+        void withoutPlannedDays_aGoalKeepsItsTargetAndAnyDayCounts() {
+            Goal goal = goalService.createGoal(ME, request(4));
+
+            assertThat(goal.getPlannedDays()).isNull();
+            assertThat(goal.getTargetPerWeek()).isEqualTo(4);
+        }
+
+        @Test
+        void pickedDaysAreKeptAndTheirCountBecomesTheTarget() {
+            GoalRequest request = request(5);
+            request.setPlannedDays(MON_WED_FRI);
+
+            Goal goal = goalService.createGoal(ME, request);
+
+            assertThat(goal.getPlannedDays()).isEqualTo((short) MON_WED_FRI);
+            // The request said 5; three days were picked, so it is three.
+            assertThat(goal.getTargetPerWeek()).isEqualTo(3);
+        }
+
+        @Test
+        void zeroOnCreateMeansNoPlannedDays() {
+            GoalRequest request = request(2);
+            request.setPlannedDays(0);
+
+            Goal goal = goalService.createGoal(ME, request);
+
+            assertThat(goal.getPlannedDays()).isNull();
+            assertThat(goal.getTargetPerWeek()).isEqualTo(2);
+        }
+
+        @Test
+        void refusesAMaskOutsideTheWeek() {
+            GoalRequest tooMany = request(3);
+            tooMany.setPlannedDays(128);
+            GoalRequest negative = request(3);
+            negative.setPlannedDays(-1);
+
+            assertThatThrownBy(() -> goalService.createGoal(ME, tooMany))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("0 to 127");
+            assertThatThrownBy(() -> goalService.createGoal(ME, negative))
+                .isInstanceOf(IllegalArgumentException.class);
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void onEdit_zeroClearsTheDaysAndKeepsTheTargetGiven() {
+            Goal goal = existingGoal(me);
+            goal.setPlannedDays((short) MON_WED_FRI);
+            goal.setTargetPerWeek(3);
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            GoalRequest patch = new GoalRequest();
+            patch.setPlannedDays(0);
+            patch.setTargetPerWeek(4);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isNull();
+            assertThat(updated.getTargetPerWeek()).isEqualTo(4);
+        }
+
+        @Test
+        void onEdit_aMissingValueLeavesTheDaysAndTheyStillDecideTheTarget() {
+            Goal goal = existingGoal(me);
+            goal.setPlannedDays((short) MON_WED_FRI);
+            goal.setTargetPerWeek(3);
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            // What the Goals page's target suggestion sends: a target alone.
+            GoalRequest patch = new GoalRequest();
+            patch.setTargetPerWeek(5);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isEqualTo((short) MON_WED_FRI);
+            assertThat(updated.getTargetPerWeek()).isEqualTo(3);
+        }
+
+        @Test
+        void onEdit_newDaysSetANewTarget() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(me)));
+
+            GoalRequest patch = new GoalRequest();
+            patch.setPlannedDays(PlannedDays.ALL);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isEqualTo((short) 127);
+            assertThat(updated.getTargetPerWeek()).isEqualTo(7);
+        }
+
+        @Test
+        void historyCarriesThePlannedDays() {
+            Goal archived = existingGoal(me);
+            archived.setPlannedDays((short) MON_WED_FRI);
+            archived.setArchivedAt(java.time.LocalDateTime.now());
+            when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNotNullOrderByArchivedAtDesc(me))
+                .thenReturn(java.util.List.of(archived));
+            when(behaviorRepository.summarizeByGoal(eq(me), any())).thenReturn(java.util.List.of());
+
+            assertThat(goalService.getArchivedGoals(ME).get(0).plannedDays()).isEqualTo((short) MON_WED_FRI);
+        }
+    }
+
     @Test
     void editingArchivingOrDeleting_aSharedGoalIOnlyJoined_readsAsNotFound() {
         Goal joined = existingGoal(someoneElse);

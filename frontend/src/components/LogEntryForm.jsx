@@ -12,12 +12,17 @@ const OUTCOMES = [
   { id: false, label: 'Didn’t do it' },
 ];
 
+const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
 /**
  * One entry for today. Whether it was done is two named choices rather than
  * a checkbox nobody noticed, and a goal already done today says so before
  * saving: a second entry is kept, but the day only ever counts once.
+ *
+ * `logDate` ("YYYY-MM-DD") logs an earlier day instead, as the calendar does
+ * from a planned goal's chip. Without it the form logs today.
  */
-export default function LogEntryForm({ goals, behaviors = [], initialGoalId = '', onSaved, onCancel }) {
+export default function LogEntryForm({ goals, behaviors = [], initialGoalId = '', logDate = null, onSaved, onCancel }) {
   const [goalId, setGoalId] = useState(initialGoalId ? String(initialGoalId) : '');
   const [note, setNote] = useState('');
   const [mood, setMood] = useState('good');
@@ -29,7 +34,9 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const alreadyDone = completed && doneOnDay(behaviors, goalId, toIsoDate(new Date()));
+  const todayIso = toIsoDate(new Date());
+  const earlier = Boolean(logDate) && logDate !== todayIso;
+  const alreadyDone = completed && doneOnDay(behaviors, goalId, earlier ? logDate : todayIso);
 
   const goalOptions = [
     { value: '', label: 'Not linked to a goal' },
@@ -53,7 +60,7 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
         mood,
         completed,
         // Read at submit, so a form opened before midnight still logs today.
-        logDate: toIsoDate(new Date()),
+        logDate: earlier ? logDate : toIsoDate(new Date()),
         latitude: place?.latitude ?? null,
         longitude: place?.longitude ?? null,
         placeName: place?.placeName || null,
@@ -105,7 +112,7 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
 
       <div className="app-field">
         <span className="app-field__label" id="log-outcome-label">
-          Today
+          {earlier ? dayLabel.format(new Date(`${logDate}T00:00:00`)) : 'Today'}
         </span>
         <div className="app-segments" role="group" aria-labelledby="log-outcome-label">
           <span
@@ -128,7 +135,7 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
         </div>
         {!completed && (
           <p className="app-field__hint" id="log-outcome-hint">
-            Saved as a note for today. It doesn’t count toward the goal.
+            Saved as a note for {earlier ? 'that day' : 'today'}. It doesn’t count toward the goal.
           </p>
         )}
       </div>
@@ -137,7 +144,9 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
       <div role="status">
         {alreadyDone && (
           <p className="app-field__hint log-form__repeat">
-            Already logged today. Saving adds a note to today; it won’t count twice.
+            {earlier
+              ? 'Already logged that day. Saving adds a note to it; it won’t count twice.'
+              : 'Already logged today. Saving adds a note to today; it won’t count twice.'}
           </p>
         )}
       </div>

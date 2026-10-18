@@ -3,6 +3,7 @@ import client from '../api/client';
 import Modal from './Modal';
 import { addDays, addMonths, monthGrid, startOfMonth, toIsoDate } from '../pages/dashboardData';
 import { entryName } from '../lib/entries';
+import { plannedGoalsOn } from '../lib/plannedDays';
 import { weekdayLabels, useWeekStart } from '../lib/weekStart';
 import './calendar.css';
 
@@ -25,8 +26,12 @@ const longDate = new Intl.DateTimeFormat(undefined, {
  * rather than in the page's toast, which would sit behind this dialog where
  * neither a pointer nor the keyboard can reach it. `onRemove` and
  * `onRestore` do the requests; `onRestore` resolves to the entry as saved.
+ *
+ * Goals planned for particular weekdays (`goals`) mark their days with a
+ * small ring each, filled once done that day, and the picked day lists them.
  */
 export default function CalendarModal({
+  goals = [],
   behaviors,
   today,
   initialSelected,
@@ -103,6 +108,8 @@ export default function CalendarModal({
   const days = useMemo(() => monthGrid(month, weekStart), [month, weekStart]);
   // The day's list keeps a removed entry, as its Undo, until the day changes.
   const selectedRows = loaded.filter((e) => e.logDate === selected);
+  const plansOn = (iso) => plannedGoalsOn(goals, byDay.get(iso) ?? [], iso);
+  const selectedPlans = plansOn(selected);
 
   const setStatus = (id, status) =>
     setRemoval((m) => {
@@ -193,6 +200,7 @@ export default function CalendarModal({
         <div className="cal__grid" role="group" aria-label={`Days in ${monthLabel.format(month)}`}>
           {days.map((day) => {
             const entries = byDay.get(day.iso) ?? [];
+            const plans = plansOn(day.iso);
             return (
               <button
                 key={day.iso}
@@ -207,11 +215,20 @@ export default function CalendarModal({
                     {entries.length}
                   </span>
                 )}
+                {plans.length > 0 && (
+                  <span className="cal__plans" aria-hidden="true">
+                    {plans.slice(0, 3).map(({ goal, done }) => (
+                      <span key={goal.id} className={'cal__plan' + (done ? ' cal__plan--done' : '')} />
+                    ))}
+                  </span>
+                )}
                 <span className="app-sr">
                   {longDate.format(day.date)}
                   {entries.length === 0
                     ? ', nothing logged'
                     : `, ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`}
+                  {plans.length > 0 &&
+                    ', planned: ' + plans.map(({ goal, done }) => goal.title + (done ? ', done' : '')).join('; ')}
                   {day.iso === todayIso ? ', today' : ''}
                 </span>
               </button>
@@ -229,6 +246,11 @@ export default function CalendarModal({
           <span>
             <span className="cal__key cal__key--missed" aria-hidden="true" /> Nothing
           </span>
+          {goals.some((g) => g.plannedDays) && (
+            <span>
+              <span className="cal__key cal__key--plan" aria-hidden="true" /> A planned goal
+            </span>
+          )}
         </p>
 
         {loadState === 'error' && (
@@ -239,6 +261,16 @@ export default function CalendarModal({
 
         <div className="cal__selected">
           <h4 className="cal__selected-title">{longDate.format(new Date(`${selected}T00:00:00`))}</h4>
+          {selectedPlans.length > 0 && (
+            <p className="cal__planned">
+              Planned:{' '}
+              {selectedPlans
+                .map(({ goal, done }) =>
+                  goal.title + (done ? ', done' : selected < todayIso ? ', not done' : selected === todayIso ? ', not yet' : ''),
+                )
+                .join(' · ')}
+            </p>
+          )}
           {selectedRows.length === 0 ? (
             <p className="cal__empty">
               {loadState === 'loading' ? 'Loading…' : 'Nothing logged on this day.'}

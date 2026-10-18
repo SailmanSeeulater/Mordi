@@ -15,6 +15,8 @@ import { targetLabel, toIsoDate, weekSummary } from './dashboardData';
 import { formatAverage, suggestTarget } from '../lib/targets';
 import { togetherApi, togetherLabel } from '../lib/together';
 import { enableModule } from '../lib/modules';
+import { DAY_NAMES, plannedDays, plannedDaysLabel } from '../lib/plannedDays';
+import { useWeekStart } from '../lib/weekStart';
 import './goals.css';
 
 const IconPin = () => (
@@ -108,6 +110,7 @@ export default function Goals() {
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
 
   const { categories } = useCategories();
+  const calendarStart = useWeekStart();
 
   const [modal, setModal] = useState(null); // 'add' | 'edit' | 'archive' | 'share' | 'leave' | 'categories'
   const [active, setActive] = useState(null);
@@ -242,6 +245,8 @@ export default function Goals() {
           {summary.rows.map((row) => {
             const percent = Math.min(row.done / row.target, 1) * 100;
             const category = goalCategory(row.goal, categories);
+            const planned = plannedDaysLabel(row.goal, calendarStart);
+            const plannedSet = new Set(plannedDays(row.goal));
             return (
               <article className="goal-card" key={row.goal.id}>
                 <span className="goal-card__mark" aria-hidden="true">
@@ -321,6 +326,15 @@ export default function Goals() {
                     </span>
                   )}
                   <span>{targetLabel(row.goal)}</span>
+                  {planned && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="goal-card__days">
+                        <span className="app-sr">on </span>
+                        {planned}
+                      </span>
+                    </>
+                  )}
                   <span aria-hidden="true">·</span>
                   <span>
                     {row.done} of {row.target} this week
@@ -347,8 +361,10 @@ export default function Goals() {
                         'week-dot' +
                         (status === 'done' ? ' week-dot--done' : '') +
                         (status === 'missed' ? ' week-dot--missed' : '') +
+                        (plannedSet.has(i) ? ' week-dot--planned' : '') +
                         (i === todayColumn ? ' week-dot--today' : '')
                       }
+                      title={plannedSet.has(i) ? `Planned for ${DAY_NAMES[i]}` : undefined}
                     />
                   ))}
                 </div>

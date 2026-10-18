@@ -4,8 +4,13 @@ import Modal from '../components/Modal';
 import EventForm from '../components/EventForm';
 import MonthGrid from '../components/MonthGrid';
 import ImportCalendar from '../components/ImportCalendar';
+import LogEntryForm from '../components/LogEntryForm';
+import PlannedChip from '../components/PlannedChip';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useEvents from '../hooks/useEvents';
+import usePlannedGoals from '../hooks/usePlannedGoals';
+import { plannedGoalsOn } from '../lib/plannedDays';
+import { toIsoDate } from './dashboardData';
 import {
   DAY_MINUTES,
   HOUR_PX,
@@ -33,6 +38,7 @@ const hourLabel = new Intl.DateTimeFormat(undefined, { hour: 'numeric' });
 const dayName = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 const monthYear = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
 const shortDay = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+const longDay = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
 const pxToMinutes = (px) => (px / HOUR_PX) * 60;
 const minutesToPx = (min) => (min / 60) * HOUR_PX;
@@ -102,6 +108,13 @@ export default function Calendar() {
   const startKey = start.getTime();
   const days = useMemo(() => daysFrom(new Date(startKey), count), [startKey, count]);
   const { events, loadState, reload, create, update, remove } = useEvents(start, count);
+
+  // Goals planned for particular weekdays show on those days, filled once
+  // done. A chip on today or an earlier day logs that goal for that day.
+  const todayIso = toIsoDate(now);
+  const goalData = usePlannedGoals(toIsoDate(days[0]), toIsoDate(days[days.length - 1]), todayIso);
+  const plannedOn = (day) => plannedGoalsOn(goalData.goals, goalData.behaviors, toIsoDate(day));
+  const [logging, setLogging] = useState(null); // { goalId, iso }
 
   const scroller = useRef(null);
   const columns = useRef(null);
@@ -268,6 +281,7 @@ export default function Calendar() {
   };
 
   const hasAllDay = days.some((d) => allDayOn(shown, d).length > 0);
+  const hasPlanned = days.some((d) => plannedOn(d).length > 0);
 
   return (
     <AppShell
@@ -367,6 +381,7 @@ export default function Calendar() {
               weekStart={weekStart}
               month={monthStart.getMonth()}
               events={events}
+              planned={plannedOn}
               now={now}
               onOpenDay={openDay}
               onOpenEvent={(ev) => setEditor({ event: ev })}
@@ -401,6 +416,30 @@ export default function Calendar() {
               </button>
             ))}
           </div>
+
+          {hasPlanned && (
+            <div className="planner__allday planner__goals">
+              <span className="planner__gutter planner__gutter--label">Goals</span>
+              {days.map((d) => {
+                const iso = toIsoDate(d);
+                return (
+                  <div key={d.toISOString()} className="planner__allday-cell">
+                    {plannedOn(d).map(({ goal, done }) => (
+                      <PlannedChip
+                        key={goal.id}
+                        goal={goal}
+                        done={done}
+                        iso={iso}
+                        todayIso={todayIso}
+                        dayName={longDay.format(d)}
+                        onLog={() => setLogging({ goalId: goal.id, iso })}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {hasAllDay && (
             <div className="planner__allday">
@@ -558,6 +597,22 @@ export default function Calendar() {
               );
               reload();
             }}
+          />
+        </Modal>
+      )}
+
+      {logging && (
+        <Modal title={logging.iso === todayIso ? 'Log today' : 'Log a day'} onClose={() => setLogging(null)}>
+          <LogEntryForm
+            goals={goalData.goals}
+            behaviors={goalData.behaviors}
+            initialGoalId={logging.goalId}
+            logDate={logging.iso}
+            onSaved={() => {
+              setLogging(null);
+              goalData.reload();
+            }}
+            onCancel={() => setLogging(null)}
           />
         </Modal>
       )}

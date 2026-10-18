@@ -25,10 +25,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Categories and goal icons against a real PostgreSQL migrated by Flyway: the
- * derived queries, the update that clears a deleted category off its goals, the
- * case-blind unique index, and the cascade on account deletion. The unit tests
- * mock all of these. Each test's rows are rolled back.
+ * Categories, goal icons and planned days against a real PostgreSQL migrated
+ * by Flyway: the derived queries, the update that clears a deleted category
+ * off its goals, the case-blind unique index, the cascade on account deletion,
+ * and V20's planned_days column with its range check. The unit tests mock all
+ * of these. Each test's rows are rolled back.
  *
  *   MORDI_IT_DB=1 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mordi \
  *   SPRING_DATASOURCE_PASSWORD=... ./mvnw test -Dtest=CategoryQueriesIT
@@ -141,6 +142,41 @@ class CategoryQueriesIT {
         assertThat(after.getIcon()).isEqualTo("pen");
         assertThat(goals.findById(plain.getId()).orElseThrow().getCategory()).isEqualTo("fitness");
         assertThat(categories.findById(reading.getId())).isEmpty();
+    }
+
+    @Test
+    void plannedDaysRoundTripThroughMigrationV20() {
+        GoalRequest request = new GoalRequest();
+        request.setTitle("Morning run");
+        request.setTargetPerWeek(5);
+        request.setPlannedDays(0b001_0101); // Monday, Wednesday, Friday
+        Goal run = goalService.createGoal(sam.getEmail(), request);
+        Goal read = goal(sam, "Read", null, null);
+        em.flush();
+        em.clear();
+
+        Goal loaded = goals.findById(run.getId()).orElseThrow();
+        assertThat(loaded.getPlannedDays()).isEqualTo((short) 0b001_0101);
+        assertThat(loaded.getTargetPerWeek()).isEqualTo(3);
+        assertThat(goals.findById(read.getId()).orElseThrow().getPlannedDays()).isNull();
+
+        GoalRequest clear = new GoalRequest();
+        clear.setPlannedDays(0);
+        goalService.updateGoal(sam.getEmail(), run.getId(), clear);
+        em.flush();
+        em.clear();
+        assertThat(goals.findById(run.getId()).orElseThrow().getPlannedDays()).isNull();
+    }
+
+    @Test
+    void theCheckConstraintRefusesAnOutOfRangeMask() {
+        Goal goal = goal(sam, "Run", null, null);
+        em.flush();
+
+        assertThatThrownBy(() -> em.createNativeQuery("UPDATE goals SET planned_days = 128 WHERE id = :id")
+            .setParameter("id", goal.getId())
+            .executeUpdate())
+            .isInstanceOf(Exception.class);
     }
 
     @Test

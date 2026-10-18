@@ -1,5 +1,6 @@
 import { formatTime, onDay, parseLocal, sameDay } from '../lib/planner';
 import { weekdayLabels } from '../lib/weekStart';
+import { goalIcon } from '../lib/categories';
 
 const SHOWN = 3;
 const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
@@ -14,8 +15,24 @@ const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'l
  * that day's hours; the empty part of a day starts a new event on it. On a
  * phone the chips shrink to coloured dots, one per event, so the month still
  * reads as a whole.
+ *
+ * `planned(day)`, when given, lists the goals planned for that weekday as
+ * { goal, done }; each shows as a small mark of its icon above the events,
+ * filled once done that day, and the date's name says which.
  */
-export default function MonthGrid({ days, weekStart = 'monday', month, events, now, onOpenDay, onNew, onOpenEvent }) {
+const noPlans = () => [];
+
+export default function MonthGrid({
+  days,
+  weekStart = 'monday',
+  month,
+  events,
+  planned = noPlans,
+  now,
+  onOpenDay,
+  onNew,
+  onOpenEvent,
+}) {
   return (
     <div className="month">
       {/* The day letters are decoration: each date button already says its
@@ -37,6 +54,10 @@ export default function MonthGrid({ days, weekStart = 'monday', month, events, n
           const outside = day.getMonth() !== month;
           const today = sameDay(day, now);
           const extra = items.length - SHOWN;
+          const plans = planned(day);
+          const plansLabel = plans.length
+            ? ', planned: ' + plans.map(({ goal, done }) => goal.title + (done ? ', done' : '')).join('; ')
+            : '';
           return (
             <div
               key={day.toISOString()}
@@ -49,10 +70,23 @@ export default function MonthGrid({ days, weekStart = 'monday', month, events, n
                 type="button"
                 className="month__date"
                 onClick={() => onOpenDay(day)}
-                aria-label={`${dayLabel.format(day)}${items.length ? `, ${items.length} event${items.length === 1 ? '' : 's'}` : ''}`}
+                aria-label={`${dayLabel.format(day)}${items.length ? `, ${items.length} event${items.length === 1 ? '' : 's'}` : ''}${plansLabel}`}
               >
                 {day.getDate()}
               </button>
+              {plans.length > 0 && (
+                <span className="month__goals" aria-hidden="true">
+                  {plans.map(({ goal, done }) => (
+                    <span
+                      key={goal.id}
+                      className={'month__goal' + (done ? ' month__goal--done' : '')}
+                      title={goal.title + (done ? ', done' : '')}
+                    >
+                      {goalIcon(goal)}
+                    </span>
+                  ))}
+                </span>
+              )}
               <ul className="month__events">
                 {items.slice(0, SHOWN).map((ev) => (
                   <li key={`${ev.id}-${day.getDate()}`}>

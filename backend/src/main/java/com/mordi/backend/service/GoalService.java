@@ -47,6 +47,8 @@ public class GoalService {
         goal.setCategory(request.getCategory() == null ? null : validCategory(user, request.getCategory()));
         goal.setIcon(request.getIcon() == null ? null : validIcon(request.getIcon()));
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), 1));
+        goal.setPlannedDays(PlannedDays.valid(request.getPlannedDays()));
+        matchTargetToPlannedDays(goal);
         goal.setPlaceName(blankToNull(request.getPlaceName()));
 
         return goalRepository.save(goal);
@@ -115,6 +117,12 @@ public class GoalService {
             goal.setIcon(validIcon(request.getIcon()));
         }
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), goal.getTargetPerWeek()));
+        // Planned days are clearable too: 0 removes them, a missing value
+        // leaves them alone. Either way, days that are set decide the target.
+        if (request.getPlannedDays() != null) {
+            goal.setPlannedDays(PlannedDays.valid(request.getPlannedDays()));
+        }
+        matchTargetToPlannedDays(goal);
         // Like category, the usual place is clearable: an explicitly empty
         // value removes it, a missing one leaves it alone.
         if (request.getPlaceName() != null) {
@@ -172,6 +180,7 @@ public class GoalService {
                 category == null ? null : category.getName(),
                 category == null ? null : category.getIcon(),
                 goal.getTargetPerWeek(),
+                goal.getPlannedDays(),
                 goal.getPlaceName(),
                 goal.getCreatedAt(),
                 goal.getArchivedAt(),
@@ -260,6 +269,19 @@ public class GoalService {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    /**
+     * A goal planned for Monday, Wednesday and Friday is a three-times-a-week
+     * goal: when days are picked, their count is the target, whatever target
+     * the request carried. Setting it here rather than refusing a mismatch
+     * means an older client that only sends a target (the Goals page's
+     * suggestion) cannot leave the two disagreeing.
+     */
+    private void matchTargetToPlannedDays(Goal goal) {
+        if (goal.getPlannedDays() != null) {
+            goal.setTargetPerWeek(PlannedDays.count(goal.getPlannedDays()));
+        }
     }
 
     private int validTarget(Integer requested, int fallback) {

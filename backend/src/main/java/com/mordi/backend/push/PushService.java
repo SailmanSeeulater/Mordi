@@ -193,7 +193,7 @@ public class PushService {
         List<ReminderComposer.GoalProgress> progress = new ArrayList<>();
         for (Goal g : current) {
             progress.add(new ReminderComposer.GoalProgress(g.getTitle(), g.getTargetPerWeek(),
-                done.getOrDefault(g.getId(), Set.of())));
+                done.getOrDefault(g.getId(), Set.of()), g.getPlannedDays()));
         }
         return ReminderComposer.compose(progress, today);
     }

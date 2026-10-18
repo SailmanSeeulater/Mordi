@@ -1,4 +1,5 @@
 import { addDays, parseIsoDate, startOfWeek, toIsoDate, weekSummary } from '../pages/dashboardData';
+import { isPlannedOn } from './plannedDays';
 
 /**
  * Everything the week report draws, from raw goals, entries and planned
@@ -94,8 +95,8 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
     };
   });
 
-  // Goal × day: how many entries each goal got each day, and whether any
-  // of them was marked done.
+  // Goal × day: how many entries each goal got each day, whether any of
+  // them was marked done, and whether the goal was planned for that day.
   const matrix = summary.rows.map((row) => ({
     goal: row.goal,
     target: row.target,
@@ -106,6 +107,7 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
         iso,
         count: list.length,
         completed: list.some((b) => b.completed),
+        planned: isPlannedOn(row.goal, iso),
         status: row.statuses[i],
       };
     }),

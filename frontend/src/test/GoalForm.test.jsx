@@ -126,3 +126,84 @@ describe('GoalForm categories and icons', () => {
     );
   });
 });
+
+describe('GoalForm planned days', () => {
+  const dayButtons = () => within(screen.getByRole('group', { name: 'On these days' })).getAllByRole('button');
+  const segment = (name) => within(screen.getByRole('group', { name: 'Times a week' })).getByRole('button', { name });
+
+  beforeEach(() => {
+    localStorage.removeItem('mordi-week-start');
+  });
+
+  it('offers seven named days, Monday first, none picked', () => {
+    render(<GoalForm onSaved={() => {}} onCancel={() => {}} />);
+    expect(dayButtons().map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+    ]);
+    expect(dayButtons().every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true);
+    expect(segment(/^3/)).toBeEnabled();
+  });
+
+  it('orders the days by the calendar’s week start', () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    render(<GoalForm onSaved={() => {}} onCancel={() => {}} />);
+    expect(dayButtons()[0]).toHaveAccessibleName('Sunday');
+    expect(dayButtons()[6]).toHaveAccessibleName('Saturday');
+  });
+
+  it('sets the times a week from the picked days, locks it, and saves the mask', async () => {
+    const user = userEvent.setup();
+    const onSaved = vi.fn();
+    render(<GoalForm onSaved={onSaved} onCancel={() => {}} />);
+    await user.type(screen.getByLabelText('Goal'), 'Morning run');
+
+    await user.click(screen.getByRole('button', { name: 'Monday' }));
+    await user.click(screen.getByRole('button', { name: 'Wednesday' }));
+    await user.click(screen.getByRole('button', { name: 'Friday' }));
+
+    expect(screen.getByRole('button', { name: 'Wednesday' })).toHaveAttribute('aria-pressed', 'true');
+    expect(segment(/^3/)).toHaveAttribute('aria-pressed', 'true');
+    expect(segment(/^5/)).toBeDisabled();
+    expect(screen.getByText('Set by the days you picked. Clear the days to choose freely.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add goal' }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(client.post).toHaveBeenLastCalledWith(
+      '/api/goals',
+      expect.objectContaining({ title: 'Morning run', targetPerWeek: 3, plannedDays: 0b001_0101 }),
+    );
+  });
+
+  it('clearing every day frees the times a week again, on the count it had', async () => {
+    const user = userEvent.setup();
+    const goal = { id: 4, title: 'Run', targetPerWeek: 2, plannedDays: 0b000_0101 };
+    render(<GoalForm goal={goal} onSaved={() => {}} onCancel={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Monday' })).toHaveAttribute('aria-pressed', 'true');
+    expect(segment(/^2/)).toHaveAttribute('aria-pressed', 'true');
+    expect(segment(/^4/)).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Monday' }));
+    expect(segment(/^1/)).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Wednesday' }));
+
+    expect(segment(/^4/)).toBeEnabled();
+    expect(segment(/^1/)).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Any 1 day of the week counts.')).toBeInTheDocument();
+    await user.click(segment(/^4/));
+    await user.click(screen.getByRole('button', { name: 'Save goal' }));
+
+    await waitFor(() =>
+      expect(client.put).toHaveBeenCalledWith('/api/goals/4', expect.objectContaining({ targetPerWeek: 4, plannedDays: 0 })),
+    );
+  });
+
+  it('sends no planned days for a goal that never had any', async () => {
+    const user = userEvent.setup();
+    render(<GoalForm onSaved={() => {}} onCancel={() => {}} />);
+    await user.type(screen.getByLabelText('Goal'), 'Read');
+    await user.click(screen.getByRole('button', { name: 'Add goal' }));
+    await waitFor(() =>
+      expect(client.post).toHaveBeenLastCalledWith('/api/goals', expect.objectContaining({ targetPerWeek: 3, plannedDays: 0 })),
+    );
+  });
+});

@@ -1,3 +1,5 @@
+import { hasPlannedDays, plannedDays } from './plannedDays';
+
 /**
  * What is still left this week, in the words the push reminder uses. A port
  * of the backend's ReminderComposer so the week card can say the same thing
@@ -6,6 +8,8 @@
  * Only facts against targets the person set, most pressing first: the
  * largest share of a target still to do, then by title. Nothing when every
  * target is met, because a reminder that there is nothing to do is noise.
+ * A goal planned for particular weekdays is only listed on one of them,
+ * until it is done that day, as in the backend.
  */
 
 export const MAX_LISTED = 3;
@@ -16,11 +20,22 @@ export function daysLeft(todayIndex) {
 }
 
 /**
- * `rows` are the week summary's rows ({ goal, done, target }); `todayIndex`
- * is 0 for Monday. Returns { title, body, items, more } or null.
+ * Whether a row with something left belongs in today's reminder: always for
+ * a goal without planned days; for one with them, only on a planned day it
+ * isn't done yet (`statuses` is the row's Monday-first day list).
+ */
+export function dueToday(row, todayIndex) {
+  if (!hasPlannedDays(row.goal)) return true;
+  return plannedDays(row.goal).includes(todayIndex) && row.statuses?.[todayIndex] !== 'done';
+}
+
+/**
+ * `rows` are the week summary's rows ({ goal, done, target, statuses });
+ * `todayIndex` is 0 for Monday. Returns { title, body, items, more } or null.
  */
 export function composeReminder(rows, todayIndex) {
   const behind = rows
+    .filter((r) => dueToday(r, todayIndex))
     .map((r) => ({ title: r.goal.title, left: Math.max(0, r.target - r.done), target: r.target }))
     .filter((r) => r.target > 0 && r.left > 0)
     .sort((a, b) => b.left / b.target - a.left / a.target || a.title.localeCompare(b.title));
