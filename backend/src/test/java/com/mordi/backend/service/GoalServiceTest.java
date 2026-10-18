@@ -2,9 +2,11 @@ package com.mordi.backend.service;
 
 import com.mordi.backend.dto.GoalRequest;
 import com.mordi.backend.exception.GoalNotFoundException;
+import com.mordi.backend.model.Category;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.CategoryRepository;
 import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.GoalMessageRepository;
 import com.mordi.backend.repository.GoalRepository;
@@ -46,13 +48,16 @@ class GoalServiceTest {
     @Mock
     private GoalMessageRepository messageRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     private GoalService goalService;
     private User me;
     private User someoneElse;
 
     @BeforeEach
     void setUp() {
-        goalService = new GoalService(goalRepository, userRepository, behaviorRepository, memberRepository, messageRepository);
+        goalService = new GoalService(goalRepository, userRepository, behaviorRepository, memberRepository, messageRepository, categoryRepository);
         me = user(ME);
         someoneElse = user("other@mordi.com");
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
@@ -297,6 +302,124 @@ class GoalServiceTest {
         assertThat(joined.getMemberCount()).isEqualTo(3);
         assertThat(joined.getUnread()).isEqualTo(2);
         assertThat(joined.getOwnerName()).isEqualTo("Alex Kim");
+    }
+
+    private Category category(Long id, User owner, String name, String icon) {
+        Category category = new Category();
+        category.setId(id);
+        category.setUser(owner);
+        category.setName(name);
+        category.setIcon(icon);
+        return category;
+    }
+
+    @Nested
+    class IconsAndCategories {
+
+        @Test
+        void aGoalKeepsTheIconItWasGiven() {
+            GoalRequest request = request(3);
+            request.setIcon("book");
+
+            assertThat(goalService.createGoal(ME, request).getIcon()).isEqualTo("book");
+        }
+
+        @Test
+        void withoutAnIcon_aGoalFallsBackToItsCategory() {
+            assertThat(goalService.createGoal(ME, request(3)).getIcon()).isNull();
+        }
+
+        @Test
+        void refusesAnIconMordiCannotDraw() {
+            GoalRequest request = request(3);
+            request.setIcon("rocket");
+
+            assertThatThrownBy(() -> goalService.createGoal(ME, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Pick one of the icons");
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void anEmptyIconGoesBackToTheCategorysAndAMissingOneIsLeftAlone() {
+            Goal goal = existingGoal(me);
+            goal.setIcon("book");
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            GoalRequest untouched = new GoalRequest();
+            untouched.setTitle("Run more");
+            assertThat(goalService.updateGoal(ME, 10L, untouched).getIcon()).isEqualTo("book");
+
+            GoalRequest cleared = new GoalRequest();
+            cleared.setIcon("");
+            assertThat(goalService.updateGoal(ME, 10L, cleared).getIcon()).isNull();
+        }
+
+        @Test
+        void refusesAnUnknownIconOnEditToo() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(me)));
+            GoalRequest patch = new GoalRequest();
+            patch.setIcon("<svg>");
+
+            assertThatThrownBy(() -> goalService.updateGoal(ME, 10L, patch))
+                .hasMessage("Pick one of the icons");
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void acceptsABuiltInCategoryOrNone() {
+            GoalRequest builtIn = request(3);
+            builtIn.setCategory("sleep");
+            assertThat(goalService.createGoal(ME, builtIn).getCategory()).isEqualTo("sleep");
+
+            GoalRequest none = request(3);
+            none.setCategory("");
+            assertThat(goalService.createGoal(ME, none).getCategory()).isNull();
+        }
+
+        @Test
+        void acceptsOneOfMyOwnCategories() {
+            when(categoryRepository.findById(7L)).thenReturn(Optional.of(category(7L, me, "Reading", "book")));
+            GoalRequest request = request(3);
+            request.setCategory("custom:7");
+
+            assertThat(goalService.createGoal(ME, request).getCategory()).isEqualTo("custom:7");
+        }
+
+        @Test
+        void refusesSomeoneElsesCategoryLikeOneThatDoesNotExist() {
+            when(categoryRepository.findById(7L)).thenReturn(Optional.of(category(7L, someoneElse, "Theirs", "book")));
+            when(categoryRepository.findById(8L)).thenReturn(Optional.empty());
+
+            for (String value : java.util.List.of("custom:7", "custom:8", "custom:x", "custom:", "running")) {
+                GoalRequest request = request(3);
+                request.setCategory(value);
+                assertThatThrownBy(() -> goalService.createGoal(ME, request))
+                    .as(value)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("That category doesn’t exist");
+            }
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void listedGoalsInACustomCategoryCarryItsNameAndIcon() {
+            Goal mine = existingGoal(me);
+            mine.setCategory("custom:7");
+            Goal plain = existingGoal(me);
+            plain.setId(11L);
+            when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNull(me))
+                .thenReturn(new java.util.ArrayList<>(java.util.List.of(mine, plain)));
+            when(categoryRepository.findAllById(any()))
+                .thenReturn(java.util.List.of(category(7L, me, "Reading", "book")));
+
+            goalService.getActiveGoals(ME);
+
+            assertThat(mine.getCategoryName()).isEqualTo("Reading");
+            assertThat(mine.getCategoryIcon()).isEqualTo("book");
+            assertThat(plain.getCategoryName()).isNull();
+            assertThat(plain.getCategoryIcon()).isNull();
+        }
     }
 
     @Test

@@ -8,14 +8,14 @@ import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import GoalForm from '../components/GoalForm';
 import ShareGoalDialog from '../components/ShareGoalDialog';
-import { CATEGORY_ICONS } from '../lib/categories';
+import CategoriesDialog from '../components/CategoriesDialog';
+import useCategories from '../hooks/useCategories';
+import { ICONS, goalCategory, goalIcon } from '../lib/categories';
 import { targetLabel, toIsoDate, weekSummary } from './dashboardData';
 import { formatAverage, suggestTarget } from '../lib/targets';
 import { togetherApi, togetherLabel } from '../lib/together';
 import { enableModule } from '../lib/modules';
 import './goals.css';
-
-const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 const IconPin = () => (
   <svg
@@ -107,7 +107,9 @@ export default function Goals() {
   const today = useToday();
   const { goals, behaviors, loadState, weekStart, todayIso, reload, retry } = useWeekData(today);
 
-  const [modal, setModal] = useState(null); // 'add' | 'edit' | 'archive' | 'share' | 'leave'
+  const { categories } = useCategories();
+
+  const [modal, setModal] = useState(null); // 'add' | 'edit' | 'archive' | 'share' | 'leave' | 'categories'
   const [active, setActive] = useState(null);
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState('');
@@ -232,14 +234,18 @@ export default function Goals() {
             <Link className="goals__history" to="/history">
               Archived goals
             </Link>
+            <button type="button" className="app-linkbtn goals__cats" onClick={() => setModal('categories')}>
+              Categories
+            </button>
           </p>
 
           {summary.rows.map((row) => {
             const percent = Math.min(row.done / row.target, 1) * 100;
+            const category = goalCategory(row.goal, categories);
             return (
               <article className="goal-card" key={row.goal.id}>
                 <span className="goal-card__mark" aria-hidden="true">
-                  {row.goal.title.trim()[0]?.toUpperCase() ?? 'M'}
+                  {goalIcon(row.goal, categories)}
                 </span>
 
                 <span
@@ -308,10 +314,10 @@ export default function Goals() {
                 </div>
 
                 <div className="goal-card__meta">
-                  {row.goal.category && (
+                  {category && (
                     <span className="goal-card__tag">
-                      {CATEGORY_ICONS[row.goal.category] ?? null}
-                      {capitalize(row.goal.category)}
+                      {ICONS[category.icon]}
+                      <span className="app-trunc">{category.label}</span>
                     </span>
                   )}
                   <span>{targetLabel(row.goal)}</span>
@@ -411,6 +417,14 @@ export default function Goals() {
           </div>
         </Modal>
       )}
+      {modal === 'categories' && (
+        <CategoriesDialog
+          goals={goals.filter((g) => g.role !== 'member')}
+          onClose={closeModal}
+          onChanged={reload}
+        />
+      )}
+
       {modal === 'share' && active && <ShareGoalDialog goal={active} onClose={handleSaved} onChanged={reload} />}
 
       {modal === 'leave' && active && (

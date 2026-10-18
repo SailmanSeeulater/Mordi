@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import ShareGoalDialog from '../components/ShareGoalDialog';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { addDays, startOfWeek, toIsoDate } from './dashboardData';
+import { goalIcon } from '../lib/categories';
 import { MAX_MESSAGE, initials, sharedGoals, sinceLabel, togetherApi, togetherLabel } from '../lib/together';
 import './together.css';
 
@@ -119,6 +120,9 @@ export default function Together() {
                     className="together__item"
                     aria-current={g.id === goalId ? 'page' : undefined}
                   >
+                    <span className="together__item-icon" aria-hidden="true">
+                      {goalIcon(g)}
+                    </span>
                     <span className="together__item-title">{g.title}</span>
                     <span className="together__item-meta">{togetherLabel(g)}</span>
                     {g.unread > 0 && g.id !== goalId && (

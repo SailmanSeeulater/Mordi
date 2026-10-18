@@ -28,8 +28,15 @@ public class Goal {
     @Column
     private String frequency;
 
+    // A built-in key ("fitness"), "custom:<id>" for one of the person's own
+    // categories, or null.
     @Column
     private String category;
+
+    // A key from Icons.KEYS, chosen for this goal. Null means it shows its
+    // category's icon, or the thumbtack when it has no category.
+    @Column(length = 32)
+    private String icon;
 
     @Column(name = "target_per_week", nullable = false)
     private int targetPerWeek = 1;
@@ -65,6 +72,15 @@ public class Goal {
 
     @Transient
     private String ownerName;
+
+    // Not stored: for a goal in a custom category, that category's name and
+    // icon, so anyone in a shared goal can draw it without being able to list
+    // the owner's categories. Null otherwise.
+    @Transient
+    private String categoryName;
+
+    @Transient
+    private String categoryIcon;
 
     @PrePersist
     protected void onCreate() {

@@ -57,6 +57,23 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryNotFound(CategoryNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    // Like the note cap: well formed, but it conflicts with what is there. Both
+    // messages are written to be shown to the person as-is.
+    @ExceptionHandler(CategoryLimitReachedException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryLimit(CategoryLimitReachedException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CategoryNameTakenException.class)
+    public ResponseEntity<Map<String, Object>> handleCategoryNameTaken(CategoryNameTakenException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler(TodoNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTodoNotFound(TodoNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());

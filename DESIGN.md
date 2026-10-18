@@ -156,10 +156,15 @@ are on always shows in the rail, whatever the modules say.
   has a ring; each opens the month calendar. One action: Log today. The
   weather chip sits on its own row along the card's top edge, right-aligned,
   so it never sits over the facts beside it; the clock lives in the top bar.
-- **Goal rings** — conic progress per goal, dashed when nothing is logged;
-  draggable, arrow keys to move.
-- **Goal cards** — matte cards on the Goals page: title, category, usual
-  place, target, and the week as seven dots.
+- **Goal icons** — every goal shows one: its own, else its category's, else a
+  thumbtack. One drawn set in `lib/categories.jsx` (twenty-one marks, 24 grid,
+  1.9 stroke, never emoji), picked from a radio-group grid in the goal form
+  behind "Choose an icon". People add their own categories (a name and an
+  icon) from the goal form or the Goals page's Categories dialog.
+- **Goal rings** — conic progress per goal, dashed when nothing is logged, the
+  goal's icon above the count; draggable, arrow keys to move.
+- **Goal cards** — matte cards on the Goals page: the goal's icon on an accent
+  tile, title, category, usual place, target, and the week as seven dots.
 - **Timer** — the Clock app's timer in Mordi's materials: a ring that fills
   over an hour with a dot orbiting each minute, large tabular digits, and two
   round buttons that keep their places (quiet action left, forward action

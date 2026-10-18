@@ -3,9 +3,11 @@ package com.mordi.backend.service;
 import com.mordi.backend.dto.ArchivedGoalResponse;
 import com.mordi.backend.dto.GoalRequest;
 import com.mordi.backend.exception.GoalNotFoundException;
+import com.mordi.backend.model.Category;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.CategoryRepository;
 import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.GoalMessageRepository;
 import com.mordi.backend.repository.GoalRepository;
@@ -13,9 +15,13 @@ import com.mordi.backend.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +34,7 @@ public class GoalService {
     private final BehaviorRepository behaviorRepository;
     private final GoalMemberRepository memberRepository;
     private final GoalMessageRepository messageRepository;
+    private final CategoryRepository categoryRepository;
 
     public Goal createGoal(String email, GoalRequest request) {
         User user = findUser(email);
@@ -37,7 +44,8 @@ public class GoalService {
         goal.setTitle(request.getTitle());
         goal.setDescription(request.getDescription());
         goal.setFrequency(request.getFrequency());
-        goal.setCategory(request.getCategory());
+        goal.setCategory(request.getCategory() == null ? null : validCategory(user, request.getCategory()));
+        goal.setIcon(request.getIcon() == null ? null : validIcon(request.getIcon()));
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), 1));
         goal.setPlaceName(blankToNull(request.getPlaceName()));
 
@@ -75,6 +83,14 @@ public class GoalService {
             goal.setMemberCount((int) Math.max(1, heads.getOrDefault(goal.getId(), 1L)));
             goal.setUnread(unread.getOrDefault(goal.getId(), 0L));
         }
+        Map<String, Category> custom = customCategories(goals.stream().map(Goal::getCategory).toList());
+        for (Goal goal : goals) {
+            Category category = custom.get(goal.getCategory());
+            if (category != null) {
+                goal.setCategoryName(category.getName());
+                goal.setCategoryIcon(category.getIcon());
+            }
+        }
         return goals;
     }
 
@@ -92,7 +108,11 @@ public class GoalService {
         }
         // Category is clearable, so an explicitly empty value removes it.
         if (request.getCategory() != null) {
-            goal.setCategory(request.getCategory().isBlank() ? null : request.getCategory());
+            goal.setCategory(validCategory(goal.getUser(), request.getCategory()));
+        }
+        // So is the icon: empty goes back to the category's.
+        if (request.getIcon() != null) {
+            goal.setIcon(validIcon(request.getIcon()));
         }
         goal.setTargetPerWeek(validTarget(request.getTargetPerWeek(), goal.getTargetPerWeek()));
         // Like category, the usual place is clearable: an explicitly empty
@@ -140,12 +160,17 @@ public class GoalService {
         for (Object[] row : behaviorRepository.summarizeByGoal(user, goals.stream().map(Goal::getId).toList())) {
             stats.put((Long) row[0], row);
         }
+        Map<String, Category> custom = customCategories(goals.stream().map(Goal::getCategory).toList());
         return goals.stream().map(goal -> {
             Object[] row = stats.get(goal.getId());
+            Category category = custom.get(goal.getCategory());
             return new ArchivedGoalResponse(
                 goal.getId(),
                 goal.getTitle(),
                 goal.getCategory(),
+                goal.getIcon(),
+                category == null ? null : category.getName(),
+                category == null ? null : category.getIcon(),
                 goal.getTargetPerWeek(),
                 goal.getPlaceName(),
                 goal.getCreatedAt(),
@@ -172,6 +197,65 @@ public class GoalService {
             .findById(goalId)
             .filter(goal -> goal.isActive() && goal.getUser().getEmail().equals(email))
             .orElseThrow(GoalNotFoundException::new);
+    }
+
+    /**
+     * The custom categories these goals point at, by the key they use. One
+     * query for all of them. Not filtered by owner: a shared goal shows its
+     * owner's category to everyone in it, and only the goal's owner could
+     * have set it.
+     */
+    private Map<String, Category> customCategories(Collection<String> keys) {
+        Set<Long> ids = new HashSet<>();
+        for (String key : keys) {
+            Long id = Icons.customCategoryId(key);
+            if (id != null) {
+                ids.add(id);
+            }
+        }
+        Map<String, Category> byKey = new HashMap<>();
+        if (ids.isEmpty()) {
+            return byKey;
+        }
+        for (Category category : categoryRepository.findAllById(ids)) {
+            byKey.put(category.getKey(), category);
+        }
+        return byKey;
+    }
+
+    /**
+     * A built-in key, one of the owner's own categories as "custom:<id>", or
+     * empty for none. Someone else's category is refused like a made-up one.
+     */
+    private String validCategory(User owner, String requested) {
+        String value = requested.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        if (Icons.BUILT_IN_CATEGORIES.contains(value)) {
+            return value;
+        }
+        Long id = Icons.customCategoryId(value);
+        boolean owned = id != null && categoryRepository
+            .findById(id)
+            .filter(category -> Objects.equals(category.getUser().getEmail(), owner.getEmail()))
+            .isPresent();
+        if (!owned) {
+            throw new IllegalArgumentException("That category doesn’t exist");
+        }
+        return Icons.CUSTOM_PREFIX + id;
+    }
+
+    /** A key from the drawn set, or empty for "same as the category". */
+    private String validIcon(String requested) {
+        String value = requested.trim();
+        if (value.isEmpty()) {
+            return null;
+        }
+        if (!Icons.isKey(value)) {
+            throw new IllegalArgumentException("Pick one of the icons");
+        }
+        return value;
     }
 
     private String blankToNull(String value) {

@@ -20,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * Everything the person owns goes with them, by the database's own cascades:
  * goals, entries, places, notes, to-dos, events, reports, sessions, push
- * subscriptions, and what they wrote in shared-goal threads. The one thing
+ * subscriptions, their own categories, and what they wrote in shared-goal
+ * threads. The one thing
  * that outlives them is a shared goal other people are still in: it passes to
  * whoever joined it first, so their entries and their thread carry on.
  */
@@ -60,6 +61,11 @@ public class AccountService {
             Goal goal = heir.getGoal();
             if (handedOver.add(goal.getId())) {
                 goal.setUser(heir.getUser());
+                // The departing owner's own categories go with them, so a
+                // goal in one of them passes on with no category.
+                if (Icons.customCategoryId(goal.getCategory()) != null) {
+                    goal.setCategory(null);
+                }
                 goals.save(goal);
             }
         }

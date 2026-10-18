@@ -75,12 +75,13 @@ export default function Settings() {
     setExporting(true);
     setStatus({ tone: 'info', text: 'Collecting your data…' });
     try {
-      const [goals, behaviors, locations] = await Promise.all([
+      const [goals, behaviors, locations, categories] = await Promise.all([
         client.get('/api/goals'),
         client.get('/api/behaviors/range', {
           params: { start: EXPORT_START, end: toIsoDate(new Date()) },
         }),
         client.get('/api/locations').catch(() => ({ data: [] })),
+        client.get('/api/categories').catch(() => ({ data: [] })),
       ]);
 
       const payload = {
@@ -89,6 +90,7 @@ export default function Settings() {
         goals: goals.data,
         entries: behaviors.data,
         places: locations.data,
+        categories: categories.data,
       };
 
       const url = URL.createObjectURL(
