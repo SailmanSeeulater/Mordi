@@ -3,12 +3,11 @@ import client from '../api/client';
 import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
 import useDocumentTitle from '../hooks/useDocumentTitle';
-import { CATEGORY_ICONS } from '../lib/categories';
+import { ICONS, goalCategory } from '../lib/categories';
 import { parseIsoDate } from './dashboardData';
 import './history.css';
 
 const dayFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 /** "Mar 1, 2026 – Jun 30, 2026", or one date when both ends are the same day. */
 function span(first, last) {
@@ -103,6 +102,7 @@ export default function History() {
           {goals.map((goal) => {
             const rate = goal.entries ? Math.round((goal.completed / goal.entries) * 100) : null;
             const ran = span(goal.firstLog, goal.lastLog);
+            const category = goalCategory(goal);
             return (
               <li key={goal.id} className="app-panel history__item">
                 <div className="history__head">
@@ -113,10 +113,10 @@ export default function History() {
                 </div>
 
                 <div className="history__meta">
-                  {goal.category && (
+                  {category && (
                     <span className="history__tag">
-                      {CATEGORY_ICONS[goal.category] ?? null}
-                      {capitalize(goal.category)}
+                      {ICONS[category.icon]}
+                      {category.label}
                     </span>
                   )}
                   <span>{goal.targetPerWeek === 7 ? 'Every day' : `${goal.targetPerWeek}× a week`}</span>

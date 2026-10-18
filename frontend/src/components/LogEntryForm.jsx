@@ -1,11 +1,28 @@
 import { useState } from 'react';
 import client from '../api/client';
 import { toIsoDate } from '../pages/dashboardData';
+import { doneOnDay } from '../lib/entries';
+import { goalIcon } from '../lib/categories';
 import Select from './Select';
 import MoodPicker from './MoodPicker';
 import PlaceField from './PlaceField';
 
-export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCancel }) {
+const OUTCOMES = [
+  { id: true, label: 'Did it' },
+  { id: false, label: 'Didn’t do it' },
+];
+
+const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+/**
+ * One entry for today. Whether it was done is two named choices rather than
+ * a checkbox nobody noticed, and a goal already done today says so before
+ * saving: a second entry is kept, but the day only ever counts once.
+ *
+ * `logDate` ("YYYY-MM-DD") logs an earlier day instead, as the calendar does
+ * from a planned goal's chip. Without it the form logs today.
+ */
+export default function LogEntryForm({ goals, behaviors = [], initialGoalId = '', logDate = null, onSaved, onCancel }) {
   const [goalId, setGoalId] = useState(initialGoalId ? String(initialGoalId) : '');
   const [note, setNote] = useState('');
   const [mood, setMood] = useState('good');
@@ -17,10 +34,13 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const todayIso = toIsoDate(new Date());
+  const earlier = Boolean(logDate) && logDate !== todayIso;
+  const alreadyDone = completed && doneOnDay(behaviors, goalId, earlier ? logDate : todayIso);
 
   const goalOptions = [
     { value: '', label: 'Not linked to a goal' },
-    ...goals.map((goal) => ({ value: String(goal.id), label: goal.title })),
+    ...goals.map((goal) => ({ value: String(goal.id), label: goal.title, icon: goalIcon(goal) })),
   ];
 
   const pickGoal = (next) => {
@@ -40,7 +60,7 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
         mood,
         completed,
         // Read at submit, so a form opened before midnight still logs today.
-        logDate: toIsoDate(new Date()),
+        logDate: earlier ? logDate : toIsoDate(new Date()),
         latitude: place?.latitude ?? null,
         longitude: place?.longitude ?? null,
         placeName: place?.placeName || null,
@@ -90,14 +110,46 @@ export default function LogEntryForm({ goals, initialGoalId = '', onSaved, onCan
 
       <PlaceField id="log-place-label" label="Where" value={place} onChange={setPlace} />
 
-      <label className="app-check">
-        <input
-          type="checkbox"
-          checked={completed}
-          onChange={(e) => setCompleted(e.target.checked)}
-        />
-        I did it today
-      </label>
+      <div className="app-field">
+        <span className="app-field__label" id="log-outcome-label">
+          {earlier ? dayLabel.format(new Date(`${logDate}T00:00:00`)) : 'Today'}
+        </span>
+        <div className="app-segments" role="group" aria-labelledby="log-outcome-label">
+          <span
+            className="app-segments__thumb"
+            style={{ '--n': OUTCOMES.length, '--i': completed ? 0 : 1 }}
+            aria-hidden="true"
+          />
+          {OUTCOMES.map((o) => (
+            <button
+              key={o.label}
+              type="button"
+              className="app-segment"
+              aria-pressed={completed === o.id}
+              aria-describedby={!o.id && !completed ? 'log-outcome-hint' : undefined}
+              onClick={() => setCompleted(o.id)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {!completed && (
+          <p className="app-field__hint" id="log-outcome-hint">
+            Saved as a note for {earlier ? 'that day' : 'today'}. It doesn’t count toward the goal.
+          </p>
+        )}
+      </div>
+
+      {/* Always in the page, so the note is announced when it appears. */}
+      <div role="status">
+        {alreadyDone && (
+          <p className="app-field__hint log-form__repeat">
+            {earlier
+              ? 'Already logged that day. Saving adds a note to it; it won’t count twice.'
+              : 'Already logged today. Saving adds a note to today; it won’t count twice.'}
+          </p>
+        )}
+      </div>
 
       {error && (
         <p className="app-form__error" role="alert">

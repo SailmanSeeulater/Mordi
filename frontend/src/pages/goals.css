@@ -55,10 +55,12 @@
   border-radius: var(--r-chip);
   background: var(--color-accent);
   color: var(--color-on-accent);
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 19px;
   line-height: 1;
+}
+/* The goal's icon: its own, its category's, or the thumbtack. */
+.goal-card__mark svg {
+  width: 22px;
+  height: 22px;
 }
 
 .goal-card__ring {
@@ -101,10 +103,16 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  min-width: 0;
+  max-width: 100%;
   padding: 3px 8px;
   border-radius: var(--r-chip);
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   color: var(--color-accent-700);
+}
+
+.goal-card__tag svg {
+  flex: none;
 }
 
 .goal-card__place {
@@ -212,4 +220,7 @@
   margin-left: auto;
   font-size: 13px;
   color: var(--color-accent-700);
+}
+.goals__cats {
+  font-weight: 400;
 }

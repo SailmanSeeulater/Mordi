@@ -13,10 +13,51 @@ import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteAccount from '../components/DeleteAccount';
 import { toIsoDate } from './dashboardData';
 import { LEGAL } from '../lib/legal';
+import { WEEK_STARTS, setWeekStart, useWeekStart } from '../lib/weekStart';
 import './settings.css';
 
 // Far enough back to cover any account's history.
 const EXPORT_START = '2020-01-01';
+
+const WEEK_START_LABELS = { monday: 'Monday', sunday: 'Sunday' };
+
+/** Monday or Sunday for the calendar's weeks; goal targets are unaffected. */
+function WeekStartSetting() {
+  const weekStart = useWeekStart();
+  return (
+    <div className="settings__pref">
+      <span className="settings__label" id="set-week-start">
+        Week starts on
+      </span>
+      <div
+        className="app-segments settings__pref-segments"
+        role="group"
+        aria-labelledby="set-week-start"
+        aria-describedby="set-week-start-hint"
+      >
+        <span
+          className="app-segments__thumb"
+          style={{ '--n': WEEK_STARTS.length, '--i': WEEK_STARTS.indexOf(weekStart) }}
+          aria-hidden="true"
+        />
+        {WEEK_STARTS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            className="app-segment"
+            aria-pressed={id === weekStart}
+            onClick={() => setWeekStart(id)}
+          >
+            {WEEK_START_LABELS[id]}
+          </button>
+        ))}
+      </div>
+      <p className="settings__pref-hint" id="set-week-start-hint">
+        Changes the calendar. Weekly goals still count Monday to Sunday.
+      </p>
+    </div>
+  );
+}
 
 export default function Settings() {
   useDocumentTitle('Settings');
@@ -34,12 +75,13 @@ export default function Settings() {
     setExporting(true);
     setStatus({ tone: 'info', text: 'Collecting your data…' });
     try {
-      const [goals, behaviors, locations] = await Promise.all([
+      const [goals, behaviors, locations, categories] = await Promise.all([
         client.get('/api/goals'),
         client.get('/api/behaviors/range', {
           params: { start: EXPORT_START, end: toIsoDate(new Date()) },
         }),
         client.get('/api/locations').catch(() => ({ data: [] })),
+        client.get('/api/categories').catch(() => ({ data: [] })),
       ]);
 
       const payload = {
@@ -48,6 +90,7 @@ export default function Settings() {
         goals: goals.data,
         entries: behaviors.data,
         places: locations.data,
+        categories: categories.data,
       };
 
       const url = URL.createObjectURL(
@@ -93,6 +136,7 @@ export default function Settings() {
             below. Sorbet is the default. Your pick applies across the whole site, landing page
             included, and is saved in this browser only — so another device keeps its own.
           </p>
+          <WeekStartSetting />
         </section>
 
         <CustomThemeEditor />

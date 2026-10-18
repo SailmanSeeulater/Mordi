@@ -1,5 +1,6 @@
 package com.mordi.backend.push;
 
+import com.mordi.backend.service.PlannedDays;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,11 +16,19 @@ import java.util.Set;
  * Only facts against targets the person set: what is left and how many days
  * remain, most pressing first. Nothing when every target is already met,
  * because a reminder that there is nothing to do is noise. No streaks, no
- * scolding, no invented urgency.
+ * scolding, no invented urgency. A goal planned for particular weekdays is
+ * only mentioned on one of them, until it is done that day.
  */
 public final class ReminderComposer {
 
-    public record GoalProgress(String title, int target, Set<LocalDate> doneDays) {
+    /**
+     * One goal's week. `plannedDays` is its weekday mask (bit 0 Monday), or
+     * null when any day counts.
+     */
+    public record GoalProgress(String title, int target, Set<LocalDate> doneDays, Short plannedDays) {
+        public GoalProgress(String title, int target, Set<LocalDate> doneDays) {
+            this(title, target, doneDays, null);
+        }
     }
 
     public record Reminder(String title, String body) {
@@ -45,7 +54,7 @@ public final class ReminderComposer {
         for (GoalProgress g : goals) {
             long done = g.doneDays().stream().filter(d -> !d.isBefore(monday) && !d.isAfter(today)).count();
             int left = (int) Math.max(0, g.target() - done);
-            if (left > 0) {
+            if (left > 0 && dueToday(g, today)) {
                 behind.add(new Left(g.title(), left, g.target()));
             }
         }
@@ -71,6 +80,20 @@ public final class ReminderComposer {
             ? "Last day of the week"
             : daysLeft + " days left this week";
         return new Reminder(title, body.toString());
+    }
+
+    /**
+     * Whether a goal with days left belongs in today's reminder. A goal with
+     * no planned days always does, while its target is short. A goal planned
+     * for particular weekdays only does on one of them, and only until it is
+     * done that day: a Monday, Wednesday and Friday run says nothing on a
+     * Tuesday.
+     */
+    static boolean dueToday(GoalProgress g, LocalDate today) {
+        if (g.plannedDays() == null || g.plannedDays() == 0) {
+            return true;
+        }
+        return PlannedDays.includes(g.plannedDays(), today.getDayOfWeek()) && !g.doneDays().contains(today);
     }
 
     /** Groups completed entry dates by goal title, for {@link #compose}. */

@@ -21,9 +21,10 @@ function weekRange(monday) {
 /* ── The week, goal by goal ─────────────────────────────────── */
 
 function cellLabel(cell) {
-  if (cell.status === 'future') return 'still to come';
-  if (!cell.count) return cell.status === 'missed' ? 'missed' : 'nothing logged';
-  return `${cell.count} ${cell.count === 1 ? 'entry' : 'entries'}${cell.completed ? ', done' : ', not done'}`;
+  const planned = cell.planned ? 'planned, ' : '';
+  if (cell.status === 'future') return `${planned}still to come`;
+  if (!cell.count) return planned + (cell.status === 'missed' ? 'missed' : 'nothing logged');
+  return `${planned}${cell.count} ${cell.count === 1 ? 'entry' : 'entries'}${cell.completed ? ', done' : ', not done'}`;
 }
 
 function GoalMatrix({ report }) {
@@ -80,7 +81,7 @@ function GoalMatrix({ report }) {
                       return (
                         <td key={cell.iso}>
                           <span
-                            className={`wk-cell wk-cell--${kind}`}
+                            className={`wk-cell wk-cell--${kind}${cell.planned ? ' wk-cell--planned' : ''}`}
                             data-level={level}
                             title={`${row.goal.title}, ${dayLong.format(parseIsoDate(cell.iso))}: ${cellLabel(cell)}`}
                           >
@@ -122,7 +123,10 @@ function GoalMatrix({ report }) {
         <li><span className="wk-cell wk-cell--done" data-level="1" />Done</li>
         <li><span className="wk-cell wk-cell--done" data-level="3" />Done, several times</li>
         <li><span className="wk-cell wk-cell--open" data-level="1" />Logged, not done</li>
-        <li><span className="wk-cell wk-cell--missed" />Missed a daily goal</li>
+        <li><span className="wk-cell wk-cell--missed" />Missed a daily goal or a planned day</li>
+        {report.matrix.some((row) => row.cells.some((c) => c.planned)) && (
+          <li><span className="wk-cell wk-cell--none wk-cell--planned" />Planned day</li>
+        )}
       </ul>
     </section>
   );

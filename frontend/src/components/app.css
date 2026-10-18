@@ -583,6 +583,12 @@ table.app-sr { white-space: normal; }
   font-size: 13px;
   color: var(--color-text-muted);
 }
+/* The log form's "Already logged today" line, just above the buttons: in
+   full ink, because it changes what saving will do. */
+.log-form__repeat {
+  margin: 0 0 14px;
+  color: var(--color-text);
+}
 
 .app-check {
   display: flex;
@@ -698,6 +704,40 @@ table.app-sr { white-space: normal; }
   background: color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 .app-segment[aria-pressed='true'] {
+  color: var(--color-on-accent);
+}
+/* Set by something else (a goal's picked days): still legible, not pressable. */
+.app-segment:disabled { cursor: default; }
+.app-segments--locked .app-segments__thumb { opacity: 0.72; }
+.app-segments--locked .app-segment:not([aria-pressed='true']) { color: var(--color-text-muted); }
+
+/* Seven weekday toggles, any number on: a goal's planned days. */
+.app-daypick {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+.app-daypick__day {
+  min-height: 38px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.app-daypick__day:not([aria-pressed='true']):hover {
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+}
+.app-daypick__day[aria-pressed='true'] {
+  background: var(--color-accent);
+  box-shadow: none;
   color: var(--color-on-accent);
 }
 
@@ -1148,6 +1188,7 @@ table.app-sr { white-space: normal; }
 @media (pointer: coarse) {
   .app-btn--sm,
   .app-segment,
+  .app-daypick__day,
   .app-iconbtn,
   .theme-switch__cycle,
   .theme-switch__more {
@@ -1155,6 +1196,8 @@ table.app-sr { white-space: normal; }
   }
   .app-iconbtn,
   .theme-switch__more { min-width: 44px; }
+  /* Seven across a phone's sheet measured 43px wide with a 6px gap. */
+  .app-daypick { gap: 4px; }
   .app-iconbtn--sm { width: 44px; height: 44px; }
   .theme-switch__more { width: 44px; }
   /* Measured at 30x44 (the colour chip, its name hidden on a phone) and 44x38

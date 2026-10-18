@@ -1,0 +1,142 @@
+/* ── Icon picker, category editor, the goal form's icon disclosure ──
+   Shared by the goal form (dashboard and Goals page) and the Categories
+   dialog, so it travels with the components rather than with a page. */
+
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 4px;
+}
+
+.icon-picker__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--t-small);
+  cursor: pointer;
+}
+.icon-picker__option svg {
+  width: 19px;
+  height: 19px;
+  flex: none;
+}
+.icon-picker__option:hover {
+  background: color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+.icon-picker__option[aria-checked='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* "Same as category" takes the first row, so its words have room. */
+.icon-picker__option--default {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+/* The goal form's icon field: the current icon and a disclosure button. */
+.icon-field__toggle {
+  gap: 8px;
+}
+.icon-field__current {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-chip);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.icon-field__current svg {
+  width: 16px;
+  height: 16px;
+}
+.icon-field__panel {
+  margin-top: 8px;
+}
+
+/* A category being made or edited, inline. */
+.cat-editor {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: var(--r-panel);
+  background: color-mix(in srgb, var(--color-text) 4%, var(--color-surface));
+  box-shadow: var(--edge);
+}
+.cat-editor .app-field {
+  margin-bottom: 0;
+}
+.cat-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* The Categories dialog's list. */
+.cat-list {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.cat-list__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.cat-list__mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-chip);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-accent-700);
+}
+.cat-list__mark svg {
+  width: 17px;
+  height: 17px;
+}
+.cat-list__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-list__actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.cat-list__confirm {
+  margin: 4px 0 8px;
+  font-size: var(--t-small);
+  color: var(--color-text-muted);
+}
+
+@media (pointer: coarse) {
+  .icon-picker {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  }
+  .icon-picker__option {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

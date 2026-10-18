@@ -50,7 +50,7 @@ export const HOW = {
       id: 'week',
       title: 'See where the week stands',
       body:
-        'The week card tells you whether you’re on pace for today. An empty day counts as missed only for a goal meant to happen every day.',
+        'The week card tells you whether you’re on pace for today. An empty day counts as missed only for a goal meant to happen every day, or on a day you planned it for.',
     },
   ],
 };

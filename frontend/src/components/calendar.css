@@ -96,6 +96,38 @@
   letter-spacing: 0.04em;
 }
 
+/* Planned goals: a small ring each along the day's top edge, filled once
+   done. Drawn in the day's own ink, so they read on the accent fill too. */
+.cal__plans {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+.cal__plan {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.cal__plan--done { background: currentColor; }
+.cal__key.cal__key--plan {
+  width: 8px;
+  height: 8px;
+  margin: 0 2px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px var(--color-text);
+}
+
+.cal__planned {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
 .cal__legend {
   display: flex;
   flex-wrap: wrap;
@@ -175,4 +207,23 @@
   margin: 10px 0 0;
   font-size: 12.5px;
   color: var(--color-text-muted);
+}
+
+/* An entry's Remove, small and to the right of its goal. Once removed, the
+   entry's place holds its Undo until another day is picked. */
+.cal__entry-remove {
+  margin-left: auto;
+  font-size: 12px;
+}
+.cal__entry-top .mood + .cal__entry-remove { margin-left: 4px; }
+.cal__entry--removed {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+.cal__entry-gone {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
 }

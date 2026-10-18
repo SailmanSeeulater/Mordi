@@ -16,7 +16,7 @@ Mordi tracks goals with a weekly target and the entries logged against them, so 
 
 ## Positioning
 
-Goals carry a numeric weekly target (1–7 times per week), and every logged entry is attributed to a day. That pairing is what the product owns: progress is measured against a target the user set, not against a streak the app invented, and a day with nothing logged reads as missed only for goals meant to happen daily.
+Goals carry a numeric weekly target (1–7 times per week), and every logged entry is attributed to a day. That pairing is what the product owns: progress is measured against a target the user set, not against a streak the app invented, and a day with nothing logged reads as missed only when the person said the goal was due that day: a goal meant to happen daily, or one planned for that weekday.
 
 ## Operating Context
 
@@ -24,14 +24,14 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 - Routes: landing (`/`), sign in and create account, forgot and reset password (`/forgot-password`, `/reset-password#token`), Terms and Privacy (`/terms`, `/privacy`), dashboard (`/dashboard`), goals (`/goals`), locations (`/locations`), weekly report (`/reports`), settings (`/settings`).
 - Auth is email plus password; addresses are case-insensitive. A 15-minute access token is kept in `localStorage`; a 30-day refresh token, rotated on every use, lives in an httpOnly cookie, so a session survives from one day to the next. The frontend calls a same-origin Spring Boot API.
 - A forgotten password is reset by a one-time link emailed through Resend: valid for 30 minutes, usable once, only the latest one sent. Setting a new password, by link or from Settings, signs every device out. The forgot form answers the same whether or not the address has an account.
-- Deleting an account (Settings, password required) is immediate and total: goals, entries, places, notes, to-dos, events, reports, sessions and the person's shared-goal messages all go. A shared goal with other members passes to whoever joined it first; entries others logged against a goal that goes with its owner stay theirs, unattached. A confirmation email is sent once the deletion commits. Nightly backups roll over within 7 days.
+- Deleting an account (Settings, password required) is immediate and total: goals, entries, places, notes, to-dos, events, reports, their own categories, sessions and the person's shared-goal messages all go. A shared goal with other members passes to whoever joined it first; entries others logged against a goal that goes with its owner stay theirs, unattached. A confirmation email is sent once the deletion commits. Nightly backups roll over within 7 days.
 - Sign-in tokens carry the account id and are checked against a live account on every request, so a deleted account's token stops working at once.
 - The Terms (California law, 13+) and Privacy Policy live at `/terms` and `/privacy`; their facts sit in `frontend/src/lib/legal.js`. Sign-up says that creating an account agrees to both, and the agreed version is stored on the account. When a feature starts collecting something new or calling a new service, the Privacy Policy and the version change with it.
 - A companion Locations feature saves places with a map, sharing the same shell.
 
 ## Capabilities and Constraints
 
-- Goals: title, optional category (fitness / sleep / productivity / health), `targetPerWeek` 1–7, optional usual place, soft-delete via an `active` flag, `createdAt`.
+- Goals: title, optional category (fitness / sleep / productivity / health, or one of up to 20 of the person’s own, each a name and an icon), an optional icon of its own, `targetPerWeek` 1–7, optional planned weekdays (`plannedDays`, a Monday-first 7-bit mask; when set, the target is the number of days picked, and the server keeps the two equal), optional usual place, soft-delete via an `active` flag, `createdAt`. Every goal shows an icon: its own, else its category’s, else a thumbtack. The icons are a fixed drawn set; the backend accepts only their keys.
 - Notes: up to five per user, optional title, pinnable.
 - To-dos: one line of text, done or not, no description or due date. Finishing one is part of the record: it is stamped with the moment and the person's own day (`completedOn`, sent by the browser), shows in Lately beside entries, and counts in that week's report (a "To-dos done" fact, a "To-dos finished" block, and a sentence in the written summary). To-dos sit beside goals, never inside their targets or percentages. "Clear done" takes finished items off the list but keeps them as history; deleting one removes it everywhere.
 - Entries ("behaviors"): note, mood (great / good / neutral / bad / terrible), `completed` boolean, `logDate`, optional link to one goal, optional place, and an optional `durationSeconds` for sessions saved from the time logger (0 to 7 days).
@@ -39,7 +39,8 @@ Goals carry a numeric weekly target (1–7 times per week), and every logged ent
 - Weekly progress, streaks, and the goal × day grid are computed in the browser from `GET /api/goals` and `GET /api/behaviors/range`; the backend has no streak or per-goal aggregation.
 - A `Report` entity exists (weekly totals, completion rate, most common mood) but no per-goal or per-day breakdown.
 - Server timestamps are stored without a timezone, so times of day are not shown to users — dates only.
-- Reminders: opt-in Web Push, once a day at the person's chosen hour, only when a goal still has days left.
+- Planned days repeat every week. A goal with them is due on those days: the week card's pace counts the planned days so far, an empty past planned day reads as missed, the calendar shows the goal on its days (filled once done), and the report outlines them. A done entry on another day still counts toward the target. Goals without planned days work as before: any days count.
+- Reminders: opt-in Web Push, once a day at the person's chosen hour, only when a goal still has days left. A goal with planned days is only mentioned on one of them, until it is done that day.
 - Shared goals ("Together"): an owner shares a goal by invite link (7-day, revocable, hashed at rest); up to 8 people each log it themselves. Members see each other's names and which days each marked it done, never notes, moods or places. Each shared goal has one message thread among its members; there is no messaging between arbitrary accounts, no user search, and no shared calendar or notes.
 
 ## Brand Commitments

@@ -23,7 +23,7 @@ export default function About() {
         A goal carries a target of one to seven times a week, and every entry you log belongs to a day. The
         week is the unit: each screen answers where the week stands before anything else. Progress is
         measured against the target you set, never against a streak the app invented, and a day with nothing
-        logged counts as missed only for goals meant to happen daily.
+        logged counts as missed only for goals meant to happen daily, or on days you planned a goal for.
       </p>
 
       <h2>What it doesn&rsquo;t do</h2>

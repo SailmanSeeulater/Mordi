@@ -156,10 +156,15 @@ are on always shows in the rail, whatever the modules say.
   has a ring; each opens the month calendar. One action: Log today. The
   weather chip sits on its own row along the card's top edge, right-aligned,
   so it never sits over the facts beside it; the clock lives in the top bar.
-- **Goal rings** — conic progress per goal, dashed when nothing is logged;
-  draggable, arrow keys to move.
-- **Goal cards** — matte cards on the Goals page: title, category, usual
-  place, target, and the week as seven dots.
+- **Goal icons** — every goal shows one: its own, else its category's, else a
+  thumbtack. One drawn set in `lib/categories.jsx` (twenty-one marks, 24 grid,
+  1.9 stroke, never emoji), picked from a radio-group grid in the goal form
+  behind "Choose an icon". People add their own categories (a name and an
+  icon) from the goal form or the Goals page's Categories dialog.
+- **Goal rings** — conic progress per goal, dashed when nothing is logged, the
+  goal's icon above the count; draggable, arrow keys to move.
+- **Goal cards** — matte cards on the Goals page: the goal's icon on an accent
+  tile, title, category, usual place, target, and the week as seven dots.
 - **Timer** — the Clock app's timer in Mordi's materials: a ring that fills
   over an hour with a dot orbiting each minute, large tabular digits, and two
   round buttons that keep their places (quiet action left, forward action
@@ -175,6 +180,11 @@ are on always shows in the rail, whatever the modules say.
   and only a heavier day stretches the scale. Clicking a day opens the calendar.
   Scrolls sideways natively on touch and trackpads, drags with a mouse, and
   takes arrow keys when focused; a drag never counts as a click on a day.
+  A Year / Month switch (remembered per browser) swaps in one month as a
+  calendar of the same squares, rows led by the calendar's week start, the
+  day number in each, today ringed. The month is one tab stop with arrow keys
+  between days, each day named ("2 logs on Fri, Oct 16"), and the month
+  summarised once. Paging stays inside the loaded year.
 - **Notes** — up to five, pinned first. Markdown with Obsidian's habits:
   `[[Note]]` links, `#tags`, task lists, tables, backlinks. Opening a note shows
   a reading view (a page set at 16.5px on a 64ch measure, with a line of facts
@@ -183,7 +193,10 @@ are on always shows in the rail, whatever the modules say.
 - **Calendar** — day, week and month. Drag on the hours to block out time, drag
   an event to move it, drag its edge to resize; all snap to 15 minutes and
   commit on release. Seven named colours, each mixed against the theme's own
-  surface and ink. Month is a six-week grid, dots on a phone. `.ics` files from
+  surface and ink. Month is a six-week grid, dots on a phone. Weeks start on
+  Monday or Sunday (Settings → Appearance, per browser, `lib/weekStart.js`);
+  that applies to calendar views only, and weekly goal targets always count
+  Monday to Sunday. `.ics` files from
   Google, Apple or Outlook import after a preview, repeating events expanded.
 - **History** — archived goals with what they amounted to; restore or delete.
 - **Together** — shared goals. A list of shared goals beside one room that fills

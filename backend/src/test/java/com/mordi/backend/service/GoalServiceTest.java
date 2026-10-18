@@ -2,9 +2,11 @@ package com.mordi.backend.service;
 
 import com.mordi.backend.dto.GoalRequest;
 import com.mordi.backend.exception.GoalNotFoundException;
+import com.mordi.backend.model.Category;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.CategoryRepository;
 import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.GoalMessageRepository;
 import com.mordi.backend.repository.GoalRepository;
@@ -46,13 +48,16 @@ class GoalServiceTest {
     @Mock
     private GoalMessageRepository messageRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     private GoalService goalService;
     private User me;
     private User someoneElse;
 
     @BeforeEach
     void setUp() {
-        goalService = new GoalService(goalRepository, userRepository, behaviorRepository, memberRepository, messageRepository);
+        goalService = new GoalService(goalRepository, userRepository, behaviorRepository, memberRepository, messageRepository, categoryRepository);
         me = user(ME);
         someoneElse = user("other@mordi.com");
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
@@ -297,6 +302,233 @@ class GoalServiceTest {
         assertThat(joined.getMemberCount()).isEqualTo(3);
         assertThat(joined.getUnread()).isEqualTo(2);
         assertThat(joined.getOwnerName()).isEqualTo("Alex Kim");
+    }
+
+    private Category category(Long id, User owner, String name, String icon) {
+        Category category = new Category();
+        category.setId(id);
+        category.setUser(owner);
+        category.setName(name);
+        category.setIcon(icon);
+        return category;
+    }
+
+    @Nested
+    class IconsAndCategories {
+
+        @Test
+        void aGoalKeepsTheIconItWasGiven() {
+            GoalRequest request = request(3);
+            request.setIcon("book");
+
+            assertThat(goalService.createGoal(ME, request).getIcon()).isEqualTo("book");
+        }
+
+        @Test
+        void withoutAnIcon_aGoalFallsBackToItsCategory() {
+            assertThat(goalService.createGoal(ME, request(3)).getIcon()).isNull();
+        }
+
+        @Test
+        void refusesAnIconMordiCannotDraw() {
+            GoalRequest request = request(3);
+            request.setIcon("rocket");
+
+            assertThatThrownBy(() -> goalService.createGoal(ME, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Pick one of the icons");
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void anEmptyIconGoesBackToTheCategorysAndAMissingOneIsLeftAlone() {
+            Goal goal = existingGoal(me);
+            goal.setIcon("book");
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            GoalRequest untouched = new GoalRequest();
+            untouched.setTitle("Run more");
+            assertThat(goalService.updateGoal(ME, 10L, untouched).getIcon()).isEqualTo("book");
+
+            GoalRequest cleared = new GoalRequest();
+            cleared.setIcon("");
+            assertThat(goalService.updateGoal(ME, 10L, cleared).getIcon()).isNull();
+        }
+
+        @Test
+        void refusesAnUnknownIconOnEditToo() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(me)));
+            GoalRequest patch = new GoalRequest();
+            patch.setIcon("<svg>");
+
+            assertThatThrownBy(() -> goalService.updateGoal(ME, 10L, patch))
+                .hasMessage("Pick one of the icons");
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void acceptsABuiltInCategoryOrNone() {
+            GoalRequest builtIn = request(3);
+            builtIn.setCategory("sleep");
+            assertThat(goalService.createGoal(ME, builtIn).getCategory()).isEqualTo("sleep");
+
+            GoalRequest none = request(3);
+            none.setCategory("");
+            assertThat(goalService.createGoal(ME, none).getCategory()).isNull();
+        }
+
+        @Test
+        void acceptsOneOfMyOwnCategories() {
+            when(categoryRepository.findById(7L)).thenReturn(Optional.of(category(7L, me, "Reading", "book")));
+            GoalRequest request = request(3);
+            request.setCategory("custom:7");
+
+            assertThat(goalService.createGoal(ME, request).getCategory()).isEqualTo("custom:7");
+        }
+
+        @Test
+        void refusesSomeoneElsesCategoryLikeOneThatDoesNotExist() {
+            when(categoryRepository.findById(7L)).thenReturn(Optional.of(category(7L, someoneElse, "Theirs", "book")));
+            when(categoryRepository.findById(8L)).thenReturn(Optional.empty());
+
+            for (String value : java.util.List.of("custom:7", "custom:8", "custom:x", "custom:", "running")) {
+                GoalRequest request = request(3);
+                request.setCategory(value);
+                assertThatThrownBy(() -> goalService.createGoal(ME, request))
+                    .as(value)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("That category doesn’t exist");
+            }
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void listedGoalsInACustomCategoryCarryItsNameAndIcon() {
+            Goal mine = existingGoal(me);
+            mine.setCategory("custom:7");
+            Goal plain = existingGoal(me);
+            plain.setId(11L);
+            when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNull(me))
+                .thenReturn(new java.util.ArrayList<>(java.util.List.of(mine, plain)));
+            when(categoryRepository.findAllById(any()))
+                .thenReturn(java.util.List.of(category(7L, me, "Reading", "book")));
+
+            goalService.getActiveGoals(ME);
+
+            assertThat(mine.getCategoryName()).isEqualTo("Reading");
+            assertThat(mine.getCategoryIcon()).isEqualTo("book");
+            assertThat(plain.getCategoryName()).isNull();
+            assertThat(plain.getCategoryIcon()).isNull();
+        }
+    }
+
+    @Nested
+    class PlannedDaysOnAGoal {
+
+        // Monday, Wednesday and Friday: bits 0, 2 and 4.
+        private static final int MON_WED_FRI = 0b001_0101;
+
+        @Test
+        void withoutPlannedDays_aGoalKeepsItsTargetAndAnyDayCounts() {
+            Goal goal = goalService.createGoal(ME, request(4));
+
+            assertThat(goal.getPlannedDays()).isNull();
+            assertThat(goal.getTargetPerWeek()).isEqualTo(4);
+        }
+
+        @Test
+        void pickedDaysAreKeptAndTheirCountBecomesTheTarget() {
+            GoalRequest request = request(5);
+            request.setPlannedDays(MON_WED_FRI);
+
+            Goal goal = goalService.createGoal(ME, request);
+
+            assertThat(goal.getPlannedDays()).isEqualTo((short) MON_WED_FRI);
+            // The request said 5; three days were picked, so it is three.
+            assertThat(goal.getTargetPerWeek()).isEqualTo(3);
+        }
+
+        @Test
+        void zeroOnCreateMeansNoPlannedDays() {
+            GoalRequest request = request(2);
+            request.setPlannedDays(0);
+
+            Goal goal = goalService.createGoal(ME, request);
+
+            assertThat(goal.getPlannedDays()).isNull();
+            assertThat(goal.getTargetPerWeek()).isEqualTo(2);
+        }
+
+        @Test
+        void refusesAMaskOutsideTheWeek() {
+            GoalRequest tooMany = request(3);
+            tooMany.setPlannedDays(128);
+            GoalRequest negative = request(3);
+            negative.setPlannedDays(-1);
+
+            assertThatThrownBy(() -> goalService.createGoal(ME, tooMany))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("0 to 127");
+            assertThatThrownBy(() -> goalService.createGoal(ME, negative))
+                .isInstanceOf(IllegalArgumentException.class);
+            verify(goalRepository, never()).save(any());
+        }
+
+        @Test
+        void onEdit_zeroClearsTheDaysAndKeepsTheTargetGiven() {
+            Goal goal = existingGoal(me);
+            goal.setPlannedDays((short) MON_WED_FRI);
+            goal.setTargetPerWeek(3);
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            GoalRequest patch = new GoalRequest();
+            patch.setPlannedDays(0);
+            patch.setTargetPerWeek(4);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isNull();
+            assertThat(updated.getTargetPerWeek()).isEqualTo(4);
+        }
+
+        @Test
+        void onEdit_aMissingValueLeavesTheDaysAndTheyStillDecideTheTarget() {
+            Goal goal = existingGoal(me);
+            goal.setPlannedDays((short) MON_WED_FRI);
+            goal.setTargetPerWeek(3);
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(goal));
+
+            // What the Goals page's target suggestion sends: a target alone.
+            GoalRequest patch = new GoalRequest();
+            patch.setTargetPerWeek(5);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isEqualTo((short) MON_WED_FRI);
+            assertThat(updated.getTargetPerWeek()).isEqualTo(3);
+        }
+
+        @Test
+        void onEdit_newDaysSetANewTarget() {
+            when(goalRepository.findById(10L)).thenReturn(Optional.of(existingGoal(me)));
+
+            GoalRequest patch = new GoalRequest();
+            patch.setPlannedDays(PlannedDays.ALL);
+            Goal updated = goalService.updateGoal(ME, 10L, patch);
+
+            assertThat(updated.getPlannedDays()).isEqualTo((short) 127);
+            assertThat(updated.getTargetPerWeek()).isEqualTo(7);
+        }
+
+        @Test
+        void historyCarriesThePlannedDays() {
+            Goal archived = existingGoal(me);
+            archived.setPlannedDays((short) MON_WED_FRI);
+            archived.setArchivedAt(java.time.LocalDateTime.now());
+            when(goalRepository.findByUserAndActiveTrueAndArchivedAtIsNotNullOrderByArchivedAtDesc(me))
+                .thenReturn(java.util.List.of(archived));
+            when(behaviorRepository.summarizeByGoal(eq(me), any())).thenReturn(java.util.List.of());
+
+            assertThat(goalService.getArchivedGoals(ME).get(0).plannedDays()).isEqualTo((short) MON_WED_FRI);
+        }
     }
 
     @Test

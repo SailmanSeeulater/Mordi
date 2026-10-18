@@ -145,4 +145,23 @@ class AccountServiceTest {
         assertThat(read.getUser()).isSameAs(jo);
         verify(goals, times(2)).save(any(Goal.class));
     }
+
+    @Test
+    void aSharedGoalInMyOwnCategoryPassesOnWithNoCategoryButKeepsABuiltInOne() {
+        signedInWithRightPassword();
+        User sam = person(2L, "sam@mordi.com", "Sam");
+        Goal run = goal(10L, me);
+        run.setCategory("custom:4");
+        run.setIcon("run");
+        Goal sleep = goal(11L, me);
+        sleep.setCategory("sleep");
+        when(members.findOthersInGoalsOwnedBy(me)).thenReturn(List.of(member(run, sam), member(sleep, sam)));
+
+        service.delete("me@mordi.com", "right");
+
+        // The category goes with the account; the goal's own icon stays.
+        assertThat(run.getCategory()).isNull();
+        assertThat(run.getIcon()).isEqualTo("run");
+        assertThat(sleep.getCategory()).isEqualTo("sleep");
+    }
 }

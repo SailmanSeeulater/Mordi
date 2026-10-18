@@ -66,7 +66,25 @@ function TodoItem({ item }) {
   );
 }
 
-function Groups({ groups, todayIso }) {
+/**
+ * An entry's Remove: shows on hover, or when the entry is tapped or tabbed
+ * to, the way a Together message's Delete does. `e.detail` is 0 for a click
+ * made from the keyboard, which tells the toast to take focus.
+ */
+function RemoveButton({ entry, onRemove }) {
+  return (
+    <button
+      type="button"
+      className="lately__remove app-linkbtn"
+      onClick={(e) => onRemove(entry, { viaKeyboard: e.detail === 0 })}
+      aria-label={`Remove ${entry.note || 'this entry'}`}
+    >
+      Remove
+    </button>
+  );
+}
+
+function Groups({ groups, todayIso, onRemove }) {
   return groups.map((group) => (
     <li className="lately__day" key={group.iso}>
       <p className="lately__date">{dayLabel(group.iso, todayIso)}</p>
@@ -74,7 +92,9 @@ function Groups({ groups, todayIso }) {
         {group.entries.map((entry) => entry.kind === 'todo' ? (
           <TodoItem item={entry} key={entry.id} />
         ) : (
-          <li className="lately__entry" key={entry.id}>
+          // tabIndex -1: a tap focuses the entry, which is what shows its
+          // Remove on a touch screen; it stays out of the Tab order.
+          <li className="lately__entry" key={entry.id} tabIndex={onRemove ? -1 : undefined}>
             <div className="lately__top">
               <p className="lately__note">{entry.note}</p>
               {entry.durationSeconds != null && (
@@ -94,7 +114,7 @@ function Groups({ groups, todayIso }) {
                 </span>
               )}
             </div>
-            {(entry.goal || entry.placeName || loggedTime(entry)) && (
+            {(entry.goal || entry.placeName || loggedTime(entry) || onRemove) && (
               <div className="lately__foot">
                 {loggedTime(entry) && (
                   <time className="lately__time" dateTime={entry.loggedAt}>
@@ -108,6 +128,7 @@ function Groups({ groups, todayIso }) {
                     <span className="app-trunc">{entry.placeName}</span>
                   </span>
                 )}
+                {onRemove && <RemoveButton entry={entry} onRemove={onRemove} />}
               </div>
             )}
           </li>
@@ -135,7 +156,7 @@ function Groups({ groups, todayIso }) {
  * The groups are rendered twice so the loop has no seam; the second copy is
  * hidden from assistive technology and cannot take focus.
  */
-export default function LatelyFeed({ entries, todayIso, weekCount }) {
+export default function LatelyFeed({ entries, todayIso, weekCount, onRemove }) {
   const groups = useMemo(() => groupByDay(entries), [entries]);
 
   const viewportRef = useRef(null);
@@ -219,14 +240,20 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
 
   const pause = useCallback(() => setPaused(true), []);
   const toggle = useCallback(() => setPaused((p) => !p), []);
+  // A click on an entry only ever stops the drift: it is a reach for that
+  // entry or its Remove, and starting the list again under it would carry
+  // it away. A click anywhere else in the window toggles, as before.
+  const clickFeed = useCallback(
+    (e) => (e.target.closest?.('.lately__entry') ? pause() : toggle()),
+    [pause, toggle],
+  );
 
-  // Keyboard focus stops the drift, so someone tabbing in can read and scroll.
-  // Pointer focus must not: a click focuses first and then clicks, so pausing
-  // here would be undone by the click's own toggle a moment later.
+  // Keyboard focus stops the drift, so someone tabbing in can read and scroll,
+  // and a Remove tabbed to stays where it is. Pointer focus must not: a click
+  // focuses first and then clicks, so pausing here would be undone by the
+  // click's own toggle a moment later.
   const pauseOnKeyboardFocus = useCallback((e) => {
-    if (e.target === e.currentTarget && e.currentTarget.matches(':focus-visible')) {
-      setPaused(true);
-    }
+    if (e.target.matches?.(':focus-visible')) setPaused(true);
   }, []);
 
   const empty = groups.length === 0;
@@ -276,18 +303,20 @@ export default function LatelyFeed({ entries, todayIso, weekCount }) {
           tabIndex={overflowing ? 0 : undefined}
           role={overflowing ? 'region' : undefined}
           aria-label={overflowing ? 'Recent entries' : undefined}
-          onClick={overflowing && !reduced ? toggle : undefined}
+          onClick={overflowing && !reduced ? clickFeed : undefined}
           onWheel={playing ? pause : undefined}
           onTouchStart={playing ? pause : undefined}
           onFocus={playing ? pauseOnKeyboardFocus : undefined}
         >
           <div ref={trackRef} className="lately__track">
             <ul ref={firstRef} className="lately__copy">
-              <Groups groups={groups} todayIso={todayIso} />
+              <Groups groups={groups} todayIso={todayIso} onRemove={onRemove} />
             </ul>
             {overflowing && !reduced && (
               <ul ref={secondRef} className="lately__copy" aria-hidden="true" inert>
-                <Groups groups={groups} todayIso={todayIso} />
+                {/* The same rows, Remove included, so both copies are the same
+                    height and the loop stays seamless. Inert, so never used. */}
+                <Groups groups={groups} todayIso={todayIso} onRemove={onRemove} />
               </ul>
             )}
           </div>
