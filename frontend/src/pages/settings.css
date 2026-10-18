@@ -33,6 +33,28 @@
   height: 46px;
 }
 
+/* A display preference under the themes: a label, two segments, one line
+   saying what it does and does not change. */
+.settings__pref {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 9%, transparent);
+}
+.settings__pref-segments {
+  flex: 0 1 240px;
+  min-width: 200px;
+}
+.settings__pref-hint {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
 .settings__row {
   display: flex;
   align-items: center;

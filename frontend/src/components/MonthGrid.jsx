@@ -1,11 +1,13 @@
 import { formatTime, onDay, parseLocal, sameDay } from '../lib/planner';
+import { weekdayLabels } from '../lib/weekStart';
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const SHOWN = 3;
 const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
 /**
- * A month, six Monday-led weeks, the way Google Calendar lays one out.
+ * A month, six weeks led by Monday or Sunday (the person's choice, passed in
+ * as `weekStart`; `days` already starts on it), the way Google Calendar lays
+ * one out.
  *
  * Each day lists its events, all-day ones first, then timed ones by start;
  * past three it says how many more and opens the day. The date number opens
@@ -13,14 +15,14 @@ const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'l
  * phone the chips shrink to coloured dots, one per event, so the month still
  * reads as a whole.
  */
-export default function MonthGrid({ days, month, events, now, onOpenDay, onNew, onOpenEvent }) {
+export default function MonthGrid({ days, weekStart = 'monday', month, events, now, onOpenDay, onNew, onOpenEvent }) {
   return (
     <div className="month">
       {/* The day letters are decoration: each date button already says its
           weekday in full. No grid role either, since arrow keys do not move
           through the days; the buttons stand on their own. */}
       <div className="month__head" aria-hidden="true">
-        {WEEKDAYS.map((d) => (
+        {weekdayLabels(weekStart).map((d) => (
           <span key={d}>{d}</span>
         ))}
       </div>

@@ -3,8 +3,10 @@ import {
   LEVELS,
   SCALE_FLOOR,
   buildHeatmap,
+  buildMonth,
   countByDay,
   describeDay,
+  describeMonth,
   levelFor,
 } from '../lib/activity';
 import { groupByDay } from '../lib/feed';
@@ -136,6 +138,89 @@ describe('buildHeatmap', () => {
     const cols = map.months.map((m) => m.col);
     expect(new Set(map.months.map((m) => m.label)).size).toBeGreaterThanOrEqual(11);
     cols.slice(1).forEach((c, i) => expect(c - cols[i]).toBeGreaterThanOrEqual(3));
+  });
+});
+
+describe('buildMonth', () => {
+  const OCT = new Date(2026, 9, 1); // opens on a Thursday
+  const TODAY_OCT = new Date(2026, 9, 17); // a Saturday
+  const flat = (month) => month.weeks.flat();
+  const inMonth = (month) => flat(month).filter((d) => !d.outside);
+
+  it('lays the month out as whole weeks led by Monday', () => {
+    const month = buildMonth(new Map(), OCT, 'monday', { today: TODAY_OCT });
+    expect(month.title).toBe('October 2026');
+    expect(month.weeks.every((w) => w.length === 7)).toBe(true);
+    expect(parseIsoDate(month.weeks[0][0].iso).getDay()).toBe(1);
+    expect(month.weeks[0][0].iso).toBe('2026-09-28');
+    expect(month.weeks.at(-1).at(-1).iso).toBe('2026-11-01');
+    expect(month.weeks).toHaveLength(5);
+  });
+
+  it('leads with Sunday when the calendar does', () => {
+    const month = buildMonth(new Map(), OCT, 'sunday', { today: TODAY_OCT });
+    expect(parseIsoDate(month.weeks[0][0].iso).getDay()).toBe(0);
+    expect(month.weeks[0][0].iso).toBe('2026-09-27');
+    expect(month.weeks.at(-1).at(-1).iso).toBe('2026-10-31');
+  });
+
+  it('covers every day of the month once, and only as many weeks as it needs', () => {
+    const feb = buildMonth(new Map(), new Date(2026, 1, 1), 'sunday', { today: TODAY_OCT });
+    // February 2026 opens on a Sunday: four rows exactly.
+    expect(feb.weeks).toHaveLength(4);
+    expect(inMonth(feb).map((d) => d.day)).toEqual(Array.from({ length: 28 }, (_, i) => i + 1));
+    const aug = buildMonth(new Map(), new Date(2026, 7, 1), 'monday', { today: TODAY_OCT });
+    // August 2026 opens on a Saturday and runs 31 days: six Monday rows.
+    expect(aug.weeks).toHaveLength(6);
+    expect(new Set(inMonth(aug).map((d) => d.iso)).size).toBe(31);
+  });
+
+  it('never counts the neighbouring months or the days after today', () => {
+    const counts = new Map([
+      ['2026-09-30', 5], // outside, shown in the first row
+      ['2026-10-16', 2],
+      ['2026-10-17', 1], // today counts
+      ['2026-10-20', 3], // future
+    ]);
+    const month = buildMonth(counts, OCT, 'monday', { today: TODAY_OCT });
+    const at = (iso) => flat(month).find((d) => d.iso === iso);
+    expect(at('2026-09-30')).toMatchObject({ outside: true, count: 0, level: 0 });
+    expect(at('2026-10-20')).toMatchObject({ future: true, count: 0, level: 0 });
+    expect(at('2026-10-17')).toMatchObject({ future: false, count: 1 });
+    expect(month.total).toBe(3);
+    expect(month.activeDays).toBe(2);
+    expect(month.busiest).toEqual({ iso: '2026-10-16', count: 2 });
+  });
+
+  it('shades with the same steps as the year, on a scale it can be given', () => {
+    const counts = new Map([
+      ['2026-10-05', 1],
+      ['2026-10-06', 4],
+    ]);
+    const own = buildMonth(counts, OCT, 'monday', { today: TODAY_OCT });
+    expect(own.scale).toBe(SCALE_FLOOR);
+    const level = (month, iso) => flat(month).find((d) => d.iso === iso).level;
+    expect(level(own, '2026-10-05')).toBe(1);
+    expect(level(own, '2026-10-06')).toBe(LEVELS);
+    // The year's busiest day was 16: the same day reads lighter, as it does there.
+    const shared = buildMonth(counts, OCT, 'monday', { today: TODAY_OCT, scale: 16 });
+    expect(level(shared, '2026-10-06')).toBe(levelFor(4, 16));
+  });
+
+  it('is summarised as one sentence', () => {
+    const counts = new Map([
+      ['2026-10-05', 3],
+      ['2026-10-06', 1],
+    ]);
+    expect(describeMonth(buildMonth(counts, OCT, 'monday', { today: TODAY_OCT }))).toBe(
+      'October 2026: 2 days logged, 4 entries.',
+    );
+    expect(describeMonth(buildMonth(new Map([['2026-10-05', 1]]), OCT, 'monday', { today: TODAY_OCT }))).toBe(
+      'October 2026: 1 day logged, 1 entry.',
+    );
+    expect(describeMonth(buildMonth(new Map(), OCT, 'monday', { today: TODAY_OCT }))).toBe(
+      'October 2026: nothing logged.',
+    );
   });
 });
 

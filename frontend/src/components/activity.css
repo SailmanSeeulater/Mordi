@@ -122,6 +122,118 @@
 .activity__legend span:first-child { margin-right: 4px; }
 .activity__legend span:last-child { margin-left: 4px; }
 
+/* Year or month, beside the title. */
+.activity__views {
+  flex: 0 0 auto;
+  width: 148px;
+}
+
+/* ── Month: the same squares, shaped like a calendar ── */
+
+.activity-month {
+  --day: 40px;
+  --day-gap: 4px;
+  padding: 0 18px 4px;
+}
+
+.activity-month__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.activity-month__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.activity-month__bar .app-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.activity-month__bar .app-iconbtn:disabled:hover {
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+}
+
+.activity-month__dows,
+.activity-month__week {
+  display: grid;
+  grid-template-columns: repeat(7, var(--day));
+  column-gap: var(--day-gap);
+}
+.activity-month__dows {
+  margin-bottom: 6px;
+  font-family: var(--font-label);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.activity-month__grid {
+  display: grid;
+  row-gap: var(--day-gap);
+  width: max-content;
+}
+
+.activity-month__slot { display: block; }
+
+.activity-month__day {
+  display: grid;
+  place-items: center;
+  width: var(--day);
+  height: var(--day);
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+/* The four accent steps of the year grid. The day number takes whichever
+   ink clears 4.5:1 on that step in every theme: the text up to the middle
+   steps, the on-accent ink on the darkest. On a dark theme the middle steps
+   are too close to the off-white ink, so it is lifted toward white there
+   (light-dark follows each theme's color-scheme). */
+.activity-month__day[data-level='1'] { background: color-mix(in srgb, var(--color-accent) 30%, var(--color-surface)); }
+.activity-month__day[data-level='2'] {
+  background: color-mix(in srgb, var(--color-accent) 54%, var(--color-surface));
+  color: light-dark(var(--color-text), color-mix(in srgb, var(--color-text) 30%, #fff));
+}
+.activity-month__day[data-level='3'] {
+  background: color-mix(in srgb, var(--color-accent) 78%, var(--color-surface));
+  color: light-dark(var(--color-text), var(--color-on-accent));
+}
+.activity-month__day[data-level='4'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.activity-month__day:hover { box-shadow: 0 0 0 1.5px var(--color-accent-700); }
+
+.activity-month__day--today,
+.activity-month__day--today:hover {
+  box-shadow: 0 0 0 2px var(--color-text);
+}
+
+/* The rest of this month: the date, not yet a square. */
+.activity-month__day--future {
+  background: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 12%, transparent);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  cursor: default;
+}
+
 @media (max-width: 560px) {
   .activity {
     --cell: 11px;
@@ -129,4 +241,18 @@
   }
   .activity__scroller { padding: 0 14px 4px; }
   .activity__legend { padding: 8px 14px 12px; }
+  /* Seven columns share the card's width, never wider than it. A tighter
+     edge and gap keep a 44px day on a 375px phone. */
+  .activity-month { padding: 0 12px 4px; --day-gap: 2px; }
+  .activity-month__grid { width: auto; }
+  .activity-month__dows,
+  .activity-month__week {
+    grid-template-columns: repeat(7, minmax(0, var(--day)));
+  }
+  .activity-month__day { width: 100%; }
+}
+
+/* A 44px target on touch, as everywhere else. */
+@media (pointer: coarse) {
+  .activity-month { --day: 44px; }
 }

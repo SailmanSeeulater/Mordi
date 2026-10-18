@@ -1,4 +1,5 @@
 import { addDays, parseIsoDate, startOfWeek, toIsoDate } from '../pages/dashboardData';
+import { startOfCalendarWeek } from './weekStart';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -91,6 +92,80 @@ export function buildHeatmap(counts, today, weeks = 53) {
   });
 
   return { columns, months, total, activeDays, busiest, scale };
+}
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/**
+ * One month as a calendar: rows are weeks led by `weekStart` (lib/weekStart),
+ * each a list of seven days. Days from the neighbouring months are `outside`
+ * and carry no count, so they draw as gaps; days after `today` are `future`.
+ *
+ * `scale` defaults to this month's own busiest day (never below the floor).
+ * Pass the year grid's scale to shade a day the same in both views.
+ */
+export function buildMonth(counts, monthDate, weekStart = 'monday', { today = new Date(), scale } = {}) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const todayIso = toIsoDate(today);
+
+  const start = startOfCalendarWeek(first, weekStart);
+  const end = addDays(startOfCalendarWeek(last, weekStart), 6);
+
+  let max = 0;
+  let total = 0;
+  let activeDays = 0;
+  let busiest = null;
+
+  const weeks = [];
+  for (let day = start; day <= end; day = addDays(day, 7)) {
+    const week = [];
+    for (let d = 0; d < 7; d += 1) {
+      const date = addDays(day, d);
+      const iso = toIsoDate(date);
+      const outside = date.getMonth() !== month;
+      const future = !outside && iso > todayIso;
+      const count = outside || future ? 0 : (counts.get(iso) ?? 0);
+      if (count > 0) {
+        total += count;
+        activeDays += 1;
+        if (count > max) {
+          max = count;
+          busiest = { iso, count };
+        }
+      }
+      week.push({ iso, day: date.getDate(), count, outside, future });
+    }
+    weeks.push(week);
+  }
+
+  const used = scale ?? Math.max(max, SCALE_FLOOR);
+  for (const week of weeks) {
+    for (const day of week) day.level = day.outside || day.future ? 0 : levelFor(day.count, used);
+  }
+
+  return {
+    weeks,
+    title: `${MONTH_NAMES[month]} ${year}`,
+    total,
+    activeDays,
+    busiest,
+    scale: used,
+  };
+}
+
+/** "October 2026: 14 days logged, 23 entries." */
+export function describeMonth({ title, total, activeDays }) {
+  if (total === 0) return `${title}: nothing logged.`;
+  return (
+    `${title}: ${activeDays} ${activeDays === 1 ? 'day' : 'days'} logged, ` +
+    `${total} ${total === 1 ? 'entry' : 'entries'}.`
+  );
 }
 
 /** "3 logs on Wed, Sep 16" */

@@ -23,9 +23,9 @@ import {
   sameDay,
   snapMinutes,
   startOfDay,
-  startOfWeek,
   toLocalIso,
 } from '../lib/planner';
+import { startOfCalendarWeek, useWeekStart } from '../lib/weekStart';
 import './calendar-page.css';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
@@ -75,6 +75,9 @@ export default function Calendar() {
   useDocumentTitle('Calendar');
   const narrow = useNarrow();
   const now = useNow();
+  // Monday or Sunday, from Settings. Weeks here follow it; weekly goal
+  // targets elsewhere stay Monday to Sunday.
+  const weekStart = useWeekStart();
   const [view, setView] = useState(() => (window.matchMedia?.('(max-width: 720px)').matches ? 'day' : 'week'));
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
   const [editor, setEditor] = useState(null); // { event } | { draft }
@@ -87,7 +90,11 @@ export default function Calendar() {
   const effectiveView = narrow && view === 'week' ? 'day' : view;
   const monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
   const start =
-    effectiveView === 'month' ? startOfWeek(monthStart) : effectiveView === 'week' ? startOfWeek(anchor) : anchor;
+    effectiveView === 'month'
+      ? startOfCalendarWeek(monthStart, weekStart)
+      : effectiveView === 'week'
+        ? startOfCalendarWeek(anchor, weekStart)
+        : anchor;
   const count = effectiveView === 'month' ? 42 : effectiveView === 'week' ? 7 : 1;
   const [importing, setImporting] = useState(null); // { text, fileName }
   const [notice, setNotice] = useState('');
@@ -357,6 +364,7 @@ export default function Calendar() {
           <div className="app-panel planner__panel">
             <MonthGrid
               days={days}
+              weekStart={weekStart}
               month={monthStart.getMonth()}
               events={events}
               now={now}
