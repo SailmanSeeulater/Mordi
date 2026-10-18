@@ -90,6 +90,14 @@
 			<version>2.8.14</version>
 		</dependency>
 
+		<!-- Reads Google Calendar feeds: RRULE, EXDATE, RECURRENCE-ID and
+		     VTIMEZONE, which are not worth getting wrong by hand. -->
+		<dependency>
+			<groupId>net.sf.biweekly</groupId>
+			<artifactId>biweekly</artifactId>
+			<version>0.6.8</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>

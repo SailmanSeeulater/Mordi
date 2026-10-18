@@ -13,6 +13,7 @@ import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteAccount from '../components/DeleteAccount';
 import { toIsoDate } from './dashboardData';
 import { LEGAL } from '../lib/legal';
+import { feedForExport } from '../lib/calendarFeeds';
 import { WEEK_STARTS, setWeekStart, useWeekStart } from '../lib/weekStart';
 import './settings.css';
 
@@ -75,13 +76,15 @@ export default function Settings() {
     setExporting(true);
     setStatus({ tone: 'info', text: 'Collecting your data…' });
     try {
-      const [goals, behaviors, locations, categories] = await Promise.all([
+      const [goals, behaviors, locations, categories, feeds] = await Promise.all([
         client.get('/api/goals'),
         client.get('/api/behaviors/range', {
           params: { start: EXPORT_START, end: toIsoDate(new Date()) },
         }),
         client.get('/api/locations').catch(() => ({ data: [] })),
         client.get('/api/categories').catch(() => ({ data: [] })),
+        // 404 when this server has Google Calendar sync switched off.
+        client.get('/api/calendar-feeds').catch(() => ({ data: [] })),
       ]);
 
       const payload = {
@@ -91,6 +94,8 @@ export default function Settings() {
         entries: behaviors.data,
         places: locations.data,
         categories: categories.data,
+        // Names and counts only: a calendar's secret address never leaves the server.
+        connectedCalendars: (Array.isArray(feeds.data) ? feeds.data : []).map(feedForExport),
       };
 
       const url = URL.createObjectURL(
@@ -171,8 +176,8 @@ export default function Settings() {
             </h2>
           </div>
           <p className="settings__note">
-            Download everything Mordi holds for you — goals, entries and saved places — as one JSON
-            file.
+            Download everything Mordi holds for you — goals, entries, saved places and any
+            connected calendars — as one JSON file.
           </p>
           <div className="settings__actions">
             <button type="button" className="app-btn" onClick={exportData} disabled={exporting}>

@@ -9,6 +9,9 @@ import lombok.Data;
  * Something planned on the calendar. Times are local wall-clock times, and
  * every event is the half-open range [startsAt, endsAt): an all-day event on
  * the 5th runs from the 5th at 00:00 to the 6th at 00:00.
+ *
+ * An event copied from a connected Google Calendar carries its feed's id and
+ * is stored in the same wall-clock terms, converted to the person's zone.
  */
 @Data
 @Entity
@@ -52,6 +55,17 @@ public class PlanEvent {
     // The entry logged when it was marked done, so undoing removes exactly it.
     @Column(name = "behavior_id")
     private Long behaviorId;
+
+    // The connected calendar this is a copy of, or null for an event planned
+    // here. A copy is read-only: it changes in Google, and the next sync
+    // brings the change.
+    @Column(name = "feed_id")
+    private Long feedId;
+
+    // Which occurrence in that feed this is; see V21.
+    @JsonIgnore
+    @Column(name = "external_key")
+    private String externalKey;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

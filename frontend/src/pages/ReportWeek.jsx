@@ -524,7 +524,13 @@ export default function ReportWeek() {
       setData({
         goals: Array.isArray(goals.value.data) ? goals.value.data : [],
         behaviors: Array.isArray(behaviors.value.data) ? behaviors.value.data : [],
-        events: events.status === 'fulfilled' && Array.isArray(events.value.data) ? events.value.data : [],
+        // Planned here only: copies from a connected Google Calendar are
+        // someone else's plan, and can never be answered, so they would
+        // only ever read as "unanswered".
+        events:
+          events.status === 'fulfilled' && Array.isArray(events.value.data)
+            ? events.value.data.filter((e) => !e.feedId)
+            : [],
         todos: todos.status === 'fulfilled' && Array.isArray(todos.value.data) ? todos.value.data : [],
         written:
           reports.status === 'fulfilled' && Array.isArray(reports.value.data)

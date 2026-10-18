@@ -21,7 +21,7 @@ public class AuthService {
      * Bump together with LEGAL.version in frontend/src/lib/legal.js whenever
      * either page changes in substance.
      */
-    public static final String TERMS_VERSION = "2026-10-14";
+    public static final String TERMS_VERSION = "2026-10-18";
 
     /**
      * A bcrypt hash of nothing in particular, checked against when the

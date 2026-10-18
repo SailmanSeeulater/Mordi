@@ -2,6 +2,7 @@ package com.mordi.backend.service;
 
 import com.mordi.backend.dto.PlanEventRequest;
 import com.mordi.backend.exception.PlanEventNotFoundException;
+import com.mordi.backend.exception.ReadOnlyEventException;
 import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.PlanEventRepository;
@@ -232,5 +233,31 @@ class PlanEventServiceTest {
             .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.getEvents(ME, day, day.plusDays(100)))
             .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void anEventFromGoogleCalendarCannotBeChangedDeletedOrAnswered() {
+        PlanEvent copied = new PlanEvent();
+        copied.setId(6L);
+        copied.setUser(me);
+        copied.setFeedId(3L);
+        copied.setTitle("Standup");
+        copied.setStartsAt(NINE);
+        copied.setEndsAt(NINE.plusMinutes(30));
+        when(repository.findByIdAndUser(6L, me)).thenReturn(Optional.of(copied));
+        com.mordi.backend.dto.EventOutcomeRequest done = new com.mordi.backend.dto.EventOutcomeRequest();
+        done.setOutcome("done");
+
+        assertThatThrownBy(() -> service.updateEvent(ME, 6L, request("Moved", NINE, NINE.plusHours(1))))
+            .isInstanceOf(ReadOnlyEventException.class)
+            .hasMessage("This event comes from Google Calendar. Change it there.");
+        assertThatThrownBy(() -> service.deleteEvent(ME, 6L)).isInstanceOf(ReadOnlyEventException.class);
+        assertThatThrownBy(() -> service.setOutcome(ME, 6L, done)).isInstanceOf(ReadOnlyEventException.class);
+        assertThatThrownBy(() -> service.clearOutcome(ME, 6L)).isInstanceOf(ReadOnlyEventException.class);
+
+        verify(repository, never()).save(any());
+        verify(repository, never()).delete(any());
+        verify(behaviorService, never()).logBehavior(any(), any());
+        assertThat(copied.getTitle()).isEqualTo("Standup");
     }
 }

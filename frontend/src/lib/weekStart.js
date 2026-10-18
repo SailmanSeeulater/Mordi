@@ -1,7 +1,7 @@
 import { storedChoice } from './storedChoice';
 
 /**
- * Which day the calendar's weeks start on: Monday (the default) or Sunday.
+ * Which day the calendar's weeks start on: Sunday (the default) or Monday.
  *
  * Calendar views only: the planner's week and month, the month grid, the
  * dashboard's month dialog and the activity month. Weekly goal targets, the
@@ -12,9 +12,9 @@ import { storedChoice } from './storedChoice';
  * Kept per browser, like the theme and the modules.
  */
 
-export const WEEK_STARTS = ['monday', 'sunday'];
+export const WEEK_STARTS = ['sunday', 'monday'];
 
-const choice = storedChoice({ key: 'mordi-week-start', values: WEEK_STARTS, fallback: 'monday' });
+const choice = storedChoice({ key: 'mordi-week-start', values: WEEK_STARTS, fallback: 'sunday' });
 
 /** 'monday' or 'sunday', and re-renders when it changes. */
 export const useWeekStart = choice.useChoice;

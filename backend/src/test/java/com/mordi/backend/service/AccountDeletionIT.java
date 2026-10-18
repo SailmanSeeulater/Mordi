@@ -1,15 +1,20 @@
 package com.mordi.backend.service;
 
 import com.mordi.backend.model.Behavior;
+import com.mordi.backend.model.CalendarFeed;
 import com.mordi.backend.model.Goal;
 import com.mordi.backend.model.GoalMember;
+import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
+import com.mordi.backend.repository.CalendarFeedRepository;
 import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.GoalRepository;
+import com.mordi.backend.repository.PlanEventRepository;
 import com.mordi.backend.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +46,8 @@ class AccountDeletionIT {
     @Autowired private GoalRepository goals;
     @Autowired private GoalMemberRepository members;
     @Autowired private BehaviorRepository behaviors;
+    @Autowired private CalendarFeedRepository feeds;
+    @Autowired private PlanEventRepository planEvents;
     @Autowired private EntityManager em;
     @Autowired private ApplicationEventPublisher events;
 
@@ -151,5 +158,43 @@ class AccountDeletionIT {
         assertThat(goals.findById(run.getId())).isEmpty();
         Behavior survivor = behaviors.findById(alexRun.getId()).orElseThrow();
         assertThat(survivor.getGoal()).isNull();
+    }
+
+    @Test
+    void connectedCalendarsGoWithTheirCopiesAndNobodyElsesStay() {
+        CalendarFeed samsCalendar = calendar(sam);
+        copyOf(samsCalendar);
+        CalendarFeed alexsCalendar = calendar(alex);
+        PlanEvent alexsCopy = copyOf(alexsCalendar);
+        em.flush();
+
+        service.delete(sam.getEmail(), "password-Sam");
+        em.flush();
+        em.clear();
+
+        assertThat(count("select count(*) from calendar_feeds where user_id = ?1", sam.getId())).isZero();
+        assertThat(count("select count(*) from plan_events where feed_id = ?1", samsCalendar.getId())).isZero();
+        assertThat(feeds.findById(alexsCalendar.getId())).isPresent();
+        assertThat(planEvents.findById(alexsCopy.getId())).isPresent();
+    }
+
+    private CalendarFeed calendar(User owner) {
+        CalendarFeed feed = new CalendarFeed();
+        feed.setUser(owner);
+        feed.setName("Work");
+        feed.setUrlCiphertext("sealed");
+        feed.setUrlHash("0".repeat(64));
+        return feeds.save(feed);
+    }
+
+    private PlanEvent copyOf(CalendarFeed feed) {
+        PlanEvent event = new PlanEvent();
+        event.setUser(feed.getUser());
+        event.setFeedId(feed.getId());
+        event.setExternalKey("standup@google.com");
+        event.setTitle("Standup");
+        event.setStartsAt(LocalDateTime.of(2026, 10, 19, 9, 0));
+        event.setEndsAt(LocalDateTime.of(2026, 10, 19, 9, 30));
+        return planEvents.save(event);
     }
 }

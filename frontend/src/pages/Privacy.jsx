@@ -44,6 +44,18 @@ export default function Privacy() {
         the weekly summaries Mordi works out from them.
       </p>
 
+      <h3>A Google Calendar, if you connect one</h3>
+      <p>
+        If you connect a Google Calendar by its secret address, Mordi stores that address encrypted and keeps
+        copies of the calendar&rsquo;s events from 30 days ago to 6 months ahead, refreshing them every 15
+        minutes. It also notes your time zone, so the times read as they do where you are. Disconnecting the
+        calendar, or deleting your account, removes the address and the copies.
+      </p>
+      <p>
+        Mordi gives Google nothing: it only reads the calendar, and never adds to it, changes it or tells
+        Google anything about you.
+      </p>
+
       <h3>Location, only when you ask</h3>
       <p>
         When you attach a place to an entry, save a place, plan a trip or show the weather, your browser
@@ -134,6 +146,13 @@ export default function Privacy() {
           </dd>
         </div>
         <div>
+          <dt>Google Calendar</dt>
+          <dd>
+            Only if you connect a calendar. Mordi&rsquo;s server fetches it from Google at the secret address
+            you gave; Google sees a request from Mordi&rsquo;s server, not from you, and is sent nothing else.
+          </dd>
+        </div>
+        <div>
           <dt>Your browser&rsquo;s push service</dt>
           <dd>
             Google, Mozilla, Apple or Microsoft, depending on your browser, delivers reminders. The message
@@ -157,6 +176,10 @@ export default function Privacy() {
           The date you last used Mordi goes with your account when you delete it. The daily totals hold no
           personal information and are kept.
         </li>
+        <li>
+          Copies of a connected Google Calendar&rsquo;s events cover 30 days back to 6 months ahead; each refresh
+          drops the ones that have moved out of that range, or out of the calendar.
+        </li>
         <li>Web server logs are kept for about two weeks.</li>
         <li>Password reset links stop working after 30 minutes, and sign-in sessions end after 30 days.</li>
       </ul>
@@ -165,7 +188,8 @@ export default function Privacy() {
       <ul>
         <li>
           <strong>See and download your data.</strong> In <Link to="/settings">Settings</Link>, &ldquo;Download
-          my data&rdquo; saves your goals, entries and places. For a copy of everything else, write to {mail}.
+          my data&rdquo; saves your goals, entries, places and the names of any connected calendars. For a
+          copy of everything else, write to {mail}.
         </li>
         <li><strong>Correct it.</strong> Edit anything in the app. To change your name or email address, write to us.</li>
         <li><strong>Delete it.</strong> Settings, then Delete account. It takes effect at once.</li>
@@ -190,7 +214,8 @@ export default function Privacy() {
       <h2>Security</h2>
       <p>
         Everything travels over HTTPS. Passwords are stored as one-way hashes, and sign-in and reset tokens are
-        stored only as hashes too. Only the person who runs Mordi can reach the server. No system is perfectly
+        stored only as hashes too. A connected calendar&rsquo;s secret address is stored encrypted, and is never
+        shown again once saved. Only the person who runs Mordi can reach the server. No system is perfectly
         secure; if a breach affects your data, we will tell you as the law requires.
       </p>
 

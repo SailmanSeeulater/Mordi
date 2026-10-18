@@ -95,25 +95,25 @@ describe('monthGrid with a week start', () => {
 });
 
 describe('the stored preference', () => {
-  it('is Monday until set, and remembers Sunday', () => {
-    expect(getWeekStart()).toBe('monday');
-    setWeekStart('sunday');
+  it('is Sunday until set, and remembers Monday', () => {
     expect(getWeekStart()).toBe('sunday');
-    expect(localStorage.getItem('mordi-week-start')).toBe('sunday');
+    setWeekStart('monday');
+    expect(getWeekStart()).toBe('monday');
+    expect(localStorage.getItem('mordi-week-start')).toBe('monday');
   });
 
   it('ignores anything that is not a known day', () => {
     localStorage.setItem('mordi-week-start', 'wednesday');
-    expect(getWeekStart()).toBe('monday');
+    expect(getWeekStart()).toBe('sunday');
     setWeekStart('friday');
     expect(localStorage.getItem('mordi-week-start')).toBe('wednesday');
   });
 
   it('tells every reader when it changes', () => {
     const { result } = renderHook(() => useWeekStart());
-    expect(result.current).toBe('monday');
-    act(() => setWeekStart('sunday'));
     expect(result.current).toBe('sunday');
+    act(() => setWeekStart('monday'));
+    expect(result.current).toBe('monday');
   });
 
   it('still works for the session when storage is blocked', () => {
@@ -124,9 +124,9 @@ describe('the stored preference', () => {
       throw new Error('blocked');
     });
     try {
-      expect(getWeekStart()).toBe('monday');
-      setWeekStart('sunday');
       expect(getWeekStart()).toBe('sunday');
+      setWeekStart('monday');
+      expect(getWeekStart()).toBe('monday');
     } finally {
       get.mockRestore();
       set.mockRestore();
