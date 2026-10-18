@@ -194,7 +194,9 @@ are on always shows in the rail, whatever the modules say.
   an event to move it, drag its edge to resize; all snap to 15 minutes and
   commit on release. Seven named colours, each mixed against the theme's own
   surface and ink. Month is a six-week grid, dots on a phone. Weeks start on
-  Monday or Sunday (Settings → Appearance, per browser, `lib/weekStart.js`);
+  Sunday by default, or Monday: a Sun | Mon switch in the calendar's toolbar
+  (week and month views) and the same choice in Settings → Appearance, per
+  browser, `lib/weekStart.js`;
   that applies to calendar views only, and weekly goal targets always count
   Monday to Sunday. `.ics` files from
   Google, Apple or Outlook import after a preview, repeating events expanded.

@@ -34,7 +34,7 @@ import {
   startOfDay,
   toLocalIso,
 } from '../lib/planner';
-import { startOfCalendarWeek, useWeekStart } from '../lib/weekStart';
+import { WEEK_STARTS, setWeekStart, startOfCalendarWeek, useWeekStart } from '../lib/weekStart';
 import './calendar-page.css';
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
@@ -367,6 +367,34 @@ export default function Calendar() {
               <FeedMark size={16} />
               Google Calendar
             </button>
+          )}
+          {effectiveView !== 'day' && (
+            // The same preference as Settings → Appearance, here where its
+            // effect is seen. A day view has no first weekday, so it hides.
+            <div
+              className="app-segments planner__weekstart"
+              role="group"
+              aria-label="Week starts on"
+              title="Week starts on"
+            >
+              <span
+                className="app-segments__thumb"
+                style={{ '--n': WEEK_STARTS.length, '--i': WEEK_STARTS.indexOf(weekStart) }}
+                aria-hidden="true"
+              />
+              {WEEK_STARTS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="app-segment"
+                  aria-pressed={id === weekStart}
+                  aria-label={id === 'sunday' ? 'Sunday' : 'Monday'}
+                  onClick={() => setWeekStart(id)}
+                >
+                  {id === 'sunday' ? 'Sun' : 'Mon'}
+                </button>
+              ))}
+            </div>
           )}
           {(() => {
             const views = narrow ? ['day', 'month'] : ['day', 'week', 'month'];

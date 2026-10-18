@@ -608,6 +608,8 @@ button.planner__goal:not(.planner__goal--done):hover {
 /* ── Import ────────────────────────────────── */
 
 .planner__import { gap: 6px; }
+/* Sun | Mon, the week-start choice, beside the views it reorders. */
+.planner__weekstart { flex: 0 0 auto; width: 120px; }
 .planner__notice {
   display: flex;
   align-items: center;
