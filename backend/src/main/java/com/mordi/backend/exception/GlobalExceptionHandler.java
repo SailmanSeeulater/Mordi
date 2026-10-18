@@ -89,6 +89,34 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
+    // A copy of a Google Calendar event: well formed, but the event is not
+    // Mordi's to change.
+    @ExceptionHandler(ReadOnlyEventException.class)
+    public ResponseEntity<Map<String, Object>> handleReadOnlyEvent(ReadOnlyEventException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CalendarFeedNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCalendarFeedNotFound(CalendarFeedNotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    // Like the note cap. Both messages are written to be shown as-is.
+    @ExceptionHandler(CalendarFeedLimitReachedException.class)
+    public ResponseEntity<Map<String, Object>> handleCalendarFeedLimit(CalendarFeedLimitReachedException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CalendarFeedTakenException.class)
+    public ResponseEntity<Map<String, Object>> handleCalendarFeedTaken(CalendarFeedTakenException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CalendarSyncTooSoonException.class)
+    public ResponseEntity<Map<String, Object>> handleCalendarSyncTooSoon(CalendarSyncTooSoonException ex) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
     @ExceptionHandler(InviteNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleInviteNotFound(InviteNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());

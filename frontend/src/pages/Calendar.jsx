@@ -4,10 +4,14 @@ import Modal from '../components/Modal';
 import EventForm from '../components/EventForm';
 import MonthGrid from '../components/MonthGrid';
 import ImportCalendar from '../components/ImportCalendar';
+import GoogleCalendarDialog from '../components/GoogleCalendarDialog';
+import FeedEventDetail from '../components/FeedEventDetail';
+import FeedMark from '../components/FeedMark';
 import LogEntryForm from '../components/LogEntryForm';
 import PlannedChip from '../components/PlannedChip';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useEvents from '../hooks/useEvents';
+import useCalendarFeeds from '../hooks/useCalendarFeeds';
 import usePlannedGoals from '../hooks/usePlannedGoals';
 import { plannedGoalsOn } from '../lib/plannedDays';
 import { toIsoDate } from './dashboardData';
@@ -73,6 +77,11 @@ function useNow() {
  * its length. Everything snaps to fifteen minutes and commits on release, so
  * a drag never sends a request per pixel. For keyboard users, "New event" and
  * each event (a button) open the same form with every field editable.
+ *
+ * Events copied from a connected Google Calendar (they carry a `feedId`) sit
+ * in the same grid in their calendar's colour with a link mark, but never
+ * move, resize or open the form: they open a read-only card instead, since
+ * the change belongs in Google and the next sync would undo it here.
  */
 // The shortest an event is drawn: one line of 12.5px text plus padding.
 const EVENT_MIN_PX = 20;
@@ -108,6 +117,22 @@ export default function Calendar() {
   const startKey = start.getTime();
   const days = useMemo(() => daysFrom(new Date(startKey), count), [startKey, count]);
   const { events, loadState, reload, create, update, remove } = useEvents(start, count);
+
+  // Connected Google Calendars. Opening the calendar catches up any that
+  // the server's timer has not refreshed lately, then refetches the events.
+  const reloadRef = useRef(reload);
+  useEffect(() => {
+    reloadRef.current = reload;
+  }, [reload]);
+  const google = useCalendarFeeds({ onSynced: () => reloadRef.current() });
+  const [googleOpen, setGoogleOpen] = useState(false);
+  const [viewing, setViewing] = useState(null); // an event from Google, read-only
+  const feedName = (event) => google.feeds.find((f) => f.id === event.feedId)?.name;
+  const sourceLabel = (event) =>
+    event.feedId ? `, from Google Calendar${feedName(event) ? ` · ${feedName(event)}` : ''}` : '';
+
+  // Every way into an event: Google's open read-only, Mordi's open the form.
+  const openEvent = (event) => (event.feedId ? setViewing(event) : setEditor({ event }));
 
   // Goals planned for particular weekdays show on those days, filled once
   // done. A chip on today or an earlier day logs that goal for that day.
@@ -198,7 +223,7 @@ export default function Calendar() {
   /* ── Moving and resizing an existing event ── */
 
   const onEventDown = (e, event, mode) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || event.feedId) return;
     e.stopPropagation();
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setDrag({
@@ -237,7 +262,7 @@ export default function Calendar() {
     const { event, moved, start: s, end: en } = drag;
     setDrag(null);
     if (!moved) {
-      setEditor({ event });
+      openEvent(event);
       return;
     }
     setError('');
@@ -332,6 +357,17 @@ export default function Calendar() {
             </svg>
             Import .ics
           </button>
+          {google.enabled && (
+            <button
+              type="button"
+              className="app-btn app-btn--quiet app-btn--sm planner__import"
+              onClick={() => setGoogleOpen(true)}
+              title="Show your Google Calendar here, kept up to date"
+            >
+              <FeedMark size={16} />
+              Google Calendar
+            </button>
+          )}
           {(() => {
             const views = narrow ? ['day', 'month'] : ['day', 'week', 'month'];
             return (
@@ -384,7 +420,8 @@ export default function Calendar() {
               planned={plannedOn}
               now={now}
               onOpenDay={openDay}
-              onOpenEvent={(ev) => setEditor({ event: ev })}
+              onOpenEvent={openEvent}
+              sourceLabel={sourceLabel}
               onNew={(day) =>
                 setEditor({
                   draft: {
@@ -450,9 +487,11 @@ export default function Calendar() {
                     <button
                       key={ev.id}
                       type="button"
-                      className={`planner__chip ev--${ev.color ?? 'accent'}`}
-                      onClick={() => setEditor({ event: ev })}
+                      className={`planner__chip ev--${ev.color ?? 'accent'}${ev.feedId ? ' planner__chip--feed' : ''}`}
+                      onClick={() => openEvent(ev)}
+                      aria-label={ev.feedId ? `${ev.title}${sourceLabel(ev)}` : undefined}
                     >
+                      {ev.feedId && <FeedMark />}
                       {ev.title}
                     </button>
                   ))}
@@ -506,11 +545,12 @@ export default function Calendar() {
                         // The full range needs its own line and the width of
                         // an unshared column; otherwise just the start.
                         const fullRange = n === 1 && px >= 46;
-                        const label = `${event.title}, ${formatRange(event)}${event.placeName ? `, ${event.placeName}` : ''}`;
+                        const fromFeed = Boolean(event.feedId);
+                        const label = `${event.title}, ${formatRange(event)}${event.placeName ? `, ${event.placeName}` : ''}${sourceLabel(event)}`;
                         return (
                           <div
                             key={event.id}
-                            className={`planner__event ev--${event.color ?? 'accent'}${held ? ' planner__event--held' : ''}${px < 40 ? ' planner__event--short' : ''}${n > 1 ? ' planner__event--narrow' : ''}`}
+                            className={`planner__event ev--${event.color ?? 'accent'}${held ? ' planner__event--held' : ''}${px < 40 ? ' planner__event--short' : ''}${n > 1 ? ' planner__event--narrow' : ''}${fromFeed ? ' planner__event--feed' : ''}`}
                             style={{
                               top: minutesToPx(top),
                               height: px,
@@ -518,10 +558,14 @@ export default function Calendar() {
                               left: `calc(${(column / n) * 100}% + 2px)`,
                               width: `calc(${100 / n}% - 4px)`,
                             }}
-                            onPointerDown={(e) => onEventDown(e, event, 'move')}
-                            onPointerMove={onEventMove}
-                            onPointerUp={onEventUp}
-                            onPointerCancel={() => setDrag(null)}
+                            {...(fromFeed
+                              ? {}
+                              : {
+                                  onPointerDown: (e) => onEventDown(e, event, 'move'),
+                                  onPointerMove: onEventMove,
+                                  onPointerUp: onEventUp,
+                                  onPointerCancel: () => setDrag(null),
+                                })}
                           >
                             <button
                               type="button"
@@ -529,9 +573,11 @@ export default function Calendar() {
                               title={label}
                               aria-label={label}
                               onClick={(e) => {
-                                // Pointer clicks are handled on release above;
-                                // this is the keyboard path.
-                                if (e.detail === 0) setEditor({ event });
+                                // Pointer clicks on Mordi's own events are
+                                // handled on release above; this is the
+                                // keyboard path. Google's never drag, so any
+                                // click opens them.
+                                if (fromFeed || e.detail === 0) openEvent(event);
                               }}
                             >
                               {short ? (
@@ -539,6 +585,7 @@ export default function Calendar() {
                                 // leads, so the time survives even at a
                                 // quarter of an hour; shared, the title does.
                                 <span className="planner__event-line" aria-hidden="true">
+                                  {fromFeed && <FeedMark />}
                                   {n === 1 && <span>{shortTime(parseLocal(event.startsAt))}</span>}
                                   <strong>{event.title}</strong>
                                   {n > 1 && <span>{shortTime(parseLocal(event.startsAt))}</span>}
@@ -546,7 +593,8 @@ export default function Calendar() {
                               ) : (
                                 <>
                                   <strong aria-hidden="true">{event.title}</strong>
-                                  <span aria-hidden="true">
+                                  <span aria-hidden="true" className={fromFeed ? 'planner__event-when' : undefined}>
+                                    {fromFeed && <FeedMark />}
                                     {fullRange ? compactRange(event) : shortTime(parseLocal(event.startsAt))}
                                   </span>
                                   {event.placeName && px >= 62 && (
@@ -557,11 +605,13 @@ export default function Calendar() {
                                 </>
                               )}
                             </button>
-                            <span
-                              className="planner__resize"
-                              aria-hidden="true"
-                              onPointerDown={(e) => onEventDown(e, event, 'resize')}
-                            />
+                            {!fromFeed && (
+                              <span
+                                className="planner__resize"
+                                aria-hidden="true"
+                                onPointerDown={(e) => onEventDown(e, event, 'resize')}
+                              />
+                            )}
                           </div>
                         );
                       })}
@@ -601,6 +651,25 @@ export default function Calendar() {
         </Modal>
       )}
 
+      {googleOpen && (
+        <Modal title="Google Calendar" onClose={() => setGoogleOpen(false)}>
+          <GoogleCalendarDialog
+            feeds={google.feeds}
+            connect={google.connect}
+            update={google.update}
+            sync={google.sync}
+            disconnect={google.disconnect}
+            onClose={() => setGoogleOpen(false)}
+          />
+        </Modal>
+      )}
+
+      {viewing && (
+        <Modal title={viewing.title} onClose={() => setViewing(null)}>
+          <FeedEventDetail event={viewing} feedName={feedName(viewing)} onClose={() => setViewing(null)} />
+        </Modal>
+      )}
+
       {logging && (
         <Modal title={logging.iso === todayIso ? 'Log today' : 'Log a day'} onClose={() => setLogging(null)}>
           <LogEntryForm
@@ -617,7 +686,7 @@ export default function Calendar() {
         </Modal>
       )}
 
-      {editor && (
+      {editor && !editor.event?.feedId && (
         <Modal title={editor.event ? 'Edit event' : 'New event'} onClose={() => setEditor(null)}>
           <EventForm
             event={editor.event}

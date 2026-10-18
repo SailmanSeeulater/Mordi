@@ -6,6 +6,7 @@ import com.mordi.backend.dto.PlanEventRequest;
 import com.mordi.backend.exception.BehaviorNotFoundException;
 import com.mordi.backend.model.Behavior;
 import com.mordi.backend.exception.PlanEventNotFoundException;
+import com.mordi.backend.exception.ReadOnlyEventException;
 import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.PlanEventRepository;
@@ -25,6 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
  * The calendar: planned events, as opposed to entries, which record what was
  * done. Every rule the calendar relies on is checked here, not only in the
  * browser: a title, an end after the start, and sane sizes.
+ *
+ * Events copied from a connected Google Calendar are listed with the rest but
+ * cannot be changed, deleted or answered here: the next sync would undo it,
+ * so each of those refuses them with a 409 that says where to go instead.
  */
 @Service
 @RequiredArgsConstructor
@@ -40,7 +45,7 @@ public class PlanEventService {
     /** Most events one import may carry: a year of a busy calendar. */
     static final int MAX_IMPORT = 500;
     /** The calendar's palette, by name, so each theme decides the actual colour. */
-    static final Set<String> COLORS = Set.of("accent", "sky", "sage", "amber", "rose", "violet", "slate");
+    public static final Set<String> COLORS = Set.of("accent", "sky", "sage", "amber", "rose", "violet", "slate");
 
     private final PlanEventRepository repository;
     private final UserRepository userRepository;
@@ -67,7 +72,7 @@ public class PlanEventService {
 
     /** A partial update: fields left out keep their values. */
     public PlanEvent updateEvent(String email, Long id, PlanEventRequest request) {
-        PlanEvent event = findOwned(email, id);
+        PlanEvent event = findEditable(email, id);
         apply(event, request, false);
         return repository.save(event);
     }
@@ -111,7 +116,7 @@ public class PlanEventService {
      */
     @Transactional
     public PlanEvent setOutcome(String email, Long id, EventOutcomeRequest request) {
-        PlanEvent event = findOwned(email, id);
+        PlanEvent event = findEditable(email, id);
         String outcome = request == null ? null : request.getOutcome();
         if (!"done".equals(outcome) && !"skipped".equals(outcome)) {
             throw new IllegalArgumentException("Outcome must be done or skipped");
@@ -141,7 +146,7 @@ public class PlanEventService {
     /** Takes the answer back, removing the entry it logged if there was one. */
     @Transactional
     public PlanEvent clearOutcome(String email, Long id) {
-        PlanEvent event = findOwned(email, id);
+        PlanEvent event = findEditable(email, id);
         removeLinkedEntry(email, event);
         event.setOutcome(null);
         return repository.save(event);
@@ -159,7 +164,7 @@ public class PlanEventService {
     }
 
     public void deleteEvent(String email, Long id) {
-        repository.delete(findOwned(email, id));
+        repository.delete(findEditable(email, id));
     }
 
     private void apply(PlanEvent event, PlanEventRequest request, boolean creating) {
@@ -222,6 +227,15 @@ public class PlanEventService {
     private PlanEvent findOwned(String email, Long id) {
         return repository.findByIdAndUser(id, findUser(email))
             .orElseThrow(PlanEventNotFoundException::new);
+    }
+
+    /** One of the person's own events that Mordi may change: not a copy from Google. */
+    private PlanEvent findEditable(String email, Long id) {
+        PlanEvent event = findOwned(email, id);
+        if (event.getFeedId() != null) {
+            throw new ReadOnlyEventException();
+        }
+        return event;
     }
 
     private User findUser(String email) {

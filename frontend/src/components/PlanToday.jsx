@@ -13,6 +13,9 @@ import '../pages/calendar-page.css';
  * the goal its title matches, if any) and Skip says no. Yesterday's
  * unanswered blocks stay here until answered, so an evening's plan can be
  * closed out the next morning. Every answer can be taken back.
+ *
+ * Events copied from a connected Google Calendar are listed but never asked
+ * about: they are someone else's plan, read-only here.
  */
 export default function PlanToday({ today, goals = [], onChanged, onToast }) {
   const day = startOfDay(today);
@@ -22,11 +25,12 @@ export default function PlanToday({ today, goals = [], onChanged, onToast }) {
   const now = new Date();
 
   const ended = (e) => !e.allDay && parseLocal(e.endsAt) <= now;
+  const answerable = (e) => ended(e) && !e.feedId;
   const todays = events
     .filter((e) => sameDay(parseLocal(e.startsAt), day) || (e.allDay && parseLocal(e.endsAt) > day))
     .sort((a, b) => Number(b.allDay) - Number(a.allDay) || parseLocal(a.startsAt) - parseLocal(b.startsAt));
   const leftover = events.filter(
-    (e) => sameDay(parseLocal(e.startsAt), yesterday) && ended(e) && !e.outcome,
+    (e) => sameDay(parseLocal(e.startsAt), yesterday) && answerable(e) && !e.outcome,
   );
 
   const answer = async (event, outcome) => {
@@ -53,6 +57,7 @@ export default function PlanToday({ today, goals = [], onChanged, onToast }) {
 
   const item = (ev, isLeftover = false) => {
     const past = ended(ev);
+    const askable = answerable(ev);
     const goal = matchGoal(ev, goals);
     return (
       <li
@@ -61,7 +66,7 @@ export default function PlanToday({ today, goals = [], onChanged, onToast }) {
       >
         <span className="plan-today__time">{isLeftover ? 'Yesterday' : formatRange(ev)}</span>
         <span className="plan-today__title">{ev.title}</span>
-        {past && (
+        {askable && (
           <span className="plan-today__answer">
             {ev.outcome === 'done' && <span className="plan-today__state plan-today__state--done">Done</span>}
             {ev.outcome === 'skipped' && <span className="plan-today__state">Skipped</span>}
@@ -93,7 +98,7 @@ export default function PlanToday({ today, goals = [], onChanged, onToast }) {
     );
   };
 
-  const unanswered = [...leftover, ...todays].filter((e) => ended(e) && !e.outcome).length;
+  const unanswered = [...leftover, ...todays].filter((e) => answerable(e) && !e.outcome).length;
 
   return (
     <section className="app-panel" aria-labelledby="dash-plan-title">

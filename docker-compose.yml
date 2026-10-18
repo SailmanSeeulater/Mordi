@@ -50,6 +50,10 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:hello@latesailor.dev}
+      # Google Calendar sync; optional. The key that encrypts connected
+      # calendars' secret addresses (openssl rand -base64 32). Without it the
+      # feature is off and its button is hidden.
+      MORDI_FEED_KEY: ${MORDI_FEED_KEY:-}
       # Who may open the usage numbers; comma-separated sign-in addresses.
       # Empty means nobody.
       MORDI_ADMIN_EMAILS: ${MORDI_ADMIN_EMAILS:-}

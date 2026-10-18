@@ -84,7 +84,8 @@ Compose reads three values from `.env`: `DB_PASSWORD`, `JWT_SECRET`, and
 `POSTGRES_USER` lines in the template are only there for reference.
 
 Optional, also read by Compose: `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` for
-push reminders, and `RESEND_API_KEY` / `MAIL_FROM` / `APP_URL` for email.
+push reminders, `RESEND_API_KEY` / `MAIL_FROM` / `APP_URL` for email, and
+`MORDI_FEED_KEY` (`openssl rand -base64 32`) for Google Calendar sync.
 Without a Resend key the backend logs each message it would have sent — the
 password-reset link included — so the reset flow can be tried locally with no
 mail account at all. `APP_URL` is the origin emailed links point at.

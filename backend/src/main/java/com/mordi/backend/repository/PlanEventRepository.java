@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -20,4 +23,12 @@ public interface PlanEventRepository extends JpaRepository<PlanEvent, Long> {
         User user, LocalDateTime to, LocalDateTime from);
 
     Optional<PlanEvent> findByIdAndUser(Long id, User user);
+
+    /** Every copy taken from one connected calendar, for a sync to compare against. */
+    List<PlanEvent> findByFeedId(Long feedId);
+
+    /** A connected calendar's new colour reaches its events, without loading them. */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update PlanEvent e set e.color = :color where e.feedId = :feedId")
+    int updateColorByFeedId(@Param("feedId") Long feedId, @Param("color") String color);
 }

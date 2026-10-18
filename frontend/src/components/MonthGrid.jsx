@@ -1,6 +1,7 @@
 import { formatTime, onDay, parseLocal, sameDay } from '../lib/planner';
 import { weekdayLabels } from '../lib/weekStart';
 import { goalIcon } from '../lib/categories';
+import FeedMark from './FeedMark';
 
 const SHOWN = 3;
 const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
@@ -19,8 +20,13 @@ const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'l
  * `planned(day)`, when given, lists the goals planned for that weekday as
  * { goal, done }; each shows as a small mark of its icon above the events,
  * filled once done that day, and the date's name says which.
+ *
+ * An event copied from a connected Google Calendar (with a `feedId`) carries
+ * a small link mark, and `sourceLabel(event)` adds where it came from to its
+ * name; opening it is the page's business, through `onOpenEvent`.
  */
 const noPlans = () => [];
+const noSource = () => '';
 
 export default function MonthGrid({
   days,
@@ -32,6 +38,7 @@ export default function MonthGrid({
   onOpenDay,
   onNew,
   onOpenEvent,
+  sourceLabel = noSource,
 }) {
   return (
     <div className="month">
@@ -92,10 +99,12 @@ export default function MonthGrid({
                   <li key={`${ev.id}-${day.getDate()}`}>
                     <button
                       type="button"
-                      className={`month__event ev--${ev.color ?? 'accent'}${ev.allDay ? ' month__event--allday' : ''}`}
+                      className={`month__event ev--${ev.color ?? 'accent'}${ev.allDay ? ' month__event--allday' : ''}${ev.feedId ? ' month__event--feed' : ''}`}
                       onClick={() => onOpenEvent(ev)}
-                      title={ev.title}
+                      title={`${ev.title}${sourceLabel(ev)}`}
+                      aria-label={ev.feedId ? `${ev.title}${sourceLabel(ev)}` : undefined}
                     >
+                      {ev.feedId && <FeedMark size={10} />}
                       {!ev.allDay && <span className="month__time">{formatTime(parseLocal(ev.startsAt))}</span>}
                       <span className="month__title">{ev.title}</span>
                     </button>

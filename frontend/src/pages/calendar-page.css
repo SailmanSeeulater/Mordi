@@ -676,3 +676,87 @@ button.planner__goal:not(.planner__goal--done):hover {
   .plan-today__item { grid-template-columns: minmax(0, 1fr) auto; }
   .plan-today__time { grid-column: 1 / -1; }
 }
+
+/* ── Google Calendar ───────────────────────── */
+
+/* Copies from a connected Google Calendar: the feed's colour, a link mark
+   beside the time or title, and no grab cursor, since they never move. */
+.feed-mark { flex: 0 0 auto; align-self: center; }
+.planner__event--feed { cursor: pointer; touch-action: auto; }
+.planner__event-when .feed-mark { margin-right: 3px; vertical-align: -1px; }
+.planner__chip--feed { display: flex; align-items: center; gap: 4px; }
+.month__event--feed::before { display: none; }
+.month__event--feed .feed-mark { color: color-mix(in oklab, var(--ev) 70%, var(--color-text)); }
+.month__event--allday.month__event--feed .feed-mark { color: inherit; }
+
+.gcal__steps {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  display: grid;
+  gap: 8px;
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+.gcal__steps li::marker { font-weight: 600; color: var(--color-accent-700); }
+.gcal__feeds {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.gcal__feed {
+  padding: 12px 14px;
+  border-radius: var(--r-panel);
+  background: color-mix(in oklab, var(--ev) 8%, var(--color-surface));
+  box-shadow: var(--edge);
+}
+.gcal__feed-head { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.gcal__dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: var(--r-pill);
+  background: var(--ev);
+}
+.gcal__feed-text { display: grid; gap: 2px; min-width: 0; }
+.gcal__feed-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gcal__feed-state { font-size: var(--t-small); color: var(--color-text-muted); }
+.gcal__feed-state--error { color: var(--color-signal); }
+.gcal__feed-hint {
+  overflow: hidden;
+  font-size: var(--t-micro);
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gcal__feed-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-left: 20px; }
+.gcal__disconnect { color: var(--color-signal); }
+.gcal__rename,
+.gcal__confirm { margin-top: 12px; padding-left: 20px; }
+.gcal__confirm p { margin: 0 0 10px; font-size: var(--t-small); line-height: 1.5; }
+.gcal__feed .app-form__actions { margin-top: 0; }
+.gcal__feed .app-form__error { margin: 10px 0 0 20px; }
+.gcal__add { margin-bottom: 4px; }
+.gcal__note { margin: 14px 0 0; }
+
+/* One event from Google, read-only. */
+.feed-event__facts { display: grid; gap: 10px; margin: 0 0 14px; }
+.feed-event__facts div { display: grid; gap: 2px; min-width: 0; }
+.feed-event__facts dt {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.feed-event__facts dd { margin: 0; overflow-wrap: anywhere; }
+.feed-event__notes { white-space: pre-wrap; line-height: 1.5; }
+.feed-event__source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--ev) 45%, var(--color-text));
+}

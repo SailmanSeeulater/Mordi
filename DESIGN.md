@@ -198,6 +198,11 @@ are on always shows in the rail, whatever the modules say.
   that applies to calendar views only, and weekly goal targets always count
   Monday to Sunday. `.ics` files from
   Google, Apple or Outlook import after a preview, repeating events expanded.
+  A Google Calendar can also be connected by its secret iCal address (the
+  "Google Calendar" button beside Import, shown only when the server has
+  `MORDI_FEED_KEY`): its events sit in the grid in the colour picked for it,
+  with a small link mark, and never drag, resize or open the form; they open
+  a read-only card that says where they came from.
 - **History** — archived goals with what they amounted to; restore or delete.
 - **Together** — shared goals. A list of shared goals beside one room that fills
   the window: the week as one row per person and one square per day (filled for

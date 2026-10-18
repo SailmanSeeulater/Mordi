@@ -60,6 +60,15 @@ Optional, and fine to leave blank locally:
       page of usage counts. Empty (the default) means nobody. To look at it
       locally, put your own test account's address here.
 
+  MORDI_FEED_KEY
+      Turns on Google Calendar sync (Calendar > Google Calendar). It is the
+      key that encrypts each connected calendar's secret address. Generate
+      one (Git Bash has openssl):
+          openssl rand -base64 32
+      or, without openssl:
+          node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+      Leave it empty and the Google Calendar button simply does not appear.
+
 For the record, the database identity is fixed in docker-compose.yml, not in
 .env: database "mordi", user "mordi_user". The POSTGRES_DB and POSTGRES_USER
 lines in env.example are there for reference only - changing them has no
