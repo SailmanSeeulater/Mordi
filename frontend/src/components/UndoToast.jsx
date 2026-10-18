@@ -10,17 +10,28 @@ const SHOWN_MS = 6000;
  * should cost a tap to undo, not a trip into the feed. The message is a live
  * region, so a screen reader hears what was logged. Hovering or focusing the
  * toast holds it open, so reaching for Undo never races the timer.
+ *
+ * The one action is Undo unless the toast names another (`actionLabel`), as
+ * "Already logged Morning run today · Add a note" does. `focus` puts focus on
+ * the action as it opens, for a toast raised from the keyboard, whose button
+ * would otherwise sit at the far end of the page. `onDone` is told which toast
+ * finished, so one closing late never clears the next.
  */
 export default function UndoToast({ toast, onUndo, onDone }) {
   const [held, setHeld] = useState(false);
   const [busy, setBusy] = useState(false);
   const timer = useRef(null);
+  const actionRef = useRef(null);
 
   useEffect(() => {
     if (!toast || held) return undefined;
-    timer.current = setTimeout(onDone, SHOWN_MS);
+    timer.current = setTimeout(() => onDone(toast.key), SHOWN_MS);
     return () => clearTimeout(timer.current);
   }, [toast, held, onDone]);
+
+  useEffect(() => {
+    if (toast?.focus) actionRef.current?.focus();
+  }, [toast]);
 
   if (!toast) return null;
 
@@ -30,7 +41,7 @@ export default function UndoToast({ toast, onUndo, onDone }) {
       await onUndo(toast);
     } finally {
       setBusy(false);
-      onDone();
+      onDone(toast.key);
     }
   };
 
@@ -45,11 +56,11 @@ export default function UndoToast({ toast, onUndo, onDone }) {
     >
       <span className="undo-toast__text">{toast.message}</span>
       {toast.undoable !== false && (
-        <button type="button" className="undo-toast__undo" onClick={undo} disabled={busy}>
-          {busy ? 'Undoing…' : 'Undo'}
+        <button type="button" className="undo-toast__undo" onClick={undo} disabled={busy} ref={actionRef}>
+          {toast.actionLabel ?? (busy ? 'Undoing…' : 'Undo')}
         </button>
       )}
-      <button type="button" className="undo-toast__close" onClick={onDone} aria-label="Dismiss">
+      <button type="button" className="undo-toast__close" onClick={() => onDone(toast.key)} aria-label="Dismiss">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
           strokeLinecap="round" aria-hidden="true" focusable="false">
           <path d="M6 6l12 12M18 6L6 18" />

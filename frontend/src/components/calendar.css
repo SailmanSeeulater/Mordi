@@ -176,3 +176,22 @@
   font-size: 12.5px;
   color: var(--color-text-muted);
 }
+
+/* An entry's Remove, small and to the right of its goal. Once removed, the
+   entry's place holds its Undo until another day is picked. */
+.cal__entry-remove {
+  margin-left: auto;
+  font-size: 12px;
+}
+.cal__entry-top .mood + .cal__entry-remove { margin-left: 4px; }
+.cal__entry--removed {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+.cal__entry-gone {
+  margin: 0;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}

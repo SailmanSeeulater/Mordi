@@ -68,9 +68,13 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
   const weekGoals = goalsForWeek(goals, week);
 
   const summary = weekSummary(weekGoals, behaviors, monday, today);
-  const prevSummary = weekSummary(goalsForWeek(goals, prev), behaviors, prevMonday, today);
+  // Last week is measured only against goals that existed then, so a goal
+  // added this week doesn't make last week look like a week of nothing.
+  const existedBefore = (g) => !g.createdAt || g.createdAt.slice(0, 10) < days[0];
+  const prevSummary = weekSummary(goalsForWeek(goals.filter(existedBefore), prev), behaviors, prevMonday, today);
   const planned = summary.rows.reduce((s, r) => s + r.target, 0);
   const achieved = summary.rows.reduce((s, r) => s + Math.min(r.done, r.target), 0);
+  const prevAchieved = prevSummary.rows.reduce((s, r) => s + Math.min(r.done, r.target), 0);
 
   // Per day: what was logged, how much of it was done, time tracked, mood.
   const perDay = days.map((iso, i) => {
@@ -169,9 +173,10 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
     planned,
     achieved,
     percent: planned ? Math.round((achieved / planned) * 100) : null,
-    prevPercent: prevSummary.rows.length && prevSummary.rows.some((r) => r.target)
+    prevPercent: prevSummary.rows.length > 0 && prevSummary.rows.some((r) => r.target)
       ? prevSummary.percent
       : null,
+    prevAchieved,
     entries: week.length,
     prevEntries: prev.length,
     completedEntries: week.filter((b) => b.completed).length,
@@ -227,9 +232,26 @@ export function headline(r) {
       : 'Nothing was logged this week.';
   }
   let text = `You hit ${r.achieved} of ${r.planned} planned days`;
-  if (r.prevPercent !== null) {
-    const d = r.percent - r.prevPercent;
-    text += d === 0 ? ', level with last week' : `, ${Math.abs(d)} points ${d > 0 ? 'up on' : 'down from'} last week`;
+  if (r.prevPercent !== null && r.prevPercent !== undefined) {
+    text += `, ${versusLastWeek(r)}`;
   }
   return `${text}.`;
+}
+
+/**
+ * Last week, in days rather than percentage points: "2 more days than last
+ * week", "1 fewer day than last week", "the same as last week". "8 points up"
+ * read as a score nobody had set. A report without last week's day count
+ * falls back to its percent, "up from 62% last week".
+ */
+function versusLastWeek(r) {
+  if (Number.isFinite(r.prevAchieved)) {
+    const d = r.achieved - r.prevAchieved;
+    if (d === 0) return 'the same as last week';
+    const n = Math.abs(d);
+    return `${n} ${d > 0 ? 'more' : 'fewer'} ${n === 1 ? 'day' : 'days'} than last week`;
+  }
+  const d = r.percent - r.prevPercent;
+  if (d === 0) return `the same as last week’s ${r.prevPercent}%`;
+  return `${d > 0 ? 'up' : 'down'} from ${r.prevPercent}% last week`;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import client from '../api/client';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
@@ -28,7 +28,9 @@ import { composeReminder } from '../lib/reminder';
 import { setTourStage, tourStage } from '../lib/tour';
 import { ESTABLISHED_DAYS, enableModule, initialPrefs, isOn, savePrefs, useModules } from '../lib/modules';
 import { sharedGoals } from '../lib/together';
+import { goalIcon } from '../lib/categories';
 import { mergeFeed } from '../lib/feed';
+import { doneOnDay, entryName, restoreRequest } from '../lib/entries';
 import {
   addDays,
   bestDay,
@@ -51,7 +53,8 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
  * One goal's ring. A tap logs it done today: logging is the one thing this
  * page is for, so it takes one action, with an Undo right after in case the
  * tap was a slip. Once today is logged the ring shows a tick, and a second
- * tap opens the full form instead, for adding a note or another entry.
+ * tap doesn't log it twice: a goal counts once a day, so it says so and
+ * offers the form for a note instead.
  *
  * It is draggable where it sits. A press only becomes a drag after
  * useDragSort's threshold, so a tap is still a tap, and `touch-action: pan-y`
@@ -91,6 +94,7 @@ function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, l
         aria-hidden="true"
       >
         <span className="app-ring__inner ring-item__inner">
+          <span className="ring-item__icon">{goalIcon(row.goal)}</span>
           {row.done}/{row.target}
         </span>
       </span>
@@ -98,7 +102,7 @@ function GoalRing({ row, onClick, order, held, over, dragProps, onNudge, busy, l
       <span className="app-sr">
         {row.done} of {row.target} logged this week.{' '}
         {loggedToday
-          ? 'Done today. Opens the form to add another entry.'
+          ? 'Done today. It counts once a day, so tapping again won’t log it twice.'
           : 'Logs it done today in one tap.'}{' '}
         Use the left and right arrow keys to move it.
       </span>
@@ -140,7 +144,7 @@ const TOUR_START = [
   {
     id: 'welcome',
     title: 'Welcome to Mordi.',
-    body: 'Goals get a number of days a week, you log what you do, and the week keeps count against that number. That is the whole idea.',
+    body: 'You set how often you want to work toward your goal weekly, log your progress, and let Mordi keep track. :)',
   },
   {
     id: 'starter',
@@ -155,13 +159,13 @@ const TOUR_LOOP = [
     id: 'pass',
     target: '[data-tour="pass"]',
     title: 'The week card',
-    body: 'Your count against the targets you set, whether you are on pace for today, and what is still left this week. A day with nothing logged only counts as missed for a goal meant to happen every day.',
+    body: 'Your progress count toward the targets you set. This shows if you are on pace for today and what is still left this week. A day with nothing logged only counts as missed for a goal meant to happen every day.',
   },
   {
     id: 'log',
     target: '[data-tour="log"]',
     title: 'Log today',
-    body: 'The one action. One tap, how it felt, and a note if you want one. Tapping a goal ring logs that goal straight away.',
+    body: 'The one action. One tap, how it felt, and a note if you want one. Tapping on a goal ring logs that goal straight away. Logged by mistake? Tap Undo, or remove it from Lately.',
   },
   {
     id: 'rings',
@@ -173,7 +177,7 @@ const TOUR_LOOP = [
     id: 'focused',
     target: '[data-tour="account"]',
     title: 'You are in Focused mode',
-    body: 'A new account shows the goals, the week and what you logged. Calendar, notes, timer, places and the rest are switches in Settings, here, when you want them.',
+    body: 'A new account only shows the goals, the week, and what you logged. Calendar view, notes, timer, places, and the rest are toggled features in Settings, here, if you want to add them.',
     doneLabel: 'Done',
   },
 ];
@@ -326,26 +330,48 @@ export default function Dashboard() {
     setHistoryKey((k) => k + 1);
   }, [reload]);
 
+  // An Undo for whatever was just logged or removed: a one-tap log, a planned
+  // block marked done, an entry taken out of Lately. Each toast has its own
+  // key, so the one closing never clears the one that replaced it.
+  const [toast, setToast] = useState(null);
+  const toastKey = useRef(0);
+  const showToast = useCallback((t) => {
+    toastKey.current += 1;
+    setToast({ ...t, key: toastKey.current });
+  }, []);
+  const clearToast = useCallback((key) => setToast((t) => (t && t.key === key ? null : t)), []);
+
+  // Opening a dialog puts away the toast: on a phone it would sit over the
+  // sheet's buttons, and the dialog's focus trap would keep its Undo out of
+  // reach of the keyboard anyway.
   const openLog = useCallback((goalId = '') => {
+    setToast(null);
     setLogGoalId(goalId);
     setModal('log');
   }, []);
-
-  // An Undo for whatever was just logged: a one-tap log, or a planned block
-  // marked done.
-  const [toast, setToast] = useState(null);
-  const showToast = useCallback((t) => setToast({ ...t, key: Date.now() }), []);
-  const clearToast = useCallback(() => setToast(null), []);
 
   const loggedToday = useMemo(
     () => new Set(behaviors.filter((b) => b.completed && b.logDate === todayIso && b.goal).map((b) => b.goal.id)),
     [behaviors, todayIso],
   );
   const [loggingId, setLoggingId] = useState(null);
+  // Goals logged by a tap whose reload hasn't landed yet, so a quick second
+  // tap is still caught as a repeat.
+  const justLogged = useRef(new Set());
+  useEffect(() => {
+    justLogged.current.clear();
+  }, [behaviors]);
 
+  // A goal counts once a day, so a tap on a ring already done today doesn't
+  // log it again. It says so, and offers the form for a note instead.
   const tapRing = async (row) => {
-    if (loggedToday.has(row.goal.id)) {
-      openLog(row.goal.id);
+    if (loggingId !== null) return;
+    if (doneOnDay(behaviors, row.goal.id, todayIso) || justLogged.current.has(row.goal.id)) {
+      showToast({
+        message: `Already logged ${row.goal.title} today`,
+        actionLabel: 'Add a note',
+        undo: () => openLog(row.goal.id),
+      });
       return;
     }
     setLoggingId(row.goal.id);
@@ -358,11 +384,17 @@ export default function Dashboard() {
         logDate: todayIso,
         placeName: row.goal.placeName ?? null,
       });
+      justLogged.current.add(row.goal.id);
       handleTimeSaved();
       showToast({
         message: `Logged ${row.goal.title} for today`,
         undo: async () => {
-          await client.delete(`/api/behaviors/${res.data.id}`);
+          try {
+            await client.delete(`/api/behaviors/${res.data.id}`);
+          } catch {
+            showToast({ message: 'Couldn’t undo that. Check your connection and try again.', undoable: false });
+            return;
+          }
           handleTimeSaved();
         },
       });
@@ -372,6 +404,61 @@ export default function Dashboard() {
       setLoggingId(null);
     }
   };
+
+  // Taking an entry back, from Lately: gone at once, no confirm, with an Undo
+  // that puts it back with the fields it had. It drops out of the feed
+  // straight away and the counts follow on the same reload a log uses.
+  const [hiddenIds, setHiddenIds] = useState(() => new Set());
+  const unhide = useCallback((id) => {
+    setHiddenIds((ids) => {
+      const next = new Set(ids);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+  const restoreEntry = useCallback(
+    async (entry) => {
+      const res = await client.post('/api/behaviors', restoreRequest(entry));
+      handleTimeSaved();
+      return res.data;
+    },
+    [handleTimeSaved],
+  );
+  const removeEntry = useCallback(
+    async (entry, { viaKeyboard = false } = {}) => {
+      setHiddenIds((ids) => new Set(ids).add(entry.id));
+      try {
+        await client.delete(`/api/behaviors/${entry.id}`);
+      } catch {
+        unhide(entry.id);
+        showToast({ message: 'Couldn’t remove that entry. Check your connection and try again.', undoable: false });
+        return;
+      }
+      handleTimeSaved();
+      showToast({
+        message: `Removed ${entryName(entry)}`,
+        focus: viaKeyboard,
+        undo: async () => {
+          try {
+            await restoreEntry(entry);
+          } catch {
+            showToast({ message: 'Couldn’t put that entry back. Check your connection and try again.', undoable: false });
+          }
+        },
+      });
+    },
+    [handleTimeSaved, restoreEntry, showToast, unhide],
+  );
+  const feed = useMemo(() => recent.filter((e) => !hiddenIds.has(e.id)), [recent, hiddenIds]);
+  // The month calendar keeps its own Undo, in place of the entry, because a
+  // toast behind its dialog can't be reached.
+  const removeFromCalendar = useCallback(
+    async (entry) => {
+      await client.delete(`/api/behaviors/${entry.id}`);
+      handleTimeSaved();
+    },
+    [handleTimeSaved],
+  );
 
   // Whether anything was logged last week, which decides whether there is a
   // week to write up and review.
@@ -399,8 +486,13 @@ export default function Dashboard() {
 
   const [calendarDay, setCalendarDay] = useState(null);
   const openCalendar = (iso) => {
+    setToast(null);
     setCalendarDay(iso);
     setModal('calendar');
+  };
+  const openGoalForm = () => {
+    setToast(null);
+    setModal('goal');
   };
 
   const todayColumn = summary.days.indexOf(todayIso);
@@ -495,7 +587,7 @@ export default function Dashboard() {
             ))}
           </ul>
           <div className="onboard__actions">
-            <button type="button" className="app-btn" onClick={() => setModal('goal')}>
+            <button type="button" className="app-btn" onClick={openGoalForm}>
               Write your own goal
             </button>
             <button type="button" className="app-btn app-btn--ghost" onClick={() => openLog()}>
@@ -540,7 +632,7 @@ export default function Dashboard() {
                   type="button"
                   className="ring-item ring-item--add"
                   style={{ order: 999 }}
-                  onClick={() => setModal('goal')}
+                  onClick={openGoalForm}
                 >
                   <span className="app-ring ring-item__ring" aria-hidden="true">
                     <span className="app-ring__inner ring-item__inner">+</span>
@@ -716,7 +808,12 @@ export default function Dashboard() {
             <div className="app-panel side">
               {on('todo') && <TodoList />}
               {on('timer') && <TimeLogger onSaved={handleTimeSaved} />}
-              <LatelyFeed entries={recent} todayIso={todayIso} weekCount={summary.entries + todosThisWeek} />
+              <LatelyFeed
+                entries={feed}
+                todayIso={todayIso}
+                weekCount={summary.entries + todosThisWeek}
+                onRemove={removeEntry}
+              />
             </div>
           </div>
         </div>
@@ -728,6 +825,7 @@ export default function Dashboard() {
         <Modal title="Log today" onClose={closeModal}>
           <LogEntryForm
             goals={goals}
+            behaviors={behaviors}
             initialGoalId={logGoalId}
             onSaved={handleSaved}
             onCancel={closeModal}
@@ -746,6 +844,8 @@ export default function Dashboard() {
           initialSelected={calendarDay}
           onClose={closeModal}
           onLogDay={() => openLog()}
+          onRemove={removeFromCalendar}
+          onRestore={restoreEntry}
         />
       )}
       <UndoToast

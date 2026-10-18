@@ -1,6 +1,8 @@
 // Pure date/grid helpers for the dashboard. Dates are handled as local-time
 // calendar days and compared as YYYY-MM-DD strings, matching the backend's LocalDate.
 
+import { startOfCalendarWeek } from '../lib/weekStart';
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function toIsoDate(date) {
@@ -18,6 +20,8 @@ export function addDays(date, n) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
 }
 
+/** Monday of the week. Weekly targets always count Monday to Sunday,
+ * whichever day the calendar is set to start on. */
 export function startOfWeek(date) {
   const daysSinceMonday = (date.getDay() + 6) % 7;
   return addDays(date, -daysSinceMonday);
@@ -49,12 +53,13 @@ export function formatMonth(date) {
 }
 
 /**
- * Six Monday-led weeks covering the month, so the grid never changes height
- * as you page through. Days outside the month are marked `outside`.
+ * Six weeks covering the month, so the grid never changes height as you page
+ * through, led by Monday or Sunday as the calendar is set (lib/weekStart).
+ * Days outside the month are marked `outside`.
  */
-export function monthGrid(date) {
+export function monthGrid(date, weekStart = 'monday') {
   const first = startOfMonth(date);
-  const gridStart = startOfWeek(first);
+  const gridStart = startOfCalendarWeek(first, weekStart);
   const month = first.getMonth();
   return Array.from({ length: 42 }, (_, i) => {
     const day = addDays(gridStart, i);

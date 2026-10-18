@@ -136,3 +136,135 @@ describe('Dashboard week count', () => {
     expect(count().className).not.toContain('pass__count--pop');
   });
 });
+
+describe('Dashboard taking back an entry', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ now: TODAY });
+    localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const logged = {
+    id: 21,
+    goal: { id: 1, title: 'Morning run' },
+    logDate: TODAY_ISO,
+    completed: true,
+    note: 'Ran 3 miles',
+    mood: 'good',
+    placeName: 'Park',
+    loggedAt: '2026-09-16T07:30:00Z',
+  };
+
+  it('removes an entry from Lately at once, and Undo puts it back as it was', async () => {
+    loadWith([logged]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+    expect(count()).toHaveTextContent('1');
+
+    client.delete.mockResolvedValue({});
+    loadWith([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Ran 3 miles' }));
+    await act(async () => {});
+
+    expect(client.delete).toHaveBeenCalledWith('/api/behaviors/21');
+    expect(screen.queryByText('Ran 3 miles')).toBeNull();
+    expect(screen.getByText('Removed Morning run')).toBeInTheDocument();
+    // The week card follows on the same reload a log uses.
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(count()).toHaveTextContent('0');
+
+    client.post.mockResolvedValue({ data: { ...logged, id: 22 } });
+    loadWith([{ ...logged, id: 22 }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await act(async () => {});
+
+    expect(client.post).toHaveBeenCalledWith('/api/behaviors', {
+      goalId: 1,
+      note: 'Ran 3 miles',
+      completed: true,
+      mood: 'good',
+      logDate: TODAY_ISO,
+      latitude: null,
+      longitude: null,
+      placeName: 'Park',
+      durationSeconds: null,
+      loggedAt: '2026-09-16T07:30:00Z',
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(screen.getByText('Ran 3 miles')).toBeInTheDocument();
+    expect(count()).toHaveTextContent('1');
+  });
+
+  it('keeps an entry, and says so, when removing it fails', async () => {
+    loadWith([logged]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+
+    client.delete.mockRejectedValue(new Error('offline'));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Ran 3 miles' }));
+    await act(async () => {});
+
+    expect(screen.getByText('Ran 3 miles')).toBeInTheDocument();
+    expect(screen.getByText(/Couldn’t remove that entry/)).toBeInTheDocument();
+  });
+
+  it('does not log a goal twice from its ring, and offers the form for a note', async () => {
+    loadWith([logged]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+
+    fireEvent.click(screen.getByRole('button', { name: /Done today/ }));
+    await act(async () => {});
+
+    expect(client.post).not.toHaveBeenCalled();
+    expect(screen.getByText('Already logged Morning run today')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a note' }));
+    await act(async () => {});
+    expect(screen.getByRole('dialog', { name: 'Log today' })).toBeInTheDocument();
+    expect(screen.getByText(/Already logged today/)).toBeInTheDocument();
+  });
+
+  it('catches a quick second tap before the reload lands', async () => {
+    loadWith([]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+
+    // The reload after the first tap never comes back, so the week still
+    // shows nothing logged when the second tap arrives.
+    client.post.mockResolvedValue({ data: { id: 30 } });
+    client.get.mockImplementation(() => new Promise(() => {}));
+    const ring = screen.getByRole('button', { name: /Logs it done today/ });
+    fireEvent.click(ring);
+    await act(async () => {});
+    fireEvent.click(ring);
+    await act(async () => {});
+
+    expect(client.post).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Already logged Morning run today')).toBeInTheDocument();
+  });
+});

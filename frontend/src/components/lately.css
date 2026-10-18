@@ -168,3 +168,24 @@
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Remove shows on hover, or when the entry is tapped or tabbed to, as a
+   Together message's Delete does. Hidden rather than only transparent, so a
+   tap on a phone first shows it and only a second tap removes. It keeps its
+   place while hidden, so the row never moves as it appears. */
+.lately__remove {
+  margin-left: auto;
+  font-size: 12px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out), visibility 0s linear 120ms;
+}
+.lately__entry:hover .lately__remove,
+.lately__entry:focus-within .lately__remove {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 120ms var(--ease-out), visibility 0s;
+}
+@media (pointer: coarse) {
+  .lately__remove { min-width: 44px; justify-content: flex-end; }
+}

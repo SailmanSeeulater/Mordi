@@ -583,6 +583,12 @@ table.app-sr { white-space: normal; }
   font-size: 13px;
   color: var(--color-text-muted);
 }
+/* The log form's "Already logged today" line, just above the buttons: in
+   full ink, because it changes what saving will do. */
+.log-form__repeat {
+  margin: 0 0 14px;
+  color: var(--color-text);
+}
 
 .app-check {
   display: flex;

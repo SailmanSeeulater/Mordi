@@ -336,8 +336,8 @@ const MOOD_MIX = [
   { mood: 'Low', n: 1 },
 ];
 // The app's own headline sentence, fed the illustrative week: 11 of 13
-// planned days (85%) against 77% the week before.
-const REPORT_HEADLINE = headline({ percent: 85, prevPercent: 77, achieved: 11, planned: 13 });
+// planned days (85%) against 10 of 13 (77%) the week before.
+const REPORT_HEADLINE = headline({ percent: 85, prevPercent: 77, achieved: 11, planned: 13, prevAchieved: 10 });
 
 export function ReportDemo() {
   const ref = useRef(null);

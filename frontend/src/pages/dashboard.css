@@ -60,6 +60,17 @@
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  /* The goal's icon above the count, the pair centred together. */
+  align-content: center;
+  gap: 1px;
+}
+.ring-item__icon {
+  display: grid;
+  color: var(--color-accent-700);
+}
+.ring-item__icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .ring-item__label {

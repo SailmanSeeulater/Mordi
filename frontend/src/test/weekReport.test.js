@@ -110,9 +110,30 @@ describe('buildWeekReport', () => {
   });
 
   it('writes a headline that compares with last week only when it can', () => {
-    expect(headline(r)).toMatch(/^You hit 5 of 12 planned days, \d+ points (up on|down from) last week\.$/);
+    // Last week: one run day and one reading day, so 2 against this week's 5.
+    expect(r.prevAchieved).toBe(2);
+    expect(headline(r)).toBe('You hit 5 of 12 planned days, 3 more days than last week.');
     const empty = buildWeekReport({ goals: [], behaviors: [], weekStart, today });
     expect(headline(empty)).toBe('Nothing was logged this week.');
+  });
+
+  it('compares with last week in days, not percentage points', () => {
+    const base = { percent: 85, prevPercent: 77, achieved: 11, planned: 13 };
+    expect(headline({ ...base, prevAchieved: 9 })).toBe('You hit 11 of 13 planned days, 2 more days than last week.');
+    expect(headline({ ...base, prevAchieved: 10 })).toBe('You hit 11 of 13 planned days, 1 more day than last week.');
+    expect(headline({ ...base, prevAchieved: 12 })).toBe('You hit 11 of 13 planned days, 1 fewer day than last week.');
+    expect(headline({ ...base, prevAchieved: 14 })).toBe('You hit 11 of 13 planned days, 3 fewer days than last week.');
+    expect(headline({ ...base, prevAchieved: 11 })).toBe('You hit 11 of 13 planned days, the same as last week.');
+    expect(headline(base)).toBe('You hit 11 of 13 planned days, up from 77% last week.');
+    expect(headline({ ...base, prevPercent: 90 })).toBe('You hit 11 of 13 planned days, down from 90% last week.');
+    expect(headline({ ...base, prevPercent: null, prevAchieved: 3 })).toBe('You hit 11 of 13 planned days.');
+  });
+
+  it('makes no comparison when last week had no goals to measure against', () => {
+    const newRun = { ...run, createdAt: '2026-09-14T08:00:00' };
+    const fresh = buildWeekReport({ goals: [newRun], behaviors: [e(1, newRun, '2026-09-14')], weekStart, today });
+    expect(fresh.prevPercent).toBeNull();
+    expect(headline(fresh)).toBe('You hit 1 of 3 planned days.');
   });
 });
 
