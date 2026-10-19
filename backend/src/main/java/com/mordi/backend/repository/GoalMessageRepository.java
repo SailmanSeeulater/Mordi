@@ -26,4 +26,7 @@ public interface GoalMessageRepository extends JpaRepository<GoalMessage, Long> 
         + "where gm.user = :user and gm.goal = m.goal and m.user <> :user "
         + "and m.id > gm.lastReadMessageId group by m.goal.id")
     List<Object[]> countUnread(@Param("user") User user);
+
+    /** Everything the person wrote in shared-goal threads: the data export. */
+    List<GoalMessage> findByUserOrderByIdAsc(User user);
 }

@@ -37,18 +37,3 @@ export function syncedLabel(feed, now = new Date()) {
   const n = feed.eventCount ?? 0;
   return `Synced ${ago(feed.lastSyncedAt, now)} · ${n} event${n === 1 ? '' : 's'}`;
 }
-
-/**
- * A connected calendar as it goes into "Download my data": what it is called,
- * its colour and its counts. Never its address, nor even the hint of one: the
- * address is a credential, and an export file gets emailed and left about.
- */
-export function feedForExport(feed) {
-  return {
-    name: feed.name,
-    color: feed.color ?? null,
-    eventCount: feed.eventCount ?? 0,
-    lastSyncedAt: feed.lastSyncedAt ?? null,
-    lastError: feed.lastError ?? null,
-  };
-}

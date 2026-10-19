@@ -23,16 +23,6 @@ vi.mock('../components/LayoutSettings', () => ({ default: () => null }));
 vi.mock('../components/ChangePasswordForm', () => ({ default: () => null }));
 vi.mock('../components/DeleteAccount', () => ({ default: () => null }));
 
-const FEED = {
-  id: 1,
-  name: 'Work',
-  color: 'violet',
-  addressHint: 'calendar.google.com/…sam',
-  lastSyncedAt: '2026-10-18T11:56:00Z',
-  lastError: null,
-  eventCount: 128,
-};
-
 let saved;
 
 beforeEach(() => {
@@ -63,29 +53,40 @@ const download = async () => {
   return JSON.parse(await saved.text());
 };
 
+const EXPORT = {
+  exportedAt: '2026-10-19T12:00:00Z',
+  account: { name: 'Sam', email: 'sam@example.test' },
+  goals: [{ id: 1, title: 'Run' }],
+  entries: [{ id: 5, goalId: 1 }, { id: 6, goalId: 1 }],
+  notes: [{ title: 'Shoes', body: 'Size 10' }],
+  todos: [{ text: 'Book dentist', done: true }],
+  messages: [{ goalTitle: 'Read together', body: 'Chapter 3 done' }],
+  connectedCalendars: [{ name: 'Work', color: 'violet', eventCount: 128 }],
+};
+
 describe('Download my data', () => {
-  it('includes connected calendars by name, colour and counts, never their addresses', async () => {
-    client.get.mockImplementation((url) =>
-      Promise.resolve({ data: url === '/api/calendar-feeds' ? [FEED] : [] }),
-    );
+  it('saves the server’s full export as it came', async () => {
+    client.get.mockResolvedValue({ data: EXPORT });
 
     const exported = await download();
 
-    expect(exported.connectedCalendars).toEqual([
-      { name: 'Work', color: 'violet', eventCount: 128, lastSyncedAt: FEED.lastSyncedAt, lastError: null },
-    ]);
-    expect(JSON.stringify(exported)).not.toMatch(/calendar\.google\.com|addressHint|private-/);
+    expect(client.get).toHaveBeenCalledWith('/api/account/export');
+    expect(exported).toEqual(EXPORT);
+    expect(await screen.findByText('Downloaded 1 goals and 2 entries.')).toBeInTheDocument();
   });
 
-  it('still downloads when the server has Google Calendar sync off', async () => {
-    client.get.mockImplementation((url) =>
-      url === '/api/calendar-feeds'
-        ? Promise.reject({ response: { status: 404 } })
-        : Promise.resolve({ data: [] }),
+  it('says so when the export fails, and saves nothing', async () => {
+    client.get.mockRejectedValue({ response: { status: 500 } });
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <Settings />
+      </MemoryRouter>,
     );
 
-    const exported = await download();
+    await user.click(screen.getByRole('button', { name: 'Download my data' }));
 
-    expect(exported.connectedCalendars).toEqual([]);
+    expect(await screen.findByText('Couldn’t build your export. Try again in a moment.')).toBeInTheDocument();
+    expect(saved).toBeNull();
   });
 });

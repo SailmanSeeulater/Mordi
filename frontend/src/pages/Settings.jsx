@@ -13,12 +13,8 @@ import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteAccount from '../components/DeleteAccount';
 import { toIsoDate } from './dashboardData';
 import { LEGAL } from '../lib/legal';
-import { feedForExport } from '../lib/calendarFeeds';
 import { WEEK_STARTS, setWeekStart, useWeekStart } from '../lib/weekStart';
 import './settings.css';
-
-// Far enough back to cover any account's history.
-const EXPORT_START = '2020-01-01';
 
 const WEEK_START_LABELS = { monday: 'Monday', sunday: 'Sunday' };
 
@@ -76,27 +72,9 @@ export default function Settings() {
     setExporting(true);
     setStatus({ tone: 'info', text: 'Collecting your data…' });
     try {
-      const [goals, behaviors, locations, categories, feeds] = await Promise.all([
-        client.get('/api/goals'),
-        client.get('/api/behaviors/range', {
-          params: { start: EXPORT_START, end: toIsoDate(new Date()) },
-        }),
-        client.get('/api/locations').catch(() => ({ data: [] })),
-        client.get('/api/categories').catch(() => ({ data: [] })),
-        // 404 when this server has Google Calendar sync switched off.
-        client.get('/api/calendar-feeds').catch(() => ({ data: [] })),
-      ]);
-
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        account: { name: user?.name ?? null, email: user?.email ?? null },
-        goals: goals.data,
-        entries: behaviors.data,
-        places: locations.data,
-        categories: categories.data,
-        // Names and counts only: a calendar's secret address never leaves the server.
-        connectedCalendars: (Array.isArray(feeds.data) ? feeds.data : []).map(feedForExport),
-      };
+      // Built on the server, so it holds everything: notes, to-dos, events,
+      // messages and the rest, not only what the app happens to show.
+      const { data: payload } = await client.get('/api/account/export');
 
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
@@ -111,7 +89,7 @@ export default function Settings() {
 
       setStatus({
         tone: 'info',
-        text: `Downloaded ${goals.data.length} goals and ${behaviors.data.length} entries.`,
+        text: `Downloaded ${payload.goals.length} goals and ${payload.entries.length} entries.`,
       });
     } catch {
       setStatus({ tone: 'error', text: 'Couldn’t build your export. Try again in a moment.' });

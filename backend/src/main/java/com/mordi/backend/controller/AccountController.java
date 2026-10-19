@@ -5,6 +5,8 @@ import com.mordi.backend.dto.AuthResponse;
 import com.mordi.backend.dto.ChangePasswordRequest;
 import com.mordi.backend.dto.DeleteAccountRequest;
 import com.mordi.backend.model.User;
+import com.mordi.backend.service.AccountExportService;
+import com.mordi.backend.service.AccountExportService.AccountExport;
 import com.mordi.backend.service.AccountService;
 import com.mordi.backend.service.PasswordService;
 import com.mordi.backend.service.RefreshTokenService;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +30,7 @@ public class AccountController {
 
     private final PasswordService passwordService;
     private final AccountService accountService;
+    private final AccountExportService exportService;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
     private final SessionCookies cookies;
@@ -46,6 +50,12 @@ public class AccountController {
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, cookies.refresh(refresh).toString())
             .body(body);
+    }
+
+    /** Everything kept about this person, for "Download my data". */
+    @GetMapping("/export")
+    public AccountExport export(@AuthenticationPrincipal String email) {
+        return exportService.export(email);
     }
 
     /**

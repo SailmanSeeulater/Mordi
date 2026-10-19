@@ -188,8 +188,9 @@ export default function Privacy() {
       <ul>
         <li>
           <strong>See and download your data.</strong> In <Link to="/settings">Settings</Link>, &ldquo;Download
-          my data&rdquo; saves your goals, entries, places and the names of any connected calendars. For a
-          copy of everything else, write to {mail}.
+          my data&rdquo; saves everything we keep about you: goals, entries, places, notes, to-dos, events,
+          weekly reports, shared goals and the messages you wrote in them. A connected calendar&rsquo;s
+          private address is left out; it works like a password.
         </li>
         <li><strong>Correct it.</strong> Edit anything in the app. To change your name or email address, write to us.</li>
         <li><strong>Delete it.</strong> Settings, then Delete account. It takes effect at once.</li>

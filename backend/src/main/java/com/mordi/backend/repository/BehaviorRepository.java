@@ -15,6 +15,9 @@ import java.util.List;
 public interface BehaviorRepository extends JpaRepository<Behavior, Long> {
     List<Behavior> findByUserAndLogDateBetween(User user, LocalDate start, LocalDate end);
     List<Behavior> findByUserAndLogDate(User user, LocalDate date);
+    /** Every entry the person logged, oldest first: the data export. */
+    List<Behavior> findByUserOrderByLogDateAscIdAsc(User user);
+
 
     /**
      * One row per goal that has any entries:
