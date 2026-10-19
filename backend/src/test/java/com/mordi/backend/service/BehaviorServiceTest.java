@@ -87,6 +87,30 @@ class BehaviorServiceTest {
     }
 
     @Test
+    void logBehavior_withNoNote_savesAnEmptyOne() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        when(behaviorRepository.save(any(Behavior.class))).thenAnswer(inv -> inv.getArgument(0));
+        BehaviorRequest request = request(null);
+        request.setNote(null);
+
+        Behavior saved = behaviorService.logBehavior(ME, request);
+
+        assertThat(saved.getNote()).isEmpty();
+    }
+
+    @Test
+    void logBehavior_withANoteTooLongForTheColumn_isRefusedWithAReason() {
+        when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+        BehaviorRequest request = request(null);
+        request.setNote("x".repeat(256));
+
+        assertThatThrownBy(() -> behaviorService.logBehavior(ME, request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("A note can be at most 255 characters");
+        verify(behaviorRepository, never()).save(any());
+    }
+
+    @Test
     void logBehavior_againstOwnGoal_savesWithGoal() {
         when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
         when(goalRepository.findById(10L)).thenReturn(Optional.of(goal(10L, me)));
