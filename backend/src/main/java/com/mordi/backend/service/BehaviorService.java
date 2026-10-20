@@ -32,7 +32,7 @@ public class BehaviorService {
 
         Behavior behavior = new Behavior();
         behavior.setUser(user);
-        behavior.setNote(request.getNote());
+        behavior.setNote(validNote(request.getNote()));
         behavior.setCompleted(request.isCompleted());
         behavior.setMood(request.getMood());
         behavior.setLogDate(request.getLogDate() != null ? request.getLogDate() : LocalDate.now());
@@ -124,6 +124,24 @@ public class BehaviorService {
                 row[3] == null ? null : ((Number) row[3]).doubleValue(),
                 row[4] == null ? null : ((Number) row[4]).doubleValue()))
             .toList();
+    }
+
+    /** The column's limit, and what the log form already caps a note at. */
+    private static final int MAX_NOTE = 255;
+
+    /**
+     * No note is an empty one, as the app sends it; the column takes no null.
+     * Too long is refused here, with a reason, rather than by the database
+     * as a puzzling "conflicts with existing data".
+     */
+    static String validNote(String note) {
+        if (note == null) {
+            return "";
+        }
+        if (note.length() > MAX_NOTE) {
+            throw new IllegalArgumentException("A note can be at most " + MAX_NOTE + " characters");
+        }
+        return note;
     }
 
     private String trimToNull(String value) {
