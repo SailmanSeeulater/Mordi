@@ -13,6 +13,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findByUserAndActive(User user, boolean active);
+    /** Every goal the person owns, archived and removed ones too: the data export. */
+    List<Goal> findByUserOrderByIdAsc(User user);
+
 
     /** Current goals: not deleted, not archived. What the dashboard shows. */
     List<Goal> findByUserAndActiveTrueAndArchivedAtIsNull(User user);

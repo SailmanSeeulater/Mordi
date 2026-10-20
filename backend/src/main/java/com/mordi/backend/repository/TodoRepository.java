@@ -42,4 +42,7 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
     /** Everyone's to-dos finished on this day, for the usage totals. */
     @Query("select count(t) from Todo t where t.done = true and t.completedOn = :day")
     long countFinishedOn(@Param("day") LocalDate day);
+
+    /** Every to-do, cleared ones too: the data export. */
+    List<Todo> findByUserOrderByCreatedAtAsc(User user);
 }

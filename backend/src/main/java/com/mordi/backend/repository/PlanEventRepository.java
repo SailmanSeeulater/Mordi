@@ -31,4 +31,7 @@ public interface PlanEventRepository extends JpaRepository<PlanEvent, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update PlanEvent e set e.color = :color where e.feedId = :feedId")
     int updateColorByFeedId(@Param("feedId") Long feedId, @Param("color") String color);
+
+    /** Every event, imported ones too: the data export. */
+    List<PlanEvent> findByUserOrderByStartsAtAsc(User user);
 }

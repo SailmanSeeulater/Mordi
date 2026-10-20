@@ -38,4 +38,7 @@ public interface GoalMemberRepository extends JpaRepository<GoalMember, Long> {
     /** Goal id and head count, for the goals given. */
     @Query("select m.goal.id, count(m) from GoalMember m where m.goal.id in :goalIds group by m.goal.id")
     List<Object[]> countByGoalIds(@Param("goalIds") Collection<Long> goalIds);
+
+    /** Every shared goal the person is in, their own included: the data export. */
+    List<GoalMember> findByUserOrderByJoinedAtAsc(User user);
 }

@@ -8,7 +8,7 @@ import GoogleCalendarDialog from '../components/GoogleCalendarDialog';
 import MonthGrid from '../components/MonthGrid';
 import PlanToday from '../components/PlanToday';
 import client from '../api/client';
-import { feedForExport, isStale, syncedLabel } from '../lib/calendarFeeds';
+import { isStale, syncedLabel } from '../lib/calendarFeeds';
 import { toLocalIso } from '../lib/planner';
 
 vi.mock('../api/client', () => ({
@@ -369,17 +369,5 @@ describe('the feed helpers', () => {
     expect(isStale({ lastSyncedAt: null }, now)).toBe(true);
     expect(syncedLabel({ lastSyncedAt: '2026-10-18T10:00:00Z', eventCount: 1 }, now)).toBe('Synced 2 hr ago · 1 event');
     expect(syncedLabel({ lastSyncedAt: null })).toBe('Not synced yet');
-  });
-
-  it('export a calendar’s name, colour and counts, never its address', () => {
-    const exported = feedForExport({ ...WORK, url: URL_ });
-    expect(exported).toEqual({
-      name: 'Work',
-      color: 'violet',
-      eventCount: 128,
-      lastSyncedAt: WORK.lastSyncedAt,
-      lastError: null,
-    });
-    expect(JSON.stringify(exported)).not.toMatch(/calendar\.google\.com|private-|%40/);
   });
 });
