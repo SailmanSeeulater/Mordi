@@ -10,11 +10,25 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Sized for the 1 GB VM. Postgres' defaults (128 MB of shared buffers, 100
+    # connections) assume a machine of its own. The backend opens at most 5
+    # (spring.datasource.hikari.maximum-pool-size); 30 leaves room for psql,
+    # a backup and a second backend during a deploy.
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=30"]
+    # A hard ceiling, so a runaway query swaps this container's own pages
+    # rather than pushing the other apps on the VM out of memory.
+    mem_limit: 256m
     restart: unless-stopped
 
   redis:
     image: redis:7
     container_name: mordi-redis
+    # Redis holds only the login rate limiter's buckets, a few hundred bytes
+    # each, but they never expire, so it is told to drop the least recently
+    # used ones at 32 MB rather than grow until the container limit kills it.
+    # A dropped bucket only resets one address's attempt count.
+    command: ["redis-server", "--maxmemory", "32mb", "--maxmemory-policy", "allkeys-lru"]
+    mem_limit: 64m
     restart: unless-stopped
 
   backend:
@@ -59,6 +73,11 @@ services:
       MORDI_ADMIN_EMAILS: ${MORDI_ADMIN_EMAILS:-}
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
       SPRING_FLYWAY_BASELINE_VERSION: "1"
+    # A backstop behind the JVM's own caps (backend/Dockerfile). The backend
+    # sits at ~300 MB; a completely full heap plus the ~150 MB it uses
+    # outside the heap comes to ~450 MB. If something grows past this anyway,
+    # this container swaps its own pages instead of the rest of the VM's.
+    mem_limit: 512m
     depends_on:
       - postgres
       - redis
