@@ -668,3 +668,8 @@
 .addmore__text { display: grid; gap: 2px; min-width: 0; }
 .addmore__label { font-size: 15px; font-weight: 600; }
 .addmore__blurb { font-size: 13px; line-height: 1.45; color: var(--color-text-muted); }
+
+/* Phones: the weather chip reaches 44px. */
+@media (pointer: coarse) {
+  .wx--btn { min-height: 44px; }
+}

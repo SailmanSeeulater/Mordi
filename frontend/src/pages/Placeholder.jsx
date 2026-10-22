@@ -5,7 +5,7 @@ import './placeholder.css';
 
 /**
  * Shared "work in progress" page.
- * Used for /about, /privacy and /terms until real content exists.
+ * Used for /about until real content exists.
  * Also handy as a known-good route target when smoke-testing routing.
  */
 export default function Placeholder({

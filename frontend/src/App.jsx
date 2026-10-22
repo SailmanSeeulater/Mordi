@@ -20,6 +20,8 @@ const Calendar = lazy(() => import("./pages/Calendar"));
 const Notes = lazy(() => import("./pages/Notes"));
 const Together = lazy(() => import("./pages/Together"));
 const Join = lazy(() => import("./pages/Join"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/useAuth";
@@ -55,8 +57,8 @@ function App() {
           <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
           <Route path="/about" element={<Placeholder title="About" />} />
-          <Route path="/privacy" element={<Placeholder title="Privacy" />} />
-          <Route path="/terms" element={<Placeholder title="Terms" />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/dashboard"
             element={

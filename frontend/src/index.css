@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-/* Crimson Pro, from Fontshare, is the site's face. The same family is
-   requested from Google Fonts above as a second source, because if Fontshare
-   is unreachable everything would otherwise silently fall back to Georgia. */
-@import url('https://api.fontshare.com/v2/css?f[]=crimson-pro@400,500,600,700&display=swap');
+/* Fraunces (from Google Fonts) is the site's face — a modernist serif
+   with a distinctive "soft" axis that gives it warmth and personality.
+   Loaded via index.html with variable font (opsz, soft, won axes).
+   IBM Plex Mono for tabular numerals and labels only. */
 
 :root {
   color-scheme: light;
@@ -26,7 +25,7 @@
      family — that swap between families was the inconsistency. --font-display
      and --font-heading are aliases so no rule has to change to follow the
      decision, and changing it means changing one line here. */
-  --font-body: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  --font-body: 'Fraunces', Georgia, 'Times New Roman', serif;
   --font-display: var(--font-body);
   --font-heading: var(--font-body);
   /* Mono is for tabular numerals and labels only, never for prose. */
@@ -56,6 +55,40 @@ body {
   font-family: var(--font-body);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+a,
+button,
+[role='button'],
+input,
+select,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Skip straight to the page, past the rail and the top bar. Off screen until
+   it is tabbed to. */
+.app-skip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: var(--r-control);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--lift-2);
+  transform: translateY(-200%);
+  transition: transform 160ms var(--ease-out);
+}
+.app-skip:focus {
+  transform: none;
+  outline-color: var(--color-text);
 }
 
 #root {

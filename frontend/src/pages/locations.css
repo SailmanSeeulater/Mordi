@@ -114,7 +114,11 @@ li:last-child > .loc__place { border-bottom: 0; }
   color: var(--color-text);
   font: inherit;
 }
-.loc__search input:focus { border-color: var(--color-accent-700); outline: none; }
+.loc__search input:focus-visible {
+  border-color: var(--color-accent-700);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
 
 .loc__pin {
   display: flex;

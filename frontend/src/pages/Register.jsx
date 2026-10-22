@@ -5,6 +5,7 @@ import { useAuth } from "../context/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import client from "../api/client";
 import AuthPage from "../components/AuthPage";
+import LegalNotice from "../components/LegalNotice";
 
 export default function Register() {
   useDocumentTitle("Create account");
@@ -90,6 +91,7 @@ export default function Register() {
             {error}
           </p>
         )}
+        <LegalNotice />
         <button className="app-btn app-btn--block" type="submit" disabled={submitting}>
           {submitting ? "Creating account…" : "Create account"}
         </button>

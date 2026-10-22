@@ -1,0 +1,139 @@
+/* Privacy and Terms: a page to read. One column on the reading measure,
+   the site's own type and theme, nothing competing with the text. */
+
+.legal {
+  min-height: 100svh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.legal__bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px max(20px, calc((100% - 720px) / 2));
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
+}
+.legal__brand {
+  color: var(--color-text);
+  font-size: 21px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.legal__switch a {
+  color: var(--color-accent-700);
+  font-size: 14px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.legal__main { padding: 40px 20px 96px; }
+.legal__doc {
+  /* Crimson Pro is narrow: 62ch comes to about 72 characters a line. */
+  max-width: 62ch;
+  margin: 0 auto;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.legal__title {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.legal__updated {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The short version: the page's summary, on the surface a step off the ground. */
+.legal__summary {
+  margin: 32px 0 0;
+  padding: 20px 24px 22px;
+  border-radius: var(--r-panel);
+  background: var(--color-surface);
+  box-shadow: var(--edge), var(--lift-1);
+}
+.legal__summary-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.legal__summary ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.legal__toc { margin: 28px 0 8px; }
+.legal__toc ol {
+  columns: 2 240px;
+  column-gap: 32px;
+  margin: 0;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.9;
+}
+.legal__toc a,
+.legal__doc a {
+  color: var(--color-accent-700);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.legal__section {
+  margin-top: 44px;
+  /* Clears the sticky bar when jumped to from the list above. */
+  scroll-margin-top: 80px;
+}
+.legal__section h2 {
+  margin: 0 0 12px;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.legal__section h3 {
+  margin: 22px 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.legal__section p { margin: 0 0 12px; }
+.legal__section ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+.legal__section strong { font-weight: 650; }
+
+.legal__contact {
+  margin: 56px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-divider);
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 560px) {
+  .legal__main { padding: 28px 16px 72px; }
+  .legal__doc { font-size: 16px; }
+  .legal__summary { padding: 16px 18px 18px; }
+  .legal__section { margin-top: 36px; }
+  .legal__section h2 { font-size: 22px; }
+}

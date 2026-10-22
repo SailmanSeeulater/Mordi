@@ -577,3 +577,8 @@
   .plan-today__item { grid-template-columns: minmax(0, 1fr) auto; }
   .plan-today__time { grid-column: 1 / -1; }
 }
+
+/* Phones: Done and Skip on today's plan reach 44px. */
+@media (pointer: coarse) {
+  .plan-today__btn { min-height: 44px; padding: 0 14px; }
+}

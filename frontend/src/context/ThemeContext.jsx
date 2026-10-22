@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { DEFAULT_THEME, THEMES, THEME_STORAGE_KEY, ThemeContext } from './theme-context-value';
 
@@ -63,6 +63,22 @@ export function ThemeProvider({ children }) {
       }),
     );
   }, []);
+
+  // The browser's own chrome (the address bar on a phone, the title bar of
+  // an installed app) takes the theme's ground, so the app does not sit in a
+  // white frame. Read from a themed element, so the value is the theme's own.
+  useEffect(() => {
+    const probe = document.querySelector('[data-theme]');
+    const bg = probe && getComputedStyle(probe).getPropertyValue('--color-bg').trim();
+    if (!bg) return;
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = bg;
+  }, [theme]);
 
   const value = useMemo(() => ({ theme, setTheme, cycleTheme }), [theme, setTheme, cycleTheme]);
 

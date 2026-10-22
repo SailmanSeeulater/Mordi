@@ -1,0 +1,16 @@
+/* The consent line under a sign-up form, shared by the Register page and the
+   landing page's sign-up dialog. Muted like a field hint, with links at the
+   accent's text strength. */
+
+.legal-notice {
+  margin: 2px 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.legal-notice a {
+  color: var(--color-accent-700);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}

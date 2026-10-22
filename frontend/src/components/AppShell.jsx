@@ -110,6 +110,9 @@ export default function AppShell({ title, action, children }) {
 
   return (
     <div className="app" data-theme={theme}>
+      <a className="app-skip" href="#main">
+        Skip to content
+      </a>
       <nav className="app-rail" aria-label="Sections">
         <Link to="/dashboard" className="app-rail__mark" aria-label="Mordi">
           M
@@ -140,7 +143,9 @@ export default function AppShell({ title, action, children }) {
           </div>
         </header>
 
-        <main className="app-main">{children}</main>
+        <main className="app-main" id="main" tabIndex={-1}>
+          {children}
+        </main>
       </div>
 
       <nav className="app-tabbar" aria-label="Sections">

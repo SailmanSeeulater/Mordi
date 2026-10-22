@@ -79,6 +79,16 @@ describe("Register", () => {
     expect(link).toHaveAttribute("href", "/login");
   });
 
+  it("states that creating an account accepts the terms and privacy page", () => {
+    renderRegister();
+    expect(
+      screen.getByRole("link", { name: /terms of use/i })
+    ).toHaveAttribute("href", "/terms");
+    expect(
+      screen.getByRole("link", { name: /privacy page/i })
+    ).toHaveAttribute("href", "/privacy");
+  });
+
   it("updates input values as the user types", () => {
     renderRegister();
     const nameInput = screen.getByLabelText("Name");
