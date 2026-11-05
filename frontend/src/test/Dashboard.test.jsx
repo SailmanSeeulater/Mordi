@@ -245,6 +245,31 @@ describe('Dashboard taking back an entry', () => {
     expect(screen.getByText(/Already logged today/)).toBeInTheDocument();
   });
 
+  it('offers Undo after saving from the log form, and Undo takes the entry back', async () => {
+    loadWith([]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Log today' }));
+    await act(async () => {});
+    fireEvent.change(screen.getByLabelText('What did you do?'), { target: { value: 'Stretched' } });
+    client.post.mockResolvedValue({ data: { id: 40, note: 'Stretched', goal: null, logDate: TODAY_ISO } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save entry' }));
+    await act(async () => {});
+
+    expect(screen.queryByRole('dialog', { name: 'Log today' })).not.toBeInTheDocument();
+    expect(screen.getByText('Logged Stretched for today')).toBeInTheDocument();
+
+    client.delete.mockResolvedValue({});
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await act(async () => {});
+    expect(client.delete).toHaveBeenCalledWith('/api/behaviors/40');
+  });
+
   it('catches a quick second tap before the reload lands', async () => {
     loadWith([]);
     render(

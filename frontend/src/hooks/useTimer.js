@@ -100,15 +100,16 @@ export default function useTimer() {
 
   /**
    * Saves the session as an entry, dated the day it started, so a timer run
-   * past midnight still belongs to the evening it began. Resolves true on
-   * success; on failure the session stays stopped so saving can be retried.
+   * past midnight still belongs to the evening it began. Resolves to the saved
+   * entry; on failure to null, and the session stays stopped so saving can be
+   * retried.
    */
   const save = useCallback(async () => {
-    if (session.status !== 'stopped') return false;
+    if (session.status !== 'stopped') return null;
     setSaving(true);
     setError('');
     try {
-      await client.post('/api/behaviors', {
+      const res = await client.post('/api/behaviors', {
         goalId: null,
         note: session.name,
         mood: null,
@@ -120,10 +121,10 @@ export default function useTimer() {
         loggedAt: new Date(session.startedAt).toISOString(),
       });
       setSession(IDLE);
-      return true;
+      return res.data ?? {};
     } catch {
       setError('Couldn’t save that time. Check your connection and try again.');
-      return false;
+      return null;
     } finally {
       setSaving(false);
     }

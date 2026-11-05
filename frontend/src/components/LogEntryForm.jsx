@@ -21,6 +21,8 @@ const dayLabel = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'l
  *
  * `logDate` ("YYYY-MM-DD") logs an earlier day instead, as the calendar does
  * from a planned goal's chip. Without it the form logs today.
+ *
+ * `onSaved` is given the saved entry, so the page can offer to undo it.
  */
 export default function LogEntryForm({ goals, behaviors = [], initialGoalId = '', logDate = null, onSaved, onCancel }) {
   const [goalId, setGoalId] = useState(initialGoalId ? String(initialGoalId) : '');
@@ -54,7 +56,7 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
     setSaving(true);
     setError('');
     try {
-      await client.post('/api/behaviors', {
+      const res = await client.post('/api/behaviors', {
         goalId: goalId ? Number(goalId) : null,
         note: note.trim(),
         mood,
@@ -65,7 +67,7 @@ export default function LogEntryForm({ goals, behaviors = [], initialGoalId = ''
         longitude: place?.longitude ?? null,
         placeName: place?.placeName || null,
       });
-      onSaved();
+      onSaved(res.data);
     } catch {
       setError('Couldn’t save that entry. Check your connection and try again.');
       setSaving(false);
