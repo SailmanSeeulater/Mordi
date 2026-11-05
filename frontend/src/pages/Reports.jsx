@@ -32,14 +32,21 @@ function Bar({ percent }) {
   );
 }
 
+/** "+2 days" or "−1 day": planned days hit against the week before. */
 function Delta({ value }) {
   if (value == null || value === 0) return null;
   const up = value > 0;
+  const n = Math.abs(value);
+  const days = n === 1 ? 'day' : 'days';
   return (
     <span className={`rep-delta rep-delta--${up ? 'up' : 'down'}`}>
-      {up ? '+' : '−'}
-      {Math.abs(value)} pts
-      <span className="app-sr"> {up ? 'better' : 'worse'} than the week before</span>
+      <span aria-hidden="true">
+        {up ? '+' : '−'}
+        {n} {days}
+      </span>
+      <span className="app-sr">
+        {n} {up ? 'more' : 'fewer'} {days} than the week before
+      </span>
     </span>
   );
 }

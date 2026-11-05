@@ -67,9 +67,11 @@ export function sortReports(reports) {
 }
 
 /**
- * The change in completion against the week before it, for each report.
- * Returns a map of report id to a signed percentage, or null where there is no
- * adjacent earlier week to compare with.
+ * The change against the week before it, for each report, in planned days
+ * hit: +2 is two more days than the week before. Days rather than percentage
+ * points, as the week's own page says it: "+8 pts" read as a score nobody had
+ * set. Returns a map of report id to a signed count of days, or null where
+ * there is no earlier week to compare with.
  */
 export function weekOnWeekDelta(reports) {
   const delta = new Map();
@@ -79,7 +81,7 @@ export function weekOnWeekDelta(reports) {
       delta.set(report.id, null);
       return;
     }
-    delta.set(report.id, report.percent - earlier.percent);
+    delta.set(report.id, report.achieved - earlier.achieved);
   });
   return delta;
 }
