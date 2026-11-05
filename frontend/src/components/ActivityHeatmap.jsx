@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import useLogHistory from '../hooks/useLogHistory';
 import { LEVELS, buildHeatmap, buildMonth, countByDay, describeDay, describeMonth } from '../lib/activity';
 import { storedChoice } from '../lib/storedChoice';
-import { useWeekStart, weekdayLabels } from '../lib/weekStart';
+import { useWeekStart, weekdayLabels, weekdayOrder } from '../lib/weekStart';
 import { addDays, addMonths, parseIsoDate, startOfMonth, startOfWeek, toIsoDate } from '../pages/dashboardData';
 import './activity.css';
 
@@ -20,7 +20,8 @@ const activityView = storedChoice({ key: 'mordi-activity-view', values: ['year',
  * A year of logging, one square per day, darker the more was logged that day —
  * the contribution graph from a code host, applied to a person's week.
  *
- * Columns are Monday-to-Sunday weeks, to match every other week in the app.
+ * Columns are weeks starting on the person's first day of the week, to match
+ * every other week in the app.
  * The shade is set by lib/activity: one to four logs map straight to four
  * steps, and only a heavier day stretches the scale.
  *
@@ -36,7 +37,10 @@ const activityView = storedChoice({ key: 'mordi-activity-view', values: ['year',
 export default function ActivityHeatmap({ today, reloadKey, onPickDay }) {
   const { entries, loadState, retry } = useLogHistory(today, WEEKS, reloadKey);
   const counts = useMemo(() => countByDay(entries), [entries]);
-  const map = useMemo(() => buildHeatmap(counts, today, WEEKS), [counts, today]);
+  const weekStart = useWeekStart();
+  const map = useMemo(() => buildHeatmap(counts, today, WEEKS, weekStart), [counts, today, weekStart]);
+  // Mon, Wed and Fri label their rows, wherever those fall in the week.
+  const rowOf = (jsDay) => weekdayOrder(weekStart).indexOf(jsDay) + 1;
   const todayIso = toIsoDate(today);
   const view = activityView.useChoice();
   const [monthMeta, setMonthMeta] = useState('');
@@ -228,9 +232,9 @@ export default function ActivityHeatmap({ today, reloadKey, onPickDay }) {
             </div>
 
             <div className="activity__weekdays" aria-hidden="true">
-              <span style={{ gridRow: 1 }}>Mon</span>
-              <span style={{ gridRow: 3 }}>Wed</span>
-              <span style={{ gridRow: 5 }}>Fri</span>
+              <span style={{ gridRow: rowOf(1) }}>Mon</span>
+              <span style={{ gridRow: rowOf(3) }}>Wed</span>
+              <span style={{ gridRow: rowOf(5) }}>Fri</span>
             </div>
 
             <div className="activity__cells" aria-hidden="true">
@@ -290,7 +294,7 @@ function ActivityMonth({ counts, today, scale, onPickDay, onMeta }) {
   const thisMonth = startOfMonth(today);
   // The year grid's first day. A month that starts before it is only partly
   // loaded, so paging stops at the first whole month after it.
-  const loadedFrom = addDays(startOfWeek(today), -7 * (WEEKS - 1));
+  const loadedFrom = addDays(startOfWeek(today, weekStart), -7 * (WEEKS - 1));
   const firstMonth = loadedFrom.getDate() === 1 ? startOfMonth(loadedFrom) : addMonths(loadedFrom, 1);
 
   const [shown, setShown] = useState(thisMonth);

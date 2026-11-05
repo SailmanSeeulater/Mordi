@@ -175,13 +175,14 @@ are on always shows in the rail, whatever the modules say.
   (#2f9e55, running) and `--pause` (#d9861a, paused), the same in every theme
   so a running timer always reads the same, and each mixed 50/50 with the ink
   for its label so it clears 4.5:1 on all twenty-six themes.
-- **Activity** — a year of logging, one square per day, Monday-led weeks. Four
+- **Activity** — a year of logging, one square per day, weeks led by the
+  person's week start. Four
   accent steps mixed into the surface: one to four logs map straight to a step,
   and only a heavier day stretches the scale. Clicking a day opens the calendar.
   Scrolls sideways natively on touch and trackpads, drags with a mouse, and
   takes arrow keys when focused; a drag never counts as a click on a day.
   A Year / Month switch (remembered per browser) swaps in one month as a
-  calendar of the same squares, rows led by the calendar's week start, the
+  calendar of the same squares, rows led by the week start, the
   day number in each, today ringed. The month is one tab stop with arrow keys
   between days, each day named ("2 logs on Fri, Oct 16"), and the month
   summarised once. Paging stays inside the loaded year.
@@ -194,11 +195,11 @@ are on always shows in the rail, whatever the modules say.
   an event to move it, drag its edge to resize; all snap to 15 minutes and
   commit on release. Seven named colours, each mixed against the theme's own
   surface and ink. Month is a six-week grid, dots on a phone. Weeks start on
-  Sunday by default, or Monday: a Sun | Mon switch in the calendar's toolbar
-  (week and month views) and the same choice in Settings → Appearance, per
-  browser, `lib/weekStart.js`;
-  that applies to calendar views only, and weekly goal targets always count
-  Monday to Sunday. `.ics` files from
+  Monday by default, or Sunday: a Sun | Mon switch in the calendar's toolbar
+  (week and month views) and the same choice in Settings → Appearance, saved
+  to the account, `lib/weekStart.js`. It is the week everywhere, not only in
+  the calendar: weekly targets, pace, the week card, Goals, shared goals,
+  reports and reminders all count from it. `.ics` files from
   Google, Apple or Outlook import after a preview, repeating events expanded.
   A Google Calendar can also be connected by its secret iCal address (the
   "Google Calendar" button beside Import, shown only when the server has

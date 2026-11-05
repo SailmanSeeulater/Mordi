@@ -1,5 +1,5 @@
 import { addDays, parseIsoDate, startOfWeek, toIsoDate } from '../pages/dashboardData';
-import { startOfCalendarWeek } from './weekStart';
+import { getWeekStart, startOfCalendarWeek } from './weekStart';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -37,12 +37,13 @@ export function levelFor(count, scale) {
 
 /**
  * The grid: `weeks` columns ending with the week that contains `today`, each
- * a Monday-to-Sunday column. Days after today are marked `future` and carry no
- * count, so the last column does not show empty days as missed.
+ * a week from its first day (lib/weekStart). Days after today are marked
+ * `future` and carry no count, so the last column does not show empty days as
+ * missed.
  */
-export function buildHeatmap(counts, today, weeks = 53) {
+export function buildHeatmap(counts, today, weeks = 53, weekStart = getWeekStart()) {
   const todayIso = toIsoDate(today);
-  const first = addDays(startOfWeek(today), -7 * (weeks - 1));
+  const first = addDays(startOfWeek(today, weekStart), -7 * (weeks - 1));
 
   let max = 0;
   let total = 0;

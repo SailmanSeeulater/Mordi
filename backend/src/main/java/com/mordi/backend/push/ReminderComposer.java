@@ -1,8 +1,10 @@
 package com.mordi.backend.push;
 
 import com.mordi.backend.service.PlannedDays;
+import com.mordi.backend.service.Weeks;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -39,20 +41,33 @@ public final class ReminderComposer {
     private ReminderComposer() {
     }
 
-    /** Days from today to Sunday, today included: 7 on Monday, 1 on Sunday. */
-    static int daysLeft(LocalDate today) {
-        return DayOfWeek.SUNDAY.getValue() - today.getDayOfWeek().getValue() + 1;
+    /**
+     * Days from today to the end of the week, today included: 7 on its first
+     * day, 1 on its last (Sunday, or Saturday for a week that starts Sunday).
+     */
+    static int daysLeft(LocalDate today, DayOfWeek firstDay) {
+        return 7 - (int) ChronoUnit.DAYS.between(Weeks.start(today, firstDay), today);
     }
 
+    /** For a week that starts on Monday. */
+    static int daysLeft(LocalDate today) {
+        return daysLeft(today, DayOfWeek.MONDAY);
+    }
+
+    /** For a week that starts on Monday. */
     public static Reminder compose(List<GoalProgress> goals, LocalDate today) {
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        int daysLeft = daysLeft(today);
+        return compose(goals, today, DayOfWeek.MONDAY);
+    }
+
+    public static Reminder compose(List<GoalProgress> goals, LocalDate today, DayOfWeek firstDay) {
+        LocalDate weekStart = Weeks.start(today, firstDay);
+        int daysLeft = daysLeft(today, firstDay);
 
         record Left(String title, int left, int target) {
         }
         List<Left> behind = new ArrayList<>();
         for (GoalProgress g : goals) {
-            long done = g.doneDays().stream().filter(d -> !d.isBefore(monday) && !d.isAfter(today)).count();
+            long done = g.doneDays().stream().filter(d -> !d.isBefore(weekStart) && !d.isAfter(today)).count();
             int left = (int) Math.max(0, g.target() - done);
             if (left > 0 && dueToday(g, today)) {
                 behind.add(new Left(g.title(), left, g.target()));

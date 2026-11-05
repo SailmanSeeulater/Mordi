@@ -86,6 +86,37 @@ describe('CalendarModal', () => {
     expect(screen.getByText('note 1')).toBeInTheDocument();
   });
 
+  it('logs any day of this week so far, and no other', async () => {
+    const onLogDay = vi.fn();
+    renderCalendar({ onLogDay });
+    // Today first.
+    expect(await screen.findByRole('button', { name: 'Log today' })).toBeInTheDocument();
+
+    // Tuesday this week: done but not written down, still loggable.
+    fireEvent.click(screen.getByRole('button', { name: /Tuesday, September 15,/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Log this day' }));
+    expect(onLogDay).toHaveBeenCalledWith('2026-09-15');
+
+    // Tomorrow has not happened; last week is closed.
+    fireEvent.click(screen.getByRole('button', { name: /Friday, September 18,/ }));
+    expect(screen.queryByRole('button', { name: /^Log/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Sunday, September 13,/ }));
+    expect(screen.queryByRole('button', { name: /^Log/ })).not.toBeInTheDocument();
+  });
+
+  it('counts this week from Sunday when the week starts on Sunday', async () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    try {
+      const onLogDay = vi.fn();
+      renderCalendar({ onLogDay });
+      fireEvent.click(await screen.findByRole('button', { name: /Sunday, September 13,/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Log this day' }));
+      expect(onLogDay).toHaveBeenCalledWith('2026-09-13');
+    } finally {
+      localStorage.removeItem('mordi-week-start');
+    }
+  });
+
   it('says so when a day has nothing on it', async () => {
     renderCalendar();
     const empty = await screen.findByRole('button', { name: /Friday, September 4, nothing logged/ });

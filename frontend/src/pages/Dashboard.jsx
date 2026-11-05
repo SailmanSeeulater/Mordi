@@ -31,7 +31,7 @@ import { sharedGoals } from '../lib/together';
 import { goalIcon } from '../lib/categories';
 import { mergeFeed } from '../lib/feed';
 import { doneOnDay, entryName, restoreRequest } from '../lib/entries';
-import { plannedDaysLabel } from '../lib/plannedDays';
+import { DAY_LETTERS, DAY_NAMES, isoDayOrder, plannedDaysLabel } from '../lib/plannedDays';
 import { useWeekStart } from '../lib/weekStart';
 import {
   addDays,
@@ -47,9 +47,6 @@ import {
   weekSummary,
 } from './dashboardData';
 import './dashboard.css';
-
-const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 /**
  * One goal's ring. A tap logs it done today: logging is the one thing this
@@ -279,6 +276,9 @@ export default function Dashboard() {
 
   const [modal, setModal] = useState(null);
   const [logGoalId, setLogGoalId] = useState('');
+  // The day the log form writes to: null for today, or an earlier day this
+  // week picked from the calendar.
+  const [logDay, setLogDay] = useState(null);
 
   const summary = useMemo(
     () => weekSummary(goals, behaviors, weekStart, today),
@@ -350,9 +350,10 @@ export default function Dashboard() {
   // Opening a dialog puts away the toast: on a phone it would sit over the
   // sheet's buttons, and the dialog's focus trap would keep its Undo out of
   // reach of the keyboard anyway.
-  const openLog = useCallback((goalId = '') => {
+  const openLog = useCallback((goalId = '', day = null) => {
     setToast(null);
     setLogGoalId(goalId);
+    setLogDay(day);
     setModal('log');
   }, []);
 
@@ -504,12 +505,17 @@ export default function Dashboard() {
   const todayColumn = summary.days.indexOf(todayIso);
   // What is still left, in the words the push reminder uses, the moment the
   // page opens. Nothing once every target is met.
-  const reminder = useMemo(() => composeReminder(summary.rows, todayColumn), [summary.rows, todayColumn]);
+  const reminder = useMemo(
+    () => composeReminder(summary.rows, todayColumn, calendarStart),
+    [summary.rows, todayColumn, calendarStart],
+  );
   const planned = summary.rows.reduce((sum, r) => sum + r.target, 0);
   const achieved = summary.rows.reduce((sum, r) => sum + Math.min(r.done, r.target), 0);
   // A goal planned for particular days owes those days so far; the rest
   // spread their target over the week.
-  const pace = weekPace(planned, achieved, todayColumn, summary.rows);
+  const pace = weekPace(planned, achieved, todayColumn, summary.rows, calendarStart);
+  // The weekday in each column of the week, the week's first day first.
+  const dayOrder = isoDayOrder(calendarStart);
   const [shownAchieved, counting] = useCountUp(achieved);
   const perDay = useMemo(() => entriesPerDay(behaviors, summary.days), [behaviors, summary.days]);
   const busiest = bestDay(perDay);
@@ -711,7 +717,7 @@ export default function Dashboard() {
                   </div>
                   <div className="pass__field">
                     <dt>Best day</dt>
-                    <dd>{busiest === null ? '—' : DAY_NAMES[busiest].slice(0, 3)}</dd>
+                    <dd>{busiest === null ? '—' : DAY_NAMES[dayOrder[busiest]].slice(0, 3)}</dd>
                   </div>
                 </dl>
               </div>
@@ -733,7 +739,7 @@ export default function Dashboard() {
                     style={{ '--fill': perDay[i] / maxPerDay, '--i': i }}
                     onClick={() => openCalendar(summary.days[i])}
                     aria-label={
-                      `${DAY_NAMES[i]} ${parseIsoDate(summary.days[i]).getDate()}` +
+                      `${DAY_NAMES[dayOrder[i]]} ${parseIsoDate(summary.days[i]).getDate()}` +
                       (perDay[i] > 0
                         ? `, ${perDay[i]} ${perDay[i] === 1 ? 'entry' : 'entries'}`
                         : state === 'missed'
@@ -747,7 +753,7 @@ export default function Dashboard() {
                   >
                     <span className="day-chip__bar" aria-hidden="true" />
                     <span className="day-chip__letter" aria-hidden="true">
-                      {DAY_LETTERS[i]}
+                      {DAY_LETTERS[dayOrder[i]]}
                     </span>
                     <span className="day-chip__num" aria-hidden="true">
                       {parseIsoDate(summary.days[i]).getDate()}
@@ -831,11 +837,12 @@ export default function Dashboard() {
       {loadState === 'ready' && goals.length > 0 && focused && <AddToPage prefs={modules} />}
 
       {modal === 'log' && (
-        <Modal title="Log today" onClose={closeModal}>
+        <Modal title={logDay && logDay !== todayIso ? 'Log a day' : 'Log today'} onClose={closeModal}>
           <LogEntryForm
             goals={goals}
             behaviors={behaviors}
             initialGoalId={logGoalId}
+            logDate={logDay}
             onSaved={handleSaved}
             onCancel={closeModal}
           />
@@ -853,7 +860,7 @@ export default function Dashboard() {
           today={today}
           initialSelected={calendarDay}
           onClose={closeModal}
-          onLogDay={() => openLog()}
+          onLogDay={(day) => openLog('', day)}
           onRemove={removeFromCalendar}
           onRestore={restoreEntry}
         />

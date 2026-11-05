@@ -6,6 +6,7 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
 import { addDays, formatWeekRange, startOfWeek, toIsoDate } from './dashboardData';
 import { ensureLastWeekReport } from '../lib/autoReview';
+import { useWeekStart } from '../lib/weekStart';
 import {
   normaliseReport,
   reportWeekLabel,
@@ -193,7 +194,7 @@ export default function Reports() {
   const reports = useMemo(() => sortReports(rows).map(normaliseReport), [rows]);
   const deltas = useMemo(() => weekOnWeekDelta(reports), [reports]);
 
-  const thisWeek = startOfWeek(today);
+  const thisWeek = startOfWeek(today, useWeekStart());
   const lastWeek = addDays(thisWeek, -7);
 
   // Last week writes itself up the first time it is looked at after it

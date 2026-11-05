@@ -6,6 +6,7 @@ import Modal from '../components/Modal';
 import ShareGoalDialog from '../components/ShareGoalDialog';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { addDays, startOfWeek, toIsoDate } from './dashboardData';
+import { useWeekStart } from '../lib/weekStart';
 import { goalIcon } from '../lib/categories';
 import { MAX_MESSAGE, initials, sharedGoals, sinceLabel, togetherApi, togetherLabel } from '../lib/together';
 import './together.css';
@@ -182,18 +183,20 @@ function Room({ goal, visible, onRead, onChanged, onLeft }) {
   // Ids already on screen when the room opened; anything later rises in.
   const [arrived, setArrived] = useState(null);
 
-  const monday = useMemo(() => startOfWeek(new Date()), []);
-  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(monday, i)), [monday]);
-  const todayIndex = (new Date().getDay() + 6) % 7;
+  const firstDay = useWeekStart();
+  const weekStart = useMemo(() => startOfWeek(new Date(), firstDay), [firstDay]);
+  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
+  const todayIso = toIsoDate(new Date());
+  const todayIndex = days.findIndex((d) => toIsoDate(d) === todayIso);
 
   const loadWeek = useCallback(async () => {
     try {
-      const res = await togetherApi.week(goal.id, toIsoDate(monday));
+      const res = await togetherApi.week(goal.id, toIsoDate(weekStart));
       setWeek(res.data);
     } catch {
       setError('Couldn’t load this week.');
     }
-  }, [goal.id, monday]);
+  }, [goal.id, weekStart]);
 
   // The newest page, merged over what is already shown so older pages that
   // were loaded stay put.

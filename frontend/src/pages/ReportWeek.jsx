@@ -6,6 +6,7 @@ import useDocumentTitle from '../hooks/useDocumentTitle';
 import useToday from '../hooks/useToday';
 import { addDays, parseIsoDate, startOfWeek, toIsoDate } from './dashboardData';
 import { buildWeekReport, headline, hoursMinutes } from '../lib/weekReport';
+import { useWeekStart } from '../lib/weekStart';
 import './report-week.css';
 
 const dayShort = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
@@ -13,9 +14,9 @@ const dayLong = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'sh
 const rangeFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
 
-function weekRange(monday) {
-  const sunday = addDays(monday, 6);
-  return `${rangeFormat.format(monday)} – ${rangeFormat.format(sunday)}, ${sunday.getFullYear()}`;
+function weekRange(start) {
+  const last = addDays(start, 6);
+  return `${rangeFormat.format(start)} – ${rangeFormat.format(last)}, ${last.getFullYear()}`;
 }
 
 /* ── The week, goal by goal ─────────────────────────────────── */
@@ -500,9 +501,13 @@ export default function ReportWeek() {
   const { week } = useParams();
   const navigate = useNavigate();
   const today = useToday();
-  const monday = useMemo(() => startOfWeek(parseIsoDate(week ?? toIsoDate(new Date()))), [week]);
-  const mondayIso = toIsoDate(monday);
-  useDocumentTitle(`Week of ${rangeFormat.format(monday)}`);
+  const firstDay = useWeekStart();
+  const start = useMemo(
+    () => startOfWeek(parseIsoDate(week ?? toIsoDate(new Date())), firstDay),
+    [week, firstDay],
+  );
+  const startIso = toIsoDate(start);
+  useDocumentTitle(`Week of ${rangeFormat.format(start)}`);
 
   const [data, setData] = useState(null);
   const [loadState, setLoadState] = useState('loading');
@@ -510,15 +515,15 @@ export default function ReportWeek() {
   const [writeError, setWriteError] = useState('');
 
   const load = useCallback(async () => {
-    const sunday = toIsoDate(addDays(monday, 6));
-    const prevMonday = toIsoDate(addDays(monday, -7));
+    const last = toIsoDate(addDays(start, 6));
+    const prevStartIso = toIsoDate(addDays(start, -7));
     try {
       const [goals, behaviors, events, reports, todos] = await Promise.allSettled([
         client.get('/api/goals'),
-        client.get('/api/behaviors/range', { params: { start: prevMonday, end: sunday } }),
-        client.get('/api/events', { params: { start: mondayIso, end: sunday } }),
+        client.get('/api/behaviors/range', { params: { start: prevStartIso, end: last } }),
+        client.get('/api/events', { params: { start: startIso, end: last } }),
         client.get('/api/reports'),
-        client.get('/api/todos/done', { params: { start: prevMonday, end: sunday } }),
+        client.get('/api/todos/done', { params: { start: prevStartIso, end: last } }),
       ]);
       if (goals.status !== 'fulfilled' || behaviors.status !== 'fulfilled') throw new Error('load failed');
       setData({
@@ -534,14 +539,14 @@ export default function ReportWeek() {
         todos: todos.status === 'fulfilled' && Array.isArray(todos.value.data) ? todos.value.data : [],
         written:
           reports.status === 'fulfilled' && Array.isArray(reports.value.data)
-            ? reports.value.data.filter((r) => r.weekStart === mondayIso).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0] ?? null
+            ? reports.value.data.filter((r) => r.weekStart === startIso).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0] ?? null
             : null,
       });
       setLoadState('ready');
     } catch {
       setLoadState('error');
     }
-  }, [monday, mondayIso]);
+  }, [start, startIso]);
 
   useEffect(() => {
     // Async: state is only set once the requests answer.
@@ -550,18 +555,18 @@ export default function ReportWeek() {
   }, [load]);
 
   const report = useMemo(
-    () => (data ? buildWeekReport({ ...data, weekStart: monday, today }) : null),
-    [data, monday, today],
+    () => (data ? buildWeekReport({ ...data, weekStart: start, today }) : null),
+    [data, start, today],
   );
 
-  const go = (delta) => navigate(`/reports/${toIsoDate(addDays(monday, delta * 7))}`);
-  const isCurrentOrFuture = monday >= startOfWeek(today);
+  const go = (delta) => navigate(`/reports/${toIsoDate(addDays(start, delta * 7))}`);
+  const isCurrentOrFuture = start >= startOfWeek(today, firstDay);
 
   const write = async () => {
     setWriting(true);
     setWriteError('');
     try {
-      await client.post('/api/reports/generate', null, { params: { week: mondayIso } });
+      await client.post('/api/reports/generate', null, { params: { week: startIso } });
       await load();
     } catch {
       setWriteError('Couldn’t write up this week. Check your connection and try again.');
@@ -604,7 +609,7 @@ export default function ReportWeek() {
       {loadState === 'ready' && report && (
         <article className="wk">
           <header className="wk-head">
-            <p className="wk-head__range">{weekRange(monday)}</p>
+            <p className="wk-head__range">{weekRange(start)}</p>
             <h2 className="wk-head__line">{headline(report)}</h2>
             <dl className="wk-facts">
               <div>

@@ -1,5 +1,5 @@
 import { doneOnDay } from './entries';
-import { weekdayOrder } from './weekStart';
+import { getWeekStart, startOfCalendarWeek, weekdayOrder } from './weekStart';
 
 /**
  * A goal's planned weekdays: a 3×-a-week run on Monday, Wednesday and
@@ -10,8 +10,9 @@ import { weekdayOrder } from './weekStart';
  * calendar starts on: bit 0 is Monday, bit 6 Sunday. Null or 0 is no planned
  * days, and any day of the week counts, as it always has.
  *
- * Days here are ISO weekday indexes, 0 for Monday to 6 for Sunday, the same
- * as a column of the week card (which always runs Monday to Sunday).
+ * Days here are ISO weekday indexes, 0 for Monday to 6 for Sunday. A column
+ * of the week card is not one: the week can start on Sunday, so a column is
+ * turned into a weekday through isoDayOrder.
  */
 
 export const ALL_DAYS = 0b111_1111;
@@ -82,18 +83,20 @@ export function plannedDaysLabel(goal, weekStart = 'monday') {
 }
 
 /**
- * How many of the goal's planned days fall in this Monday-to-Sunday week up
- * to and including `date`: what is due by then. 0 for a goal without them.
+ * How many of the goal's planned days fall in this week up to and including
+ * `date`: what is due by then. 0 for a goal without them.
  */
-export function plannedDueBy(goal, date) {
-  const upTo = isoWeekday(asDate(date));
-  return plannedDays(goal).filter((d) => d <= upTo).length;
+export function plannedDueBy(goal, date, weekStart = getWeekStart()) {
+  const d = asDate(date);
+  const column = Math.round((d - startOfCalendarWeek(d, weekStart)) / 86_400_000);
+  return plannedDueByIndex(goal, column, weekStart);
 }
 
-/** The same, from a week-card column (0 for Monday) rather than a date. */
-export function plannedDueByIndex(goal, dayIndex) {
+/** The same, from a week-card column (0 for the week's first day) rather than a date. */
+export function plannedDueByIndex(goal, dayIndex, weekStart = getWeekStart()) {
   const upTo = Math.min(6, Math.max(0, dayIndex));
-  return plannedDays(goal).filter((d) => d <= upTo).length;
+  const soFar = new Set(isoDayOrder(weekStart).slice(0, upTo + 1));
+  return plannedDays(goal).filter((d) => soFar.has(d)).length;
 }
 
 /**

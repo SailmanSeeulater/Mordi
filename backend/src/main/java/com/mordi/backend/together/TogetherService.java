@@ -11,15 +11,14 @@ import com.mordi.backend.repository.GoalInviteRepository;
 import com.mordi.backend.repository.GoalMemberRepository;
 import com.mordi.backend.repository.UserRepository;
 import com.mordi.backend.service.GoalAccess;
+import com.mordi.backend.service.Weeks;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -177,10 +176,11 @@ public class TogetherService {
     public Week week(String email, Long goalId, LocalDate anyDay) {
         User me = findUser(email);
         Goal goal = goalAccess.joined(me, goalId);
-        LocalDate monday = anyDay.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        // The week as the person looking at it counts weeks.
+        LocalDate weekStart = Weeks.start(anyDay, me);
 
         Map<Long, Set<LocalDate>> doneDays = new HashMap<>();
-        for (Object[] row : behaviorRepository.completedDaysForGoal(goal.getId(), monday, monday.plusDays(6))) {
+        for (Object[] row : behaviorRepository.completedDaysForGoal(goal.getId(), weekStart, weekStart.plusDays(6))) {
             doneDays.computeIfAbsent((Long) row[0], k -> new HashSet<>()).add((LocalDate) row[1]);
         }
 
@@ -189,7 +189,7 @@ public class TogetherService {
             Set<LocalDate> done = doneDays.getOrDefault(person.getId(), Set.of());
             List<Boolean> days = new ArrayList<>(7);
             for (int i = 0; i < 7; i++) {
-                days.add(done.contains(monday.plusDays(i)));
+                days.add(done.contains(weekStart.plusDays(i)));
             }
             members.add(new MemberWeek(
                 person.getId(),
@@ -200,7 +200,7 @@ public class TogetherService {
                 done.size()));
         }
         return new Week(goal.getId(), goal.getTitle(), goal.getTargetPerWeek(),
-            GoalAccess.isOwner(goal, me) ? "owner" : "member", monday, members, MAX_MEMBERS);
+            GoalAccess.isOwner(goal, me) ? "owner" : "member", weekStart, members, MAX_MEMBERS);
     }
 
     /** The owner first, then everyone else in the order they joined. */
