@@ -127,7 +127,8 @@ describe('AuthProvider', () => {
       </AuthProvider>,
     );
     expect(await screen.findByText('me@mordi.com')).toBeInTheDocument();
-    expect(calls).toEqual(['/api/auth/refresh']);
+    // The refresh, then the account's week start, read once signed in.
+    expect(calls).toEqual(['/api/auth/refresh', '/api/account/preferences']);
   });
 
   it('does not sign back in after the person logged out on purpose', async () => {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import client from '../api/client';
 import { addDays, startOfWeek, toIsoDate } from '../pages/dashboardData';
+import { useWeekStart } from '../lib/weekStart';
 
 /**
  * Goals plus the entries behind them, from `weeks` before the current week
@@ -8,7 +9,8 @@ import { addDays, startOfWeek, toIsoDate } from '../pages/dashboardData';
  */
 export default function useWeekData(today, weeks = 8) {
   const todayIso = toIsoDate(today);
-  const weekStart = useMemo(() => startOfWeek(today), [today]);
+  const firstDay = useWeekStart();
+  const weekStart = useMemo(() => startOfWeek(today, firstDay), [today, firstDay]);
   const historyStartIso = toIsoDate(addDays(weekStart, -7 * weeks));
 
   const [goals, setGoals] = useState([]);

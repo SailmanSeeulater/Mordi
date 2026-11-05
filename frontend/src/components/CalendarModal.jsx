@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import client from '../api/client';
 import Modal from './Modal';
-import { addDays, addMonths, monthGrid, startOfMonth, toIsoDate } from '../pages/dashboardData';
+import { addDays, addMonths, monthGrid, startOfMonth, startOfWeek, toIsoDate } from '../pages/dashboardData';
 import { entryName } from '../lib/entries';
 import { plannedGoalsOn } from '../lib/plannedDays';
 import { weekdayLabels, useWeekStart } from '../lib/weekStart';
@@ -46,6 +46,10 @@ export default function CalendarModal({
   const opensOn = initialSelected ?? todayIso;
   const [month, setMonth] = useState(() => startOfMonth(new Date(`${opensOn}T00:00:00`)));
   const [selected, setSelected] = useState(opensOn);
+  // Any day of this week so far can be logged, so a day done but not written
+  // down still counts; later days have not happened, earlier weeks are closed.
+  const weekStartIso = toIsoDate(startOfWeek(today, weekStart));
+  const canLog = selected >= weekStartIso && selected <= todayIso;
   const [loaded, setLoaded] = useState(() => (Array.isArray(behaviors) ? behaviors : []));
   const [loadState, setLoadState] = useState('ready');
   // Entries taken out while the dialog is open, by id: 'removing', 'removed'
@@ -337,9 +341,9 @@ export default function CalendarModal({
           <button type="button" className="app-btn app-btn--ghost" onClick={onClose}>
             Close
           </button>
-          {selected === todayIso && (
-            <button type="button" className="app-btn" onClick={onLogDay}>
-              Log today
+          {canLog && (
+            <button type="button" className="app-btn" onClick={() => onLogDay(selected)}>
+              {selected === todayIso ? 'Log today' : 'Log this day'}
             </button>
           )}
         </div>

@@ -87,6 +87,20 @@ describe('plannedDueBy', () => {
     expect(plannedDueByIndex(run, 3)).toBe(2);
     expect(plannedDueBy(read, '2026-09-20')).toBe(0);
   });
+
+  it('counts from Sunday in a week that starts on Sunday', () => {
+    // Sunday, Wednesday: a Sunday-first week owes Sunday's run on its first day.
+    const weekend = { id: 3, title: 'Long run', targetPerWeek: 2, plannedDays: 0b100_0100 };
+    expect(plannedDueBy(weekend, '2026-09-13', 'sunday')).toBe(1);
+    expect(plannedDueBy(weekend, TUE, 'sunday')).toBe(1);
+    expect(plannedDueBy(weekend, WED, 'sunday')).toBe(2);
+    // The same Tuesday in a Monday week: Sunday is still to come.
+    expect(plannedDueBy(weekend, TUE, 'monday')).toBe(0);
+    // Column 0 of a Sunday week is Sunday; of a Monday week, Monday.
+    expect(plannedDueByIndex(weekend, 0, 'sunday')).toBe(1);
+    expect(plannedDueByIndex(weekend, 0, 'monday')).toBe(0);
+    expect(expectedBy([{ goal: weekend, target: 2 }], 0, 'sunday')).toBe(1);
+  });
 });
 
 describe('plannedGoalsOn', () => {

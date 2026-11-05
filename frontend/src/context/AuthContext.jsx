@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./auth-context-value";
 import client, { SESSION_EXPIRED, restoreSession } from "../api/client";
+import { syncWeekStart } from "../lib/weekStart";
 
 /**
  * Set on Log out and cleared on sign-in. Logging out revokes the refresh
@@ -49,6 +50,13 @@ export function AuthProvider({ children }) {
       live = false;
     };
   }, [restoring]);
+
+  // The week start lives on the account; this browser's copy catches up
+  // with it once someone is signed in.
+  const signedInAs = user?.email ?? null;
+  useEffect(() => {
+    if (signedInAs) syncWeekStart();
+  }, [signedInAs]);
 
   const login = (userData, token) => {
     localStorage.setItem("token", token);

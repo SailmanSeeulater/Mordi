@@ -109,6 +109,27 @@ describe('buildWeekReport', () => {
     expect(r3.timedEntries).toBe(3);
   });
 
+  it('puts each hour on its own row in a week that starts on Sunday', () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    try {
+      const at = (y, m, d, h) => new Date(y, m, d, h, 15).toISOString();
+      const r = buildWeekReport({
+        goals: [run],
+        behaviors: [
+          e(30, run, '2026-09-13', { loggedAt: at(2026, 8, 13, 8) }),
+          e(31, run, '2026-09-14', { loggedAt: at(2026, 8, 14, 7) }),
+        ],
+        weekStart,
+        today,
+      });
+      expect(r.days[0]).toBe('2026-09-13');
+      expect(r.hours[0][8]).toBe(1); // Sunday, 8am: the first row
+      expect(r.hours[1][7]).toBe(1); // Monday, 7am
+    } finally {
+      localStorage.removeItem('mordi-week-start');
+    }
+  });
+
   it('writes a headline that compares with last week only when it can', () => {
     // Last week: one run day and one reading day, so 2 against this week's 5.
     expect(r.prevAchieved).toBe(2);

@@ -9,7 +9,6 @@ import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.ReportRepository;
 import com.mordi.backend.repository.UserRepository;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +27,8 @@ import org.springframework.stereotype.Service;
  * of the entries that were written down got ticked. A week with one entry,
  * ticked, is not a 100% week if four were planned.
  *
- * Weeks are Monday to Sunday, the same week the dashboard draws, and a report
- * is keyed to its week: generating one for a week that already has a report
+ * Weeks run from the day the person's week starts on (see Weeks), the same
+ * week the dashboard draws, and a report is keyed to its week: generating one for a week that already has a report
  * rewrites that report instead of adding a second one.
  */
 @Service
@@ -51,7 +50,7 @@ public class ReportService {
     public Report generateWeeklyReport(String email, LocalDate anyDayInWeek) {
         User user = findUser(email);
 
-        LocalDate weekStart = anyDayInWeek.with(DayOfWeek.MONDAY);
+        LocalDate weekStart = Weeks.start(anyDayInWeek, user);
         LocalDate weekEnd = weekStart.plusDays(6);
 
         List<Behavior> behaviors =

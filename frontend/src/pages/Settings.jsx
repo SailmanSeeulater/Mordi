@@ -18,7 +18,7 @@ import './settings.css';
 
 const WEEK_START_LABELS = { monday: 'Monday', sunday: 'Sunday' };
 
-/** Monday or Sunday for the calendar's weeks; goal targets are unaffected. */
+/** Monday or Sunday: the week every page counts and draws, saved to the account. */
 function WeekStartSetting() {
   const weekStart = useWeekStart();
   return (
@@ -50,7 +50,7 @@ function WeekStartSetting() {
         ))}
       </div>
       <p className="settings__pref-hint" id="set-week-start-hint">
-        Changes the calendar. Weekly goals still count Monday to Sunday.
+        Weekly goals, reports, reminders and every calendar count the week from this day.
       </p>
     </div>
   );

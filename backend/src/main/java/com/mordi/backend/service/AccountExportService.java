@@ -83,7 +83,7 @@ public class AccountExportService {
 
     public record Account(
         String name, String email, LocalDateTime createdAt, String timeZone,
-        Short reminderHour, String termsVersion, LocalDateTime termsAcceptedAt) {}
+        Short reminderHour, String weekStart, String termsVersion, LocalDateTime termsAcceptedAt) {}
 
     public record GoalRow(
         Long id, String title, String description, String frequency, String category,
@@ -128,7 +128,7 @@ public class AccountExportService {
             Instant.now(),
             new Account(
                 user.getName(), user.getEmail(), user.getCreatedAt(), user.getTimeZone(),
-                user.getReminderHour(), user.getTermsVersion(), user.getTermsAcceptedAt()),
+                user.getReminderHour(), user.getWeekStart(), user.getTermsVersion(), user.getTermsAcceptedAt()),
             goals.findByUserOrderByIdAsc(user).stream().map(AccountExportService::goal).toList(),
             behaviors.findByUserOrderByLogDateAscIdAsc(user).stream().map(AccountExportService::entry).toList(),
             locations.findByUserOrderByRecordedAtDesc(user).stream()

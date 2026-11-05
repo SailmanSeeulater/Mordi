@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import client from '../api/client';
 import { addDays, startOfWeek, toIsoDate } from '../pages/dashboardData';
+import { useWeekStart } from '../lib/weekStart';
 
 /**
  * Every entry from the first day the activity grid shows through today.
@@ -11,7 +12,7 @@ import { addDays, startOfWeek, toIsoDate } from '../pages/dashboardData';
  */
 export default function useLogHistory(today, weeks, reloadKey = 0) {
   const todayIso = toIsoDate(today);
-  const startIso = toIsoDate(addDays(startOfWeek(today), -7 * (weeks - 1)));
+  const startIso = toIsoDate(addDays(startOfWeek(today, useWeekStart()), -7 * (weeks - 1)));
 
   const [entries, setEntries] = useState([]);
   const [loadState, setLoadState] = useState('loading');

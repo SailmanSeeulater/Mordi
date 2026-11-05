@@ -23,6 +23,17 @@ export function storedChoice({ key, values, fallback }) {
     return values.includes(raw) ? raw : fallback;
   };
 
+  /** The value chosen in this browser, or null when none was: no fallback. */
+  const saved = () => {
+    let raw;
+    try {
+      raw = localStorage.getItem(key);
+    } catch {
+      raw = memory;
+    }
+    return values.includes(raw) ? raw : null;
+  };
+
   const set = (value) => {
     if (!values.includes(value)) return;
     try {
@@ -45,5 +56,5 @@ export function storedChoice({ key, values, fallback }) {
   // A string, so the snapshot is stable between changes without a cache.
   const useChoice = () => useSyncExternalStore(subscribe, get, () => fallback);
 
-  return { get, set, useChoice };
+  return { get, saved, set, useChoice };
 }

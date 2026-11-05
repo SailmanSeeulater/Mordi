@@ -21,8 +21,8 @@ import { hasPlannedDays } from './plannedDays';
  */
 export function suggestTarget(goal, behaviors, today, weeks = 4) {
   const target = goalTarget(goal);
-  const thisMonday = startOfWeek(today);
-  const windowStart = addDays(thisMonday, -7 * weeks);
+  const thisWeek = startOfWeek(today);
+  const windowStart = addDays(thisWeek, -7 * weeks);
   if (goal.createdAt && new Date(goal.createdAt) > windowStart) return null;
 
   const doneDays = new Set(
@@ -30,10 +30,10 @@ export function suggestTarget(goal, behaviors, today, weeks = 4) {
   );
   const counts = [];
   for (let k = 1; k <= weeks; k += 1) {
-    const monday = addDays(thisMonday, -7 * k);
+    const first = addDays(thisWeek, -7 * k);
     let n = 0;
     for (let d = 0; d < 7; d += 1) {
-      if (doneDays.has(toIsoDate(addDays(monday, d)))) n += 1;
+      if (doneDays.has(toIsoDate(addDays(first, d)))) n += 1;
     }
     counts.push(n);
   }

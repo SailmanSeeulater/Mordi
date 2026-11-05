@@ -1,7 +1,7 @@
 // Pure date/grid helpers for the dashboard. Dates are handled as local-time
 // calendar days and compared as YYYY-MM-DD strings, matching the backend's LocalDate.
 
-import { startOfCalendarWeek } from '../lib/weekStart';
+import { getWeekStart, startOfCalendarWeek } from '../lib/weekStart';
 import { hasPlannedDays, isPlannedOn, plannedDueByIndex } from '../lib/plannedDays';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -21,11 +21,12 @@ export function addDays(date, n) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
 }
 
-/** Monday of the week. Weekly targets always count Monday to Sunday,
- * whichever day the calendar is set to start on. */
-export function startOfWeek(date) {
-  const daysSinceMonday = (date.getDay() + 6) % 7;
-  return addDays(date, -daysSinceMonday);
+/**
+ * The first day of the week containing `date`: Monday, or Sunday when the
+ * person's week starts on Sunday (lib/weekStart). Every weekly count uses it.
+ */
+export function startOfWeek(date, weekStart = getWeekStart()) {
+  return startOfCalendarWeek(date, weekStart);
 }
 
 export function weekDays(weekStart) {
@@ -187,17 +188,19 @@ export function recentEntries(behaviors, count) {
 }
 
 /**
- * What is due by the end of the day in column `todayIndex` (0 for Monday),
+ * What is due by the end of the day in column `todayIndex` (0 for the first
+ * day of the week),
  * summed over the week summary's rows and rounded once. A goal with planned
  * days owes the planned days so far; any other goal's target is spread
  * evenly over the seven days. With no planned days anywhere this is exactly
  * the even spread of the whole week's target.
  */
-export function expectedBy(rows, todayIndex) {
+export function expectedBy(rows, todayIndex, weekStart = getWeekStart()) {
   const dayIndex = Math.min(6, Math.max(0, todayIndex));
   const total = rows.reduce(
     (sum, r) =>
-      sum + (hasPlannedDays(r.goal) ? plannedDueByIndex(r.goal, dayIndex) : (r.target * (dayIndex + 1)) / 7),
+      sum +
+      (hasPlannedDays(r.goal) ? plannedDueByIndex(r.goal, dayIndex, weekStart) : (r.target * (dayIndex + 1)) / 7),
     0,
   );
   return Math.round(total);
@@ -206,17 +209,18 @@ export function expectedBy(rows, todayIndex) {
 /**
  * How the week stands against its own target, as of today. "expected" is
  * what is due by the end of today, and "delta" is how far ahead (+) or
- * behind (-) the count is. Sunday night, expected is the whole target.
+ * behind (-) the count is. On the week's last night, expected is the whole
+ * target.
  *
  * Given the week summary's `rows`, a goal planned for particular days counts
  * those days (see expectedBy). Without them, or for goals without planned
  * days, the target is spread evenly over the seven days.
  */
-export function weekPace(planned, achieved, todayIndex, rows) {
+export function weekPace(planned, achieved, todayIndex, rows, weekStart = getWeekStart()) {
   if (!planned) return { expected: 0, delta: 0, state: 'none' };
   const dayIndex = Math.min(6, Math.max(0, todayIndex));
   const expected = Array.isArray(rows)
-    ? expectedBy(rows, dayIndex)
+    ? expectedBy(rows, dayIndex, weekStart)
     : Math.round((planned * (dayIndex + 1)) / 7);
   const delta = achieved - expected;
   if (achieved >= planned) return { expected, delta, state: 'done' };
@@ -242,7 +246,7 @@ export function paceLabel(pace) {
   }
 }
 
-/** Entries logged on each of the seven days, Monday first. */
+/** Entries logged on each of the seven days, in the order of `days`. */
 export function entriesPerDay(behaviors, days) {
   return days.map((iso) => behaviors.filter((b) => b.logDate === iso).length);
 }
