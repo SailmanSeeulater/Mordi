@@ -43,6 +43,21 @@ describe('startOfWeek', () => {
   it('crosses month boundaries', () => {
     expect(toIsoDate(startOfWeek(day('2026-10-01')))).toBe('2026-09-28');
   });
+
+  it('starts on Sunday when the week does', () => {
+    expect(toIsoDate(startOfWeek(day('2026-09-16'), 'sunday'))).toBe('2026-09-13');
+    expect(toIsoDate(startOfWeek(day('2026-09-20'), 'sunday'))).toBe('2026-09-20');
+    expect(toIsoDate(startOfWeek(day('2026-09-19'), 'sunday'))).toBe('2026-09-13');
+  });
+
+  it('follows the saved week start when none is given', () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    try {
+      expect(toIsoDate(startOfWeek(day('2026-09-16')))).toBe('2026-09-13');
+    } finally {
+      localStorage.removeItem('mordi-week-start');
+    }
+  });
 });
 
 describe('formatWeekRange', () => {

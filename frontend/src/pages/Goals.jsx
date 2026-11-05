@@ -15,7 +15,7 @@ import { targetLabel, toIsoDate, weekSummary } from './dashboardData';
 import { formatAverage, suggestTarget } from '../lib/targets';
 import { togetherApi, togetherLabel } from '../lib/together';
 import { enableModule } from '../lib/modules';
-import { DAY_NAMES, plannedDays, plannedDaysLabel } from '../lib/plannedDays';
+import { DAY_NAMES, isoDayOrder, plannedDays, plannedDaysLabel } from '../lib/plannedDays';
 import { useWeekStart } from '../lib/weekStart';
 import './goals.css';
 
@@ -122,6 +122,8 @@ export default function Goals() {
     [goals, behaviors, weekStart, today],
   );
   const todayColumn = summary.days.indexOf(todayIso);
+  // The weekday in each column of the week, the week's first day first.
+  const dayOrder = isoDayOrder(calendarStart);
 
   const closeModal = useCallback(() => {
     setModal(null);
@@ -361,10 +363,10 @@ export default function Goals() {
                         'week-dot' +
                         (status === 'done' ? ' week-dot--done' : '') +
                         (status === 'missed' ? ' week-dot--missed' : '') +
-                        (plannedSet.has(i) ? ' week-dot--planned' : '') +
+                        (plannedSet.has(dayOrder[i]) ? ' week-dot--planned' : '') +
                         (i === todayColumn ? ' week-dot--today' : '')
                       }
-                      title={plannedSet.has(i) ? `Planned for ${DAY_NAMES[i]}` : undefined}
+                      title={plannedSet.has(dayOrder[i]) ? `Planned for ${DAY_NAMES[dayOrder[i]]}` : undefined}
                     />
                   ))}
                 </div>

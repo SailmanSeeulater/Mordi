@@ -1,4 +1,5 @@
-import { hasPlannedDays, plannedDays } from './plannedDays';
+import { hasPlannedDays, isoDayOrder, plannedDays } from './plannedDays';
+import { getWeekStart } from './weekStart';
 
 /**
  * What is still left this week, in the words the push reminder uses. A port
@@ -14,7 +15,7 @@ import { hasPlannedDays, plannedDays } from './plannedDays';
 
 export const MAX_LISTED = 3;
 
-/** Days from today to Sunday, today included: 7 on Monday, 1 on Sunday. */
+/** Days from today to the end of the week, today included: 7 on its first day, 1 on its last. */
 export function daysLeft(todayIndex) {
   return 7 - Math.min(6, Math.max(0, todayIndex));
 }
@@ -22,20 +23,22 @@ export function daysLeft(todayIndex) {
 /**
  * Whether a row with something left belongs in today's reminder: always for
  * a goal without planned days; for one with them, only on a planned day it
- * isn't done yet (`statuses` is the row's Monday-first day list).
+ * isn't done yet (`statuses` is the row's day list, the week's first day first).
  */
-export function dueToday(row, todayIndex) {
+export function dueToday(row, todayIndex, weekStart = getWeekStart()) {
   if (!hasPlannedDays(row.goal)) return true;
-  return plannedDays(row.goal).includes(todayIndex) && row.statuses?.[todayIndex] !== 'done';
+  const weekday = isoDayOrder(weekStart)[todayIndex];
+  return plannedDays(row.goal).includes(weekday) && row.statuses?.[todayIndex] !== 'done';
 }
 
 /**
  * `rows` are the week summary's rows ({ goal, done, target, statuses });
- * `todayIndex` is 0 for Monday. Returns { title, body, items, more } or null.
+ * `todayIndex` is today's column, 0 for the week's first day. Returns
+ * { title, body, items, more } or null.
  */
-export function composeReminder(rows, todayIndex) {
+export function composeReminder(rows, todayIndex, weekStart = getWeekStart()) {
   const behind = rows
-    .filter((r) => dueToday(r, todayIndex))
+    .filter((r) => dueToday(r, todayIndex, weekStart))
     .map((r) => ({ title: r.goal.title, left: Math.max(0, r.target - r.done), target: r.target }))
     .filter((r) => r.target > 0 && r.left > 0)
     .sort((a, b) => b.left / b.target - a.left / a.target || a.title.localeCompare(b.title));

@@ -13,16 +13,16 @@ import { addDays, startOfWeek, toIsoDate } from '../pages/dashboardData';
  * progress, so a report is never frozen half way through.
  */
 export async function ensureLastWeekReport(today, loggedLastWeek) {
-  const lastMonday = toIsoDate(addDays(startOfWeek(today), -7));
+  const lastWeekIso = toIsoDate(addDays(startOfWeek(today), -7));
   try {
     const res = await client.get('/api/reports');
     const rows = Array.isArray(res.data) ? res.data : [];
     const existing = rows
-      .filter((r) => r.weekStart === lastMonday)
+      .filter((r) => r.weekStart === lastWeekIso)
       .sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
     if (existing) return existing;
     if (!loggedLastWeek) return null;
-    const made = await client.post('/api/reports/generate', null, { params: { week: lastMonday } });
+    const made = await client.post('/api/reports/generate', null, { params: { week: lastWeekIso } });
     return made.data ?? null;
   } catch {
     return null;

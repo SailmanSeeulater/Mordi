@@ -9,6 +9,8 @@ import com.mordi.backend.service.AccountExportService;
 import com.mordi.backend.service.AccountExportService.AccountExport;
 import com.mordi.backend.service.AccountService;
 import com.mordi.backend.service.PasswordService;
+import com.mordi.backend.service.PreferencesService;
+import com.mordi.backend.service.PreferencesService.Preferences;
 import com.mordi.backend.service.RefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class AccountController {
     private final PasswordService passwordService;
     private final AccountService accountService;
     private final AccountExportService exportService;
+    private final PreferencesService preferencesService;
     private final RefreshTokenService refreshTokenService;
     private final JwtUtil jwtUtil;
     private final SessionCookies cookies;
@@ -50,6 +53,19 @@ public class AccountController {
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, cookies.refresh(refresh).toString())
             .body(body);
+    }
+
+    /** Settings that follow the person from device to device. */
+    @GetMapping("/preferences")
+    public Preferences preferences(@AuthenticationPrincipal String email) {
+        return preferencesService.get(email);
+    }
+
+    @PutMapping("/preferences")
+    public Preferences updatePreferences(
+            @AuthenticationPrincipal String email,
+            @RequestBody Preferences request) {
+        return preferencesService.update(email, request);
     }
 
     /** Everything kept about this person, for "Download my data". */

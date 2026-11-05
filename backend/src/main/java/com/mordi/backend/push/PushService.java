@@ -11,6 +11,7 @@ import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.GoalRepository;
 import com.mordi.backend.repository.PushSubscriptionRepository;
 import com.mordi.backend.repository.UserRepository;
+import com.mordi.backend.service.Weeks;
 import java.security.GeneralSecurityException;
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
@@ -182,10 +183,11 @@ public class PushService {
     }
 
     ReminderComposer.Reminder composeFor(User user, LocalDate today) {
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
+        DayOfWeek firstDay = Weeks.firstDay(user);
+        LocalDate weekStart = Weeks.start(today, firstDay);
         List<Goal> current = goals.findByUserAndActiveTrueAndArchivedAtIsNull(user);
         Map<Long, Set<LocalDate>> done = new HashMap<>();
-        for (Behavior b : behaviors.findByUserAndLogDateBetween(user, monday, today)) {
+        for (Behavior b : behaviors.findByUserAndLogDateBetween(user, weekStart, today)) {
             if (b.isCompleted() && b.getGoal() != null) {
                 done.computeIfAbsent(b.getGoal().getId(), k -> new HashSet<>()).add(b.getLogDate());
             }
@@ -195,7 +197,7 @@ public class PushService {
             progress.add(new ReminderComposer.GoalProgress(g.getTitle(), g.getTargetPerWeek(),
                 done.getOrDefault(g.getId(), Set.of()), g.getPlannedDays()));
         }
-        return ReminderComposer.compose(progress, today);
+        return ReminderComposer.compose(progress, today, firstDay);
     }
 
     /**

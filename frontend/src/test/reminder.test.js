@@ -25,6 +25,14 @@ describe('composeReminder', () => {
     expect(r.more).toBe(1);
   });
 
+  it('reads a planned day from the column in a week that starts on Sunday', () => {
+    // Planned for Sunday only (bit 6). Column 0 is Sunday in a Sunday week.
+    const sunday = { goal: { title: 'Long run', plannedDays: 0b100_0000 }, target: 1, done: 0, statuses: [] };
+    expect(composeReminder([sunday], 0, 'sunday').body).toBe('Long run: 1 of 1 left');
+    expect(composeReminder([sunday], 0, 'monday')).toBeNull();
+    expect(composeReminder([sunday], 6, 'monday').body).toBe('Long run: 1 of 1 left');
+  });
+
   it('says last day on Sunday', () => {
     expect(composeReminder([row('Run', 4, 2)], 6).title).toBe('Last day of the week');
     expect(daysLeft(0)).toBe(7);

@@ -1,5 +1,6 @@
 package com.mordi.backend.push;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +61,26 @@ class ReminderComposerTest {
         assertThat(ReminderComposer.daysLeft(MON)).isEqualTo(7);
         assertThat(ReminderComposer.daysLeft(THURSDAY)).isEqualTo(4);
         assertThat(ReminderComposer.daysLeft(LocalDate.of(2026, 9, 20))).isEqualTo(1);
+    }
+
+    @Test
+    void aWeekThatStartsOnSundayEndsOnSaturday() {
+        assertThat(ReminderComposer.daysLeft(LocalDate.of(2026, 9, 13), DayOfWeek.SUNDAY)).isEqualTo(7);
+        assertThat(ReminderComposer.daysLeft(THURSDAY, DayOfWeek.SUNDAY)).isEqualTo(3);
+        assertThat(ReminderComposer.daysLeft(LocalDate.of(2026, 9, 19), DayOfWeek.SUNDAY)).isEqualTo(1);
+    }
+
+    @Test
+    void aSundayCountsTowardTheWeekItStartsWhenTheWeekStartsOnSunday() {
+        LocalDate sunday = LocalDate.of(2026, 9, 13);
+        List<ReminderComposer.GoalProgress> run = List.of(goal("Run", 3, sunday, MON));
+
+        // Counted from Monday, last Sunday was last week: 2 of 3 left.
+        assertThat(ReminderComposer.compose(run, THURSDAY).body()).isEqualTo("Run: 2 of 3 left");
+        // Counted from Sunday, it is this week's first day: 1 of 3 left.
+        ReminderComposer.Reminder fromSunday = ReminderComposer.compose(run, THURSDAY, DayOfWeek.SUNDAY);
+        assertThat(fromSunday.title()).isEqualTo("3 days left this week");
+        assertThat(fromSunday.body()).isEqualTo("Run: 1 of 3 left");
     }
 
     @Test

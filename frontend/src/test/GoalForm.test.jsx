@@ -135,20 +135,20 @@ describe('GoalForm planned days', () => {
     localStorage.removeItem('mordi-week-start');
   });
 
-  it('offers seven named days, Sunday first by default, none picked', () => {
+  it('offers seven named days, Monday first by default, none picked', () => {
     render(<GoalForm onSaved={() => {}} onCancel={() => {}} />);
     expect(dayButtons().map((b) => b.getAttribute('aria-label'))).toEqual([
-      'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
     ]);
     expect(dayButtons().every((b) => b.getAttribute('aria-pressed') === 'false')).toBe(true);
     expect(segment(/^3/)).toBeEnabled();
   });
 
   it('orders the days by the calendar’s week start', () => {
-    localStorage.setItem('mordi-week-start', 'monday');
+    localStorage.setItem('mordi-week-start', 'sunday');
     render(<GoalForm onSaved={() => {}} onCancel={() => {}} />);
-    expect(dayButtons()[0]).toHaveAccessibleName('Monday');
-    expect(dayButtons()[6]).toHaveAccessibleName('Sunday');
+    expect(dayButtons()[0]).toHaveAccessibleName('Sunday');
+    expect(dayButtons()[6]).toHaveAccessibleName('Saturday');
   });
 
   it('sets the times a week from the picked days, locks it, and saves the mask', async () => {

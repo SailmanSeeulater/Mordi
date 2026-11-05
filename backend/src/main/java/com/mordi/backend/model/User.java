@@ -60,6 +60,12 @@ public class User {
     @Column(name = "last_active_on")
     private LocalDate lastActiveOn;
 
+    // The day the person's week starts on, "monday" or "sunday". Every weekly
+    // count runs from it, not only the calendar's layout (see Weeks).
+    @JsonIgnore
+    @Column(name = "week_start", nullable = false, length = 6)
+    private String weekStart = "monday";
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

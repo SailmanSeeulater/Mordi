@@ -270,6 +270,36 @@ describe('Dashboard taking back an entry', () => {
     expect(client.delete).toHaveBeenCalledWith('/api/behaviors/40');
   });
 
+  it('logs an earlier day this week from its day chip, with an Undo that names the day', async () => {
+    loadWith([]);
+    render(
+      <MemoryRouter>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+    await settle();
+
+    // Monday this week, from the week card's day strip, then the calendar.
+    fireEvent.click(screen.getByRole('button', { name: /^Monday 14,/ }));
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('button', { name: 'Log this day' }));
+    await act(async () => {});
+    expect(screen.getByRole('dialog', { name: 'Log a day' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('What did you do?'), { target: { value: 'Stretched' } });
+    client.post.mockResolvedValue({ data: { id: 41, note: 'Stretched', goal: null, logDate: '2026-09-14' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save entry' }));
+    await act(async () => {});
+
+    expect(client.post).toHaveBeenCalledWith('/api/behaviors', expect.objectContaining({ logDate: '2026-09-14' }));
+    expect(screen.getByText('Logged Stretched for Monday')).toBeInTheDocument();
+
+    client.delete.mockResolvedValue({});
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await act(async () => {});
+    expect(client.delete).toHaveBeenCalledWith('/api/behaviors/41');
+  });
+
   it('catches a quick second tap before the reload lands', async () => {
     loadWith([]);
     render(

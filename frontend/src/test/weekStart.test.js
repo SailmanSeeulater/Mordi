@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
+import client from '../api/client';
 import {
   getWeekStart,
   setWeekStart,
   startOfCalendarWeek,
+  syncWeekStart,
   useWeekStart,
   weekdayLabels,
   weekdayOrder,
@@ -13,7 +15,10 @@ import { monthGrid, parseIsoDate, startOfWeek, toIsoDate } from '../pages/dashbo
 const day = (iso) => parseIsoDate(iso);
 const iso = (date) => toIsoDate(date);
 
-afterEach(() => localStorage.clear());
+afterEach(() => {
+  localStorage.clear();
+  vi.restoreAllMocks();
+});
 
 describe('startOfCalendarWeek', () => {
   it('goes back to Monday or Sunday from midweek', () => {
@@ -95,25 +100,25 @@ describe('monthGrid with a week start', () => {
 });
 
 describe('the stored preference', () => {
-  it('is Sunday until set, and remembers Monday', () => {
-    expect(getWeekStart()).toBe('sunday');
-    setWeekStart('monday');
+  it('is Monday until set, and remembers Sunday', () => {
     expect(getWeekStart()).toBe('monday');
-    expect(localStorage.getItem('mordi-week-start')).toBe('monday');
+    setWeekStart('sunday');
+    expect(getWeekStart()).toBe('sunday');
+    expect(localStorage.getItem('mordi-week-start')).toBe('sunday');
   });
 
   it('ignores anything that is not a known day', () => {
     localStorage.setItem('mordi-week-start', 'wednesday');
-    expect(getWeekStart()).toBe('sunday');
+    expect(getWeekStart()).toBe('monday');
     setWeekStart('friday');
     expect(localStorage.getItem('mordi-week-start')).toBe('wednesday');
   });
 
   it('tells every reader when it changes', () => {
     const { result } = renderHook(() => useWeekStart());
-    expect(result.current).toBe('sunday');
-    act(() => setWeekStart('monday'));
     expect(result.current).toBe('monday');
+    act(() => setWeekStart('sunday'));
+    expect(result.current).toBe('sunday');
   });
 
   it('still works for the session when storage is blocked', () => {
@@ -124,12 +129,53 @@ describe('the stored preference', () => {
       throw new Error('blocked');
     });
     try {
-      expect(getWeekStart()).toBe('sunday');
-      setWeekStart('monday');
       expect(getWeekStart()).toBe('monday');
+      setWeekStart('sunday');
+      expect(getWeekStart()).toBe('sunday');
     } finally {
       get.mockRestore();
       set.mockRestore();
     }
+  });
+});
+
+describe('the account\'s week start', () => {
+  const answer = (data) => Promise.resolve({ data });
+
+  it('saves a change to the account', () => {
+    const put = vi.spyOn(client, 'put').mockImplementation(() => answer({}));
+    setWeekStart('sunday');
+    return Promise.resolve().then(() => {
+      expect(put).toHaveBeenCalledWith('/api/account/preferences', { weekStart: 'sunday' });
+    });
+  });
+
+  it('takes the account\'s choice when this browser never made one', async () => {
+    vi.spyOn(client, 'get').mockImplementation(() => answer({ weekStart: 'sunday' }));
+    await syncWeekStart();
+    expect(getWeekStart()).toBe('sunday');
+  });
+
+  it('sends up a choice made here before the account kept one, once', async () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    const put = vi.spyOn(client, 'put').mockImplementation(() => answer({}));
+    const get = vi.spyOn(client, 'get').mockImplementation(() => answer({ weekStart: 'monday' }));
+
+    await syncWeekStart();
+    expect(put).toHaveBeenCalledWith('/api/account/preferences', { weekStart: 'sunday' });
+    expect(getWeekStart()).toBe('sunday');
+
+    // After that the account leads, so a change made on another device arrives.
+    await syncWeekStart();
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(getWeekStart()).toBe('monday');
+  });
+
+  it('keeps what this browser has when the account cannot be reached', async () => {
+    localStorage.setItem('mordi-week-start', 'sunday');
+    localStorage.setItem('mordi-week-start-synced', '1');
+    vi.spyOn(client, 'get').mockImplementation(() => Promise.reject(new Error('offline')));
+    await syncWeekStart();
+    expect(getWeekStart()).toBe('sunday');
   });
 });

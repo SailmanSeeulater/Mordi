@@ -45,13 +45,13 @@ function overlapSeconds(event, from, to) {
  * @param events    planned events overlapping this week
  * @param todos     to-dos finished this week and the one before
  *                  (GET /api/todos/done), cleared from the list or not
- * @param weekStart any date in the week; normalised to its Monday
+ * @param weekStart any date in the week; normalised to the week's first day
  */
 export function buildWeekReport({ goals, behaviors, events = [], todos = [], weekStart, today }) {
-  const monday = startOfWeek(weekStart);
-  const days = Array.from({ length: 7 }, (_, i) => toIsoDate(addDays(monday, i)));
-  const prevMonday = addDays(monday, -7);
-  const prevDays = Array.from({ length: 7 }, (_, i) => toIsoDate(addDays(prevMonday, i)));
+  const first = startOfWeek(weekStart);
+  const days = Array.from({ length: 7 }, (_, i) => toIsoDate(addDays(first, i)));
+  const prevFirst = addDays(first, -7);
+  const prevDays = Array.from({ length: 7 }, (_, i) => toIsoDate(addDays(prevFirst, i)));
 
   const week = behaviors.filter((b) => inWeek(b.logDate, days));
   const prev = behaviors.filter((b) => inWeek(b.logDate, prevDays));
@@ -68,11 +68,11 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
   const prevTodosDone = todos.filter((t) => finished(t) && inWeek(t.completedOn, prevDays)).length;
   const weekGoals = goalsForWeek(goals, week);
 
-  const summary = weekSummary(weekGoals, behaviors, monday, today);
+  const summary = weekSummary(weekGoals, behaviors, first, today);
   // Last week is measured only against goals that existed then, so a goal
   // added this week doesn't make last week look like a week of nothing.
   const existedBefore = (g) => !g.createdAt || g.createdAt.slice(0, 10) < days[0];
-  const prevSummary = weekSummary(goalsForWeek(goals.filter(existedBefore), prev), behaviors, prevMonday, today);
+  const prevSummary = weekSummary(goalsForWeek(goals.filter(existedBefore), prev), behaviors, prevFirst, today);
   const planned = summary.rows.reduce((s, r) => s + r.target, 0);
   const achieved = summary.rows.reduce((s, r) => s + Math.min(r.done, r.target), 0);
   const prevAchieved = prevSummary.rows.reduce((s, r) => s + Math.min(r.done, r.target), 0);
@@ -139,18 +139,19 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
     .sort((a, b) => b.count - a.count);
 
   // What was planned on the calendar for this week.
-  const from = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+  const from = new Date(first.getFullYear(), first.getMonth(), first.getDate());
   const to = addDays(from, 7);
   const plannedSeconds = events.reduce((s, e) => s + overlapSeconds(e, from, to), 0);
 
-  // When in the day things get logged: weekday (Mon=0) by hour, local time.
+  // When in the day things get logged: day of the week (its first day 0) by
+  // hour, local time.
   const hours = Array.from({ length: 7 }, () => Array(24).fill(0));
   let timed = 0;
   for (const b of week) {
     if (!b.loggedAt) continue;
     const at = new Date(b.loggedAt);
     if (Number.isNaN(at.getTime())) continue;
-    hours[(at.getDay() + 6) % 7][at.getHours()] += 1;
+    hours[(at.getDay() - first.getDay() + 7) % 7][at.getHours()] += 1;
     timed += 1;
   }
 
@@ -170,7 +171,7 @@ export function buildWeekReport({ goals, behaviors, events = [], todos = [], wee
   const busiest = perDay.reduce((best, d) => (d.total > (best?.total ?? 0) ? d : best), null);
 
   return {
-    monday,
+    first,
     days,
     planned,
     achieved,

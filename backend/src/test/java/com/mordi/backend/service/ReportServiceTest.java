@@ -110,6 +110,24 @@ class ReportServiceTest {
             assertThat(reportService.generateWeeklyReport(ME, SUNDAY).getWeekStart())
                 .isEqualTo(MONDAY);
         }
+
+        @Test
+        void aWeekThatStartsOnSundayRunsSundayToSaturday() {
+            me.setWeekStart("sunday");
+            LocalDate sundayBefore = MONDAY.minusDays(1);
+            LocalDate saturday = SUNDAY.minusDays(1);
+            when(userRepository.findByEmail(ME)).thenReturn(Optional.of(me));
+            when(goalRepository.findByUserAndActive(me, true)).thenReturn(List.of());
+            when(behaviorRepository.findByUserAndLogDateBetween(me, sundayBefore, saturday))
+                .thenReturn(List.of());
+            when(reportRepository.findByUserAndWeekStart(any(), any())).thenReturn(Optional.empty());
+            when(reportRepository.save(any(Report.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Report report = reportService.generateWeeklyReport(ME, WEDNESDAY);
+
+            assertThat(report.getWeekStart()).isEqualTo(sundayBefore);
+            assertThat(report.getWeekEnd()).isEqualTo(saturday);
+        }
     }
 
     @Nested
