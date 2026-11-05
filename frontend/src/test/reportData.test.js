@@ -106,13 +106,13 @@ describe('weekOnWeekDelta', () => {
     expect(weekOnWeekDelta(rows).get(1)).toBeNull();
   });
 
-  it('gives a signed point difference between two current weeks', () => {
+  it('gives the difference in days hit between two current weeks, not points', () => {
     const rows = [
       modern({ id: 1, plannedEntries: 10, achievedEntries: 8 }),
-      modern({ id: 2, weekStart: '2026-08-31', plannedEntries: 10, achievedEntries: 5 }),
+      modern({ id: 2, weekStart: '2026-08-31', plannedEntries: 12, achievedEntries: 5 }),
     ].map(normaliseReport);
     const delta = weekOnWeekDelta(rows);
-    expect(delta.get(1)).toBe(30);
+    expect(delta.get(1)).toBe(3);
     expect(delta.get(2)).toBeNull();
   });
 });
