@@ -98,7 +98,8 @@ export default function TimeLogger({ onSaved }) {
   };
 
   const handleSave = async () => {
-    if (await save()) onSaved?.();
+    const saved = await save();
+    if (saved) onSaved?.(saved);
   };
 
   let left;

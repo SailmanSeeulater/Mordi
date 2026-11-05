@@ -369,6 +369,51 @@ export default function Dashboard() {
     justLogged.current.clear();
   }, [behaviors]);
 
+  // Every way of logging ends with an Undo: a slip costs one tap to take back,
+  // not a trip into the feed or the calendar.
+  const offerUndo = useCallback(
+    (entry, message) => {
+      if (entry?.id == null) return;
+      showToast({
+        message,
+        undo: async () => {
+          try {
+            await client.delete(`/api/behaviors/${entry.id}`);
+          } catch {
+            showToast({ message: 'Couldn’t undo that. Check your connection and try again.', undoable: false });
+            return;
+          }
+          handleTimeSaved();
+        },
+      });
+    },
+    [handleTimeSaved, showToast],
+  );
+  const loggedMessage = useCallback(
+    (entry) => {
+      const day =
+        !entry?.logDate || entry.logDate === todayIso
+          ? 'today'
+          : parseIsoDate(entry.logDate).toLocaleDateString(undefined, { weekday: 'long' });
+      return `Logged ${entryName(entry)} for ${day}`;
+    },
+    [todayIso],
+  );
+  const handleLogSaved = useCallback(
+    (entry) => {
+      handleSaved();
+      offerUndo(entry, loggedMessage(entry));
+    },
+    [handleSaved, offerUndo, loggedMessage],
+  );
+  const handleTimerSaved = useCallback(
+    (entry) => {
+      handleTimeSaved();
+      offerUndo(entry, `Saved ${entryName(entry)}`);
+    },
+    [handleTimeSaved, offerUndo],
+  );
+
   // A goal counts once a day, so a tap on a ring already done today doesn't
   // log it again. It says so, and offers the form for a note instead.
   const tapRing = async (row) => {
@@ -393,18 +438,7 @@ export default function Dashboard() {
       });
       justLogged.current.add(row.goal.id);
       handleTimeSaved();
-      showToast({
-        message: `Logged ${row.goal.title} for today`,
-        undo: async () => {
-          try {
-            await client.delete(`/api/behaviors/${res.data.id}`);
-          } catch {
-            showToast({ message: 'Couldn’t undo that. Check your connection and try again.', undoable: false });
-            return;
-          }
-          handleTimeSaved();
-        },
-      });
+      offerUndo(res.data, `Logged ${row.goal.title} for today`);
     } catch {
       showToast({ message: 'Couldn’t log that. Check your connection and try again.', undoable: false });
     } finally {
@@ -822,7 +856,7 @@ export default function Dashboard() {
                 and what is done. */}
             <div className="app-panel side">
               {on('todo') && <TodoList />}
-              {on('timer') && <TimeLogger onSaved={handleTimeSaved} />}
+              {on('timer') && <TimeLogger onSaved={handleTimerSaved} />}
               <LatelyFeed
                 entries={feed}
                 todayIso={todayIso}
@@ -843,7 +877,7 @@ export default function Dashboard() {
             behaviors={behaviors}
             initialGoalId={logGoalId}
             logDate={logDay}
-            onSaved={handleSaved}
+            onSaved={handleLogSaved}
             onCancel={closeModal}
           />
         </Modal>
