@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import client from '../api/client';
 import AppShell from '../components/AppShell';
 import Modal from '../components/Modal';
+import TodoHistory from '../components/TodoHistory';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { ICONS, goalCategory } from '../lib/categories';
 import { parseIsoDate } from './dashboardData';
@@ -17,13 +19,53 @@ function span(first, last) {
   return a === b ? a : `${a} – ${b}`;
 }
 
+const SECTIONS = [
+  { id: 'goals', label: 'Goals' },
+  { id: 'todos', label: 'To-dos' },
+];
+
+/**
+ * What someone is done with, in two sections: goals they archived, and
+ * to-dos they finished or removed. The section is in the address, so a
+ * reload or the back button keeps it.
+ */
+export default function History() {
+  useDocumentTitle('History');
+  const [params, setParams] = useSearchParams();
+  const section = params.get('show') === 'todos' ? 'todos' : 'goals';
+  const show = (id) => setParams(id === 'goals' ? {} : { show: id }, { replace: true });
+
+  return (
+    <AppShell title="History">
+      <div className="app-segments history__sections" role="group" aria-label="History section">
+        <span
+          className="app-segments__thumb"
+          style={{ '--n': SECTIONS.length, '--i': SECTIONS.findIndex((s) => s.id === section) }}
+          aria-hidden="true"
+        />
+        {SECTIONS.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className="app-segment"
+            aria-pressed={s.id === section}
+            onClick={() => show(s.id)}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+      {section === 'goals' ? <ArchivedGoals /> : <TodoHistory />}
+    </AppShell>
+  );
+}
+
 /**
  * Goals someone has finished with. Archiving takes a goal off the dashboard
  * without losing what was logged against it; this is where it goes, with a
  * short account of what it amounted to, and a way back.
  */
-export default function History() {
-  useDocumentTitle('History');
+function ArchivedGoals() {
   const [goals, setGoals] = useState([]);
   const [loadState, setLoadState] = useState('loading');
   const [busyId, setBusyId] = useState(null);
@@ -69,12 +111,12 @@ export default function History() {
       `Couldn’t delete “${goal.title}”. Check your connection and try again.`);
 
   return (
-    <AppShell title="History">
-      {loadState === 'loading' && <p className="app-empty">Loading your history…</p>}
+    <>
+      {loadState === 'loading' && <p className="app-empty">Loading your goals…</p>}
 
       {loadState === 'error' && (
         <div className="app-empty">
-          <p>Couldn&rsquo;t load your history.</p>
+          <p>Couldn&rsquo;t load your goals.</p>
           <button type="button" className="app-btn app-btn--quiet" onClick={load}>
             Try again
           </button>
@@ -164,7 +206,7 @@ export default function History() {
 
       {confirming && (
         <Modal title="Delete goal" onClose={() => setConfirming(null)}>
-          <p className="goals__confirm">
+          <p className="history__confirm">
             Delete &ldquo;{confirming.title}&rdquo; for good?
             <span>It leaves History and can&rsquo;t be restored. Entries you logged stay in your feed.</span>
           </p>
@@ -185,6 +227,6 @@ export default function History() {
           </div>
         </Modal>
       )}
-    </AppShell>
+    </>
   );
 }

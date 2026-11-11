@@ -1,5 +1,6 @@
 package com.mordi.backend.controller;
 
+import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.model.Todo;
 import com.mordi.backend.service.TodoService;
@@ -48,6 +49,14 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getFinished(email, start, end));
     }
 
+    /** History's to-dos: done or removed, newest first, a page at a time. */
+    @GetMapping("/history")
+    public ResponseEntity<TodoHistoryPage> getHistory(
+            @AuthenticationPrincipal String email,
+            @RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(todoService.getHistory(email, page));
+    }
+
     // A literal path segment always outranks a template in Spring's matching,
     // so "done" is never read as an id.
     @DeleteMapping("/done")
@@ -60,6 +69,15 @@ public class TodoController {
             @AuthenticationPrincipal String email,
             @PathVariable Long id) {
         todoService.deleteTodo(email, id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Erased, History included. Removing it from the list only keeps it there. */
+    @DeleteMapping("/{id}/history")
+    public ResponseEntity<Void> eraseTodo(
+            @AuthenticationPrincipal String email,
+            @PathVariable Long id) {
+        todoService.eraseTodo(email, id);
         return ResponseEntity.noContent().build();
     }
 }

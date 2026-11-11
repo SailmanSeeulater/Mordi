@@ -1,5 +1,6 @@
 package com.mordi.backend.service;
 
+import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.exception.TodoNotFoundException;
 import com.mordi.backend.model.Todo;
@@ -13,6 +14,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * Finishing one is part of the record, like logging an entry: it shows in
  * Lately on the day it was done and counts in that week's report. Clearing
- * finished items tidies the list without erasing that; deleting one removes
- * it everywhere.
+ * finished items tidies the list without erasing that. Removing one takes it
+ * off the list, out of Lately and out of the reports, but keeps it for
+ * History; deleting it from History erases it.
  */
 @Service
 public class TodoService {
@@ -32,6 +36,9 @@ public class TodoService {
 
     /** A year of history in one request is plenty for any screen that asks. */
     static final long MAX_RANGE_DAYS = 366;
+
+    /** History's to-dos come a page at a time. */
+    static final int HISTORY_PAGE = 50;
 
     private final TodoRepository todoRepository;
     private final UserRepository userRepository;
@@ -49,7 +56,16 @@ public class TodoService {
     }
 
     public List<Todo> getTodos(String email) {
-        return todoRepository.findByUserAndClearedAtIsNullOrderByDoneAscCreatedAtAsc(findUser(email));
+        return todoRepository.findByUserAndClearedAtIsNullAndRemovedAtIsNullOrderByDoneAscCreatedAtAsc(findUser(email));
+    }
+
+    /** Done or removed, by when it left the list, newest first: History's to-dos. */
+    public TodoHistoryPage getHistory(String email, int page) {
+        if (page < 0) {
+            throw new IllegalArgumentException("page can't be negative");
+        }
+        Slice<Todo> slice = todoRepository.findHistory(findUser(email), PageRequest.of(page, HISTORY_PAGE));
+        return new TodoHistoryPage(slice.getContent(), slice.hasNext());
     }
 
     /** Finished on the days from start to end inclusive, cleared from the list or not. */
@@ -95,8 +111,20 @@ public class TodoService {
         return todoRepository.save(todo);
     }
 
-    /** Gone everywhere: from the list, from Lately and from the reports. */
+    /**
+     * Off the list, out of Lately and out of the reports, but kept for
+     * History. Removing it again changes nothing.
+     */
     public void deleteTodo(String email, Long id) {
+        Todo todo = findOwnedTodo(email, id);
+        if (todo.getRemovedAt() == null) {
+            todo.setRemovedAt(Instant.now(clock));
+            todoRepository.save(todo);
+        }
+    }
+
+    /** Gone for good, History included: deleting it from History. */
+    public void eraseTodo(String email, Long id) {
         todoRepository.delete(findOwnedTodo(email, id));
     }
 
