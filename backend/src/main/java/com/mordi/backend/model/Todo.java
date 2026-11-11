@@ -45,6 +45,11 @@ public class Todo {
     @Column(name = "cleared_at")
     private Instant clearedAt;
 
+    // Removed from the list. Kept for History, where it shows as removed;
+    // the list, Lately and the reports leave it out.
+    @Column(name = "removed_at")
+    private Instant removedAt;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {

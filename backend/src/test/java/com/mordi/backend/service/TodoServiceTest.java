@@ -1,5 +1,6 @@
 package com.mordi.backend.service;
 
+import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.exception.TodoNotFoundException;
 import com.mordi.backend.model.Todo;
@@ -14,6 +15,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.SliceImpl;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -209,13 +212,47 @@ class TodoServiceTest {
         }
 
         @Test
-        void deletingOwnItemRemovesIt() {
+        void removingOwnItemKeepsItForHistory() {
             Todo mine = existing(5L, me, false);
             when(todoRepository.findById(5L)).thenReturn(Optional.of(mine));
 
             todoService.deleteTodo(ME, 5L);
 
+            assertThat(mine.getRemovedAt()).isEqualTo(NOW);
+            verify(todoRepository).save(mine);
+            verify(todoRepository, never()).delete(any());
+        }
+
+        @Test
+        void removingItAgainKeepsTheFirstTime() {
+            Todo mine = existing(5L, me, true);
+            Instant earlier = NOW.minusSeconds(600);
+            mine.setRemovedAt(earlier);
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(mine));
+
+            todoService.deleteTodo(ME, 5L);
+
+            assertThat(mine.getRemovedAt()).isEqualTo(earlier);
+            verify(todoRepository, never()).save(any());
+        }
+
+        @Test
+        void erasingOwnItemDeletesItForGood() {
+            Todo mine = existing(5L, me, true);
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(mine));
+
+            todoService.eraseTodo(ME, 5L);
+
             verify(todoRepository).delete(mine);
+        }
+
+        @Test
+        void erasingAnotherUsersItemIsReportedAsNotFound() {
+            when(todoRepository.findById(9L)).thenReturn(Optional.of(existing(9L, them, true)));
+
+            assertThatThrownBy(() -> todoService.eraseTodo(ME, 9L))
+                .isInstanceOf(TodoNotFoundException.class);
+            verify(todoRepository, never()).delete(any());
         }
     }
 
@@ -225,7 +262,7 @@ class TodoServiceTest {
         @Test
         void asksForOpenItemsFirstInTheOrderTheyWereAdded() {
             List<Todo> mine = List.of(existing(1L, me, false));
-            when(todoRepository.findByUserAndClearedAtIsNullOrderByDoneAscCreatedAtAsc(me)).thenReturn(mine);
+            when(todoRepository.findByUserAndClearedAtIsNullAndRemovedAtIsNullOrderByDoneAscCreatedAtAsc(me)).thenReturn(mine);
 
             assertThat(todoService.getTodos(ME)).isSameAs(mine);
         }
@@ -247,6 +284,24 @@ class TodoServiceTest {
             when(todoRepository.findFinishedBetween(me, monday, sunday)).thenReturn(week);
 
             assertThat(todoService.getFinished(ME, monday, sunday)).isSameAs(week);
+        }
+
+        @Test
+        void historyComesAPageAtATimeAndSaysWhetherMoreFollows() {
+            List<Todo> page = List.of(existing(1L, me, true));
+            when(todoRepository.findHistory(me, PageRequest.of(2, TodoService.HISTORY_PAGE)))
+                .thenReturn(new SliceImpl<>(page, PageRequest.of(2, TodoService.HISTORY_PAGE), true));
+
+            TodoHistoryPage history = todoService.getHistory(ME, 2);
+
+            assertThat(history.items()).isEqualTo(page);
+            assertThat(history.hasMore()).isTrue();
+        }
+
+        @Test
+        void aNegativeHistoryPageIsRefused() {
+            assertThatThrownBy(() -> todoService.getHistory(ME, -1))
+                .isInstanceOf(IllegalArgumentException.class);
         }
 
         @Test

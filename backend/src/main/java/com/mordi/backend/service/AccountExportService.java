@@ -101,7 +101,7 @@ public class AccountExportService {
 
     public record NoteRow(String title, String body, boolean pinned, LocalDateTime createdAt, LocalDateTime updatedAt) {}
 
-    public record TodoRow(String text, boolean done, LocalDateTime createdAt, Instant completedAt) {}
+    public record TodoRow(String text, boolean done, LocalDateTime createdAt, Instant completedAt, Instant removedAt) {}
 
     public record EventRow(
         String title, String notes, LocalDateTime startsAt, LocalDateTime endsAt, boolean allDay,
@@ -141,7 +141,7 @@ public class AccountExportService {
                 .map(n -> new NoteRow(n.getTitle(), n.getBody(), n.isPinned(), n.getCreatedAt(), n.getUpdatedAt()))
                 .toList(),
             todos.findByUserOrderByCreatedAtAsc(user).stream()
-                .map(t -> new TodoRow(t.getText(), t.isDone(), t.getCreatedAt(), t.getCompletedAt()))
+                .map(t -> new TodoRow(t.getText(), t.isDone(), t.getCreatedAt(), t.getCompletedAt(), t.getRemovedAt()))
                 .toList(),
             events.findByUserOrderByStartsAtAsc(user).stream().map(AccountExportService::event).toList(),
             reports.findByUserOrderByWeekStartDesc(user).stream().map(AccountExportService::report).toList(),
