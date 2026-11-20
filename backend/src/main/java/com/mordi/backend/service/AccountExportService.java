@@ -12,6 +12,7 @@ import com.mordi.backend.model.Note;
 import com.mordi.backend.model.PlanEvent;
 import com.mordi.backend.model.Report;
 import com.mordi.backend.model.Todo;
+import com.mordi.backend.model.TodoStep;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.BehaviorRepository;
 import com.mordi.backend.repository.CalendarFeedRepository;
@@ -101,7 +102,8 @@ public class AccountExportService {
 
     public record NoteRow(String title, String body, boolean pinned, LocalDateTime createdAt, LocalDateTime updatedAt) {}
 
-    public record TodoRow(String text, boolean done, LocalDateTime createdAt, Instant completedAt, Instant removedAt) {}
+    public record TodoRow(String text, boolean done, LocalDateTime createdAt, Instant completedAt, Instant removedAt,
+                          List<TodoStep> steps) {}
 
     public record EventRow(
         String title, String notes, LocalDateTime startsAt, LocalDateTime endsAt, boolean allDay,
@@ -141,7 +143,7 @@ public class AccountExportService {
                 .map(n -> new NoteRow(n.getTitle(), n.getBody(), n.isPinned(), n.getCreatedAt(), n.getUpdatedAt()))
                 .toList(),
             todos.findByUserOrderByCreatedAtAsc(user).stream()
-                .map(t -> new TodoRow(t.getText(), t.isDone(), t.getCreatedAt(), t.getCompletedAt(), t.getRemovedAt()))
+                .map(t -> new TodoRow(t.getText(), t.isDone(), t.getCreatedAt(), t.getCompletedAt(), t.getRemovedAt(), t.getSteps()))
                 .toList(),
             events.findByUserOrderByStartsAtAsc(user).stream().map(AccountExportService::event).toList(),
             reports.findByUserOrderByWeekStartDesc(user).stream().map(AccountExportService::report).toList(),

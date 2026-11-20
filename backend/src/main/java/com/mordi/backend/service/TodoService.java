@@ -4,6 +4,7 @@ import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.exception.TodoNotFoundException;
 import com.mordi.backend.model.Todo;
+import com.mordi.backend.model.TodoStep;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.UserRepository;
@@ -12,7 +13,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -36,6 +39,9 @@ public class TodoService {
 
     /** A year of history in one request is plenty for any screen that asks. */
     static final long MAX_RANGE_DAYS = 366;
+
+    /** A few steps, not a project plan. */
+    static final int MAX_STEPS = 20;
 
     /** History's to-dos come a page at a time. */
     static final int HISTORY_PAGE = 50;
@@ -92,6 +98,12 @@ public class TodoService {
         if (request.getText() != null) {
             todo.setText(requireText(request.getText()));
         }
+        if (request.getSteps() != null) {
+            todo.setSteps(requireSteps(request.getSteps()));
+        }
+        // Whether the to-do is done stays the app's call, as it sends it: the
+        // apps tick it when its last step is ticked, and reopen it when one is
+        // unticked, in the same request.
         if (request.getDone() != null && request.getDone() != todo.isDone()) {
             todo.setDone(request.getDone());
             // When it was finished, not when it was last touched: reopening a
@@ -154,6 +166,27 @@ public class TodoService {
             throw new IllegalArgumentException("A to-do needs some text");
         }
         return trimmed.length() <= MAX_TEXT ? trimmed : trimmed.substring(0, MAX_TEXT);
+    }
+
+    /** Each step trimmed, with text and an id; at most MAX_STEPS of them. */
+    private List<TodoStep> requireSteps(List<TodoStep> steps) {
+        if (steps.size() > MAX_STEPS) {
+            throw new IllegalArgumentException("A to-do can have up to " + MAX_STEPS + " steps");
+        }
+        List<TodoStep> checked = new ArrayList<>();
+        for (TodoStep step : steps) {
+            if (step == null) {
+                throw new IllegalArgumentException("A step needs some text");
+            }
+            String text = step.getText() == null ? "" : step.getText().trim();
+            if (text.isEmpty()) {
+                throw new IllegalArgumentException("A step needs some text");
+            }
+            String id = step.getId() == null || step.getId().isBlank() ? UUID.randomUUID().toString() : step.getId();
+            checked.add(new TodoStep(id.length() <= 64 ? id : id.substring(0, 64),
+                text.length() <= MAX_TEXT ? text : text.substring(0, MAX_TEXT), step.isDone()));
+        }
+        return checked;
     }
 
     private User findUser(String email) {

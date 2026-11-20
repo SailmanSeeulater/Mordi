@@ -43,13 +43,15 @@
   gap: 2px;
 }
 
-.todo__item {
+.todo__row,
+.todo__step {
   display: flex;
   align-items: center;
   gap: 4px;
   border-radius: var(--r-control);
 }
-.todo__item:hover {
+.todo__row:hover,
+.todo__step:hover {
   background: color-mix(in srgb, var(--color-text) 5%, transparent);
 }
 
@@ -102,7 +104,7 @@
 
 /* Quiet until the row is hovered or focused, so a long list is not a column of
    crosses. Always visible on touch, where there is no hover. */
-.todo__remove {
+.todo__quiet {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
@@ -116,19 +118,25 @@
   opacity: 0;
   transition: opacity 140ms var(--ease-out), background-color 140ms var(--ease-out);
 }
-.todo__item:hover .todo__remove,
-.todo__item:focus-within .todo__remove {
+.todo__row:hover .todo__quiet,
+.todo__row:focus-within .todo__quiet,
+.todo__step:hover .todo__quiet,
+.todo__step:focus-within .todo__quiet {
   opacity: 1;
+}
+.todo__quiet:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
 }
 .todo__remove:hover {
   background: color-mix(in srgb, var(--color-signal) 12%, transparent);
   color: var(--color-signal);
 }
 @media (hover: none) {
-  .todo__remove { opacity: 1; }
+  .todo__quiet { opacity: 1; }
 }
 @media (pointer: coarse) {
-  .todo__remove { width: 44px; height: 44px; }
+  .todo__quiet { width: 44px; height: 44px; }
   .todo__check { min-height: 44px; }
   .todo__input { min-height: 44px; }
 }
@@ -137,4 +145,119 @@
   display: flex;
   justify-content: flex-end;
   padding: 2px 18px 12px;
+}
+
+/* Steps: a to-do's tick becomes a ring that fills as they're ticked, like the
+   goal rings, and the steps sit under it, smaller. */
+.todo__ring {
+  flex: 0 0 auto;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-on-accent);
+}
+.todo__ring svg {
+  position: absolute;
+  inset: 0;
+}
+.todo__ring svg + svg {
+  position: relative;
+}
+.todo__ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-text) 18%, transparent);
+  stroke-width: 2;
+}
+.todo__ring-fill {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 500ms var(--ease-out), fill 300ms var(--ease-out);
+}
+.todo__ring--done .todo__ring-fill {
+  fill: var(--color-accent);
+}
+
+.todo__count {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.todo__steps {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0 0 0 28px;
+  display: grid;
+  gap: 0;
+}
+
+.todo__check--step {
+  min-height: 32px;
+  gap: 8px;
+  padding: 4px 6px;
+  font-size: var(--t-small);
+}
+.todo__box--step {
+  width: 14px;
+  height: 14px;
+}
+.todo__box--step svg {
+  width: 10px;
+  height: 10px;
+}
+.todo__step--done .todo__box {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+.todo__step--done .todo__text {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--color-text) 40%, transparent);
+}
+.todo__step .todo__quiet {
+  width: 28px;
+  height: 28px;
+}
+
+.todo__step-add {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px;
+}
+.todo__step-plus {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  color: var(--color-text-muted);
+}
+.todo__step-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 30px;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1.5px solid var(--color-divider);
+  border-radius: 0;
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--t-small);
+}
+.todo__step-input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+.todo__step-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-accent-700);
+}
+@media (prefers-reduced-motion: reduce) {
+  .todo__ring-fill { transition: none; }
 }

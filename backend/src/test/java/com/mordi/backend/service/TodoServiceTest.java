@@ -4,6 +4,7 @@ import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.exception.TodoNotFoundException;
 import com.mordi.backend.model.Todo;
+import com.mordi.backend.model.TodoStep;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.UserRepository;
@@ -177,6 +178,71 @@ class TodoServiceTest {
 
             assertThat(todo.getText()).isEqualTo("Buy oat milk");
             assertThat(todo.isDone()).isTrue();
+        }
+    }
+
+    @Nested
+    class Steps {
+
+        private TodoRequest steps(List<TodoStep> list) {
+            TodoRequest request = new TodoRequest();
+            request.setSteps(list);
+            return request;
+        }
+
+        @Test
+        void areTrimmedKeptInOrderAndGivenAnIdWhenTheyHaveNone() {
+            Todo todo = existing(5L, me, false);
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(todo));
+
+            Todo saved = todoService.updateTodo(ME, 5L, steps(List.of(
+                new TodoStep("a", "  Book flights ", true), new TodoStep(null, "Find a hotel", false))));
+
+            assertThat(saved.getSteps()).extracting(TodoStep::getText).containsExactly("Book flights", "Find a hotel");
+            assertThat(saved.getSteps().get(0).getId()).isEqualTo("a");
+            assertThat(saved.getSteps().get(0).isDone()).isTrue();
+            assertThat(saved.getSteps().get(1).getId()).isNotBlank();
+        }
+
+        @Test
+        void aRequestWithoutStepsLeavesThemAndAnEmptyListClearsThem() {
+            Todo todo = existing(5L, me, false);
+            todo.setSteps(List.of(new TodoStep("a", "Book flights", false)));
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(todo));
+
+            assertThat(todoService.updateTodo(ME, 5L, request("Plan the trip", null)).getSteps()).hasSize(1);
+            assertThat(todoService.updateTodo(ME, 5L, steps(List.of())).getSteps()).isEmpty();
+        }
+
+        @Test
+        void stepsAndTheTickArriveTogether() {
+            Todo todo = existing(5L, me, false);
+            todo.setSteps(List.of(new TodoStep("a", "Book flights", true), new TodoStep("b", "Find a hotel", false)));
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(todo));
+            TodoRequest last = steps(List.of(new TodoStep("a", "Book flights", true), new TodoStep("b", "Find a hotel", true)));
+            last.setDone(true);
+            last.setCompletedOn(LocalDate.of(2026, 9, 16));
+
+            Todo saved = todoService.updateTodo(ME, 5L, last);
+
+            assertThat(saved.isDone()).isTrue();
+            assertThat(saved.getCompletedOn()).isEqualTo(LocalDate.of(2026, 9, 16));
+            assertThat(saved.getSteps()).allMatch(TodoStep::isDone);
+        }
+
+        @Test
+        void refusesABlankStepOrTooMany() {
+            when(todoRepository.findById(5L)).thenReturn(Optional.of(existing(5L, me, false)));
+
+            assertThatThrownBy(() -> todoService.updateTodo(ME, 5L, steps(List.of(new TodoStep("a", "   ", false)))))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("A step needs some text");
+            List<TodoStep> many = new java.util.ArrayList<>();
+            for (int n = 0; n <= TodoService.MAX_STEPS; n++) {
+                many.add(new TodoStep("s" + n, "Step " + n, false));
+            }
+            assertThatThrownBy(() -> todoService.updateTodo(ME, 5L, steps(many)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("A to-do can have up to 20 steps");
+            verify(todoRepository, never()).save(any());
         }
     }
 

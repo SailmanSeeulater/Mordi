@@ -3,6 +3,7 @@ package com.mordi.backend.service;
 import com.mordi.backend.dto.TodoHistoryPage;
 import com.mordi.backend.dto.TodoRequest;
 import com.mordi.backend.model.Todo;
+import com.mordi.backend.model.TodoStep;
 import com.mordi.backend.model.User;
 import com.mordi.backend.repository.TodoRepository;
 import com.mordi.backend.repository.UserRepository;
@@ -11,6 +12,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -120,6 +122,23 @@ class TodoQueriesIT {
         TodoHistoryPage second = at("2026-11-03T12:00:00Z").getHistory(sam.getEmail(), 1);
         assertThat(second.items()).extracting(Todo::getText).containsExactly("Task 2", "Task 1");
         assertThat(second.hasMore()).isFalse();
+    }
+
+    @Test
+    void stepsAreKeptAsJsonAndANewToDoHasNone() {
+        Todo trip = add(sam, "Plan the trip", "2026-11-03T08:00:00Z");
+        em.flush();
+        em.clear();
+        assertThat(todos.findById(trip.getId()).orElseThrow().getSteps()).isEmpty();
+
+        TodoRequest request = new TodoRequest();
+        request.setSteps(List.of(new TodoStep("a", "Book flights", true), new TodoStep("b", "Find a hotel", false)));
+        at("2026-11-03T09:00:00Z").updateTodo(sam.getEmail(), trip.getId(), request);
+        em.flush();
+        em.clear();
+
+        assertThat(todos.findById(trip.getId()).orElseThrow().getSteps())
+            .containsExactly(new TodoStep("a", "Book flights", true), new TodoStep("b", "Find a hotel", false));
     }
 
     @Test
