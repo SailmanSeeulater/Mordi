@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Entity
@@ -49,6 +53,12 @@ public class Todo {
     // the list, Lately and the reports leave it out.
     @Column(name = "removed_at")
     private Instant removedAt;
+
+    // Smaller steps under it, in order, each ticked on its own. Read and
+    // written whole, so they're kept beside the to-do as JSON.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private List<TodoStep> steps = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

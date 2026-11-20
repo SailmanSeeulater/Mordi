@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import client from '../api/client';
 import { toIsoDate } from '../pages/dashboardData';
+import { addStep as withStep, finishSteps, toggleStep as tickStep } from '../lib/todoSteps';
 
 /**
  * Fired after any change to the list is saved. Finished to-dos show in Lately
@@ -107,21 +108,79 @@ export default function useTodos() {
     [run],
   );
 
-  const toggle = useCallback(
-    (todo) => {
-      const done = !todo.done;
-      // The day it was finished is the person's own, not the server's: ticked
-      // off at 11pm, it belongs to today in Lately and in this week's report.
-      const completedOn = done ? toIsoDate(new Date()) : null;
-      const flip = (list) => list.map((t) => (t.id === todo.id ? { ...t, done: !t.done } : t));
+  // One to-do swapped for its changed self, then saved; put back if the save
+  // fails. Only saved to-dos (not a temporary row) can change this way.
+  const replace = useCallback(
+    (old, next, body, failure) => {
+      const swap = (t) => (list) => list.map((x) => (x.id === t.id ? t : x));
       return run({
-        apply: flip,
-        undo: flip,
-        request: () => client.put(`/api/todos/${todo.id}`, done ? { done, completedOn } : { done }),
-        failure: 'Couldn’t update that. Check your connection and try again.',
+        apply: swap(next),
+        undo: swap(old),
+        request: () => client.put(`/api/todos/${old.id}`, body),
+        failure,
       });
     },
     [run],
+  );
+
+  /** The to-do as the list has it now (a row may hold an older copy), once saved. */
+  const current = useCallback((todo) => {
+    const found = latest.current.find((t) => t.id === todo.id);
+    return found && !String(found.id).startsWith('temp-') ? found : null;
+  }, []);
+
+  const toggle = useCallback(
+    (todo) => {
+      const now = current(todo) ?? todo;
+      const done = !now.done;
+      // The day it was finished is the person's own, not the server's: ticked
+      // off at 11pm, it belongs to today in Lately and in this week's report.
+      const completedOn = done ? toIsoDate(new Date()) : null;
+      // Ticking the to-do ticks its steps too; reopening leaves them.
+      const steps = finishSteps(now, done);
+      const body = done ? { done, completedOn } : { done };
+      if (now.steps?.length) body.steps = steps;
+      return replace(now, { ...now, done, steps }, body, 'Couldn’t update that. Check your connection and try again.');
+    },
+    [current, replace],
+  );
+
+  /** One step ticked or unticked; the last one ticked finishes the to-do, unticking one reopens it. */
+  const toggleStep = useCallback(
+    (todo, stepId) => {
+      const now = current(todo);
+      if (!now) return null;
+      const { steps, done } = tickStep(now, stepId);
+      const body = { steps };
+      if (done !== now.done) {
+        body.done = done;
+        if (done) body.completedOn = toIsoDate(new Date());
+      }
+      return replace(now, { ...now, steps, done }, body, 'Couldn’t update that step. Try again.');
+    },
+    [current, replace],
+  );
+
+  /** A new step at the end. False when it's blank, the to-do is full, or it couldn't be saved. */
+  const addStep = useCallback(
+    async (todo, text) => {
+      const now = current(todo);
+      const steps = now && withStep(now, text);
+      if (!steps) return false;
+      const saved = await replace(now, { ...now, steps }, { steps }, 'Couldn’t add that step. Try again.');
+      return Boolean(saved);
+    },
+    [current, replace],
+  );
+
+  const removeStep = useCallback(
+    (todo, stepId) => {
+      const now = current(todo);
+      if (!now) return null;
+      const steps = (now.steps ?? []).filter((s) => s.id !== stepId);
+      return replace(now, { ...now, steps }, { steps }, 'Couldn’t remove that step. Try again.');
+    },
+    [current, replace],
   );
 
   const remove = useCallback(
@@ -146,5 +205,5 @@ export default function useTodos() {
     });
   }, [run]);
 
-  return { todos, loadState, error, retry, add, toggle, remove, clearDone };
+  return { todos, loadState, error, retry, add, toggle, remove, clearDone, toggleStep, addStep, removeStep };
 }
