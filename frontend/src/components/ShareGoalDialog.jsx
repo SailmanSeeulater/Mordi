@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
+import { useAuth } from '../context/useAuth';
+import { isGuest } from '../lib/guest';
+import GuestLocked from './GuestLocked';
 import { initials, inviteUrl, togetherApi } from '../lib/together';
 import { enableModule } from '../lib/modules';
 import '../pages/together.css';
@@ -11,7 +14,22 @@ const expiry = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'sh
  * Sharing a goal you own: an invite link, and who is in. The link is shown
  * once, when made; only its hash is kept, so a new one replaces the last.
  */
-export default function ShareGoalDialog({ goal, onClose, onChanged }) {
+/** A guest ("Try it") account cannot share; it is told so instead. */
+export default function ShareGoalDialog(props) {
+  // Outside an AuthProvider (a test of the dialog alone) there is no one,
+  // so no guest either.
+  const user = useAuth()?.user;
+  if (isGuest(user)) {
+    return (
+      <Modal title={`Share “${props.goal.title}”`} onClose={props.onClose}>
+        <GuestLocked what="Sharing a goal" onClose={props.onClose} />
+      </Modal>
+    );
+  }
+  return <ShareGoalForm {...props} />;
+}
+
+function ShareGoalForm({ goal, onClose, onChanged }) {
   const [people, setPeople] = useState(null);
   const [max, setMax] = useState(8);
   const [link, setLink] = useState(null);

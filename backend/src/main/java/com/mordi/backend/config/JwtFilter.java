@@ -54,8 +54,11 @@ public class JwtFilter extends OncePerRequestFilter {
                     .filter(user -> user.getId().equals(claims.userId()))
                     .orElse(null);
                 if (account != null) {
+                    // A guest ("Try it") is marked, so GuestFilter can hold
+                    // it to what a guest may do without a lookup of its own.
                     UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(email, null, List.of());
+                        new UsernamePasswordAuthenticationToken(email, null,
+                            account.isGuest() ? List.of(GuestFilter.GUEST) : List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                     activityService.markActive(account);
                 }

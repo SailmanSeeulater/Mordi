@@ -25,7 +25,10 @@ export const HERO = {
   sub:
     'Give each goal a number of days a week, then log it in one tap. Mordi measures your week against that number, not against a streak it made up.',
   primary: 'Create an account',
-  secondary: 'See how it works',
+  // The demo: a real account with a sample fortnight in it, no email asked.
+  tryIt: 'Try it first',
+  trying: 'Opening the demo…',
+  tryNote: 'No email needed. The demo comes with two weeks of sample data and is deleted after seven days, unless you save it.',
 };
 
 export const HOW = {
@@ -161,6 +164,10 @@ export const FAQ = {
   title: 'Questions',
   items: [
     {
+      q: 'Can I try it before signing up?',
+      a: 'Yes. "Try it first" opens a demo with two weeks of sample data, no email needed. It works like a real account, except sharing goals, connecting a Google Calendar and reminders, which need a saved one. The demo is deleted after seven days; save it any time before then and everything in it stays.',
+    },
+    {
       q: 'Is there a phone app?',
       a: 'Mordi is a web app. It works in the browser on phones and computers, and keeps you signed in from one day to the next.',
     },
@@ -191,6 +198,7 @@ export const CLOSE = {
   title: 'Start with one goal.',
   sub: 'Pick a number of days. Log the first one today.',
   cta: 'Create an account',
+  tryIt: 'Try it first',
 };
 
 export const FOOTER = {

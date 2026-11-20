@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/useTheme';
+import { useAuth } from '../context/useAuth';
+import { sessionUser, startGuest, startGuestError } from '../lib/guest';
+import { track } from '../lib/analytics';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { prefersReducedMotion, useInView } from '../hooks/useLandingMotion';
 import Modal from '../components/Modal';
@@ -185,6 +188,28 @@ export default function Landing() {
   const [authTab, setAuthTab] = useState('signin'); // 'signin' | 'register'
 
   const { theme, setTheme } = useTheme();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  // "Try it": a guest account, opened and signed in to in one step. The
+  // server decides whether there is room (and says why not); the person
+  // lands on the dashboard of a sample fortnight.
+  const [trying, setTrying] = useState(false);
+  const [tryError, setTryError] = useState('');
+  const tryIt = async () => {
+    if (trying) return;
+    setTrying(true);
+    setTryError('');
+    try {
+      const session = await startGuest();
+      login(sessionUser(session), session.token);
+      track('Try it');
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setTryError(startGuestError(err));
+      setTrying(false);
+    }
+  };
 
   useScrollReveal();
 
@@ -245,8 +270,18 @@ export default function Landing() {
               <button type="button" className="btn btn-primary" onClick={() => openAuth('register')}>
                 {HERO.primary}
               </button>
-              <a className="btn btn-ghost" href="#how">{HERO.secondary}</a>
+              <button type="button" className="btn btn-ghost" onClick={tryIt} disabled={trying}>
+                {trying ? HERO.trying : HERO.tryIt}
+              </button>
             </div>
+            <p className="lp-hero__try">
+              {HERO.tryNote} Trying it means agreeing to the <Link to="/terms">Terms</Link>.
+            </p>
+            {tryError && (
+              <p className="lp-hero__try lp-hero__try--error" role="alert">
+                {tryError}
+              </p>
+            )}
           </div>
           <div className="lp-hero__stage">
             <HeroWeekDemo />
@@ -352,7 +387,20 @@ export default function Landing() {
             >
               {CLOSE.cta}
             </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-ghost--invert"
+              onClick={tryIt}
+              disabled={trying}
+            >
+              {trying ? HERO.trying : CLOSE.tryIt}
+            </button>
           </div>
+          {tryError && (
+            <p className="lp-close__sub" role="alert">
+              {tryError}
+            </p>
+          )}
         </div>
       </section>
 

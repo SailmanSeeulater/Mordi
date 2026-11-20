@@ -1222,3 +1222,44 @@ table.app-sr { white-space: normal; }
     transition-duration: 1ms !important;
   }
 }
+
+/* ── Guest ("Try it") ──────────────────────── */
+
+.guest-banner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 24px;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  color: var(--color-text);
+}
+.guest-banner__text {
+  flex: 1 1 280px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.guest-banner--saved { background: var(--color-bg); }
+
+.guest-dialog__lede {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.guest-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.guest-locked__text {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .guest-banner { padding: 10px 16px; }
+}

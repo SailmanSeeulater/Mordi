@@ -1,6 +1,7 @@
 package com.mordi.backend.controller;
 
 import com.mordi.backend.config.JwtUtil;
+import com.mordi.backend.dto.AuthRequest;
 import com.mordi.backend.dto.AuthResponse;
 import com.mordi.backend.dto.ChangePasswordRequest;
 import com.mordi.backend.dto.DeleteAccountRequest;
@@ -8,6 +9,7 @@ import com.mordi.backend.model.User;
 import com.mordi.backend.service.AccountExportService;
 import com.mordi.backend.service.AccountExportService.AccountExport;
 import com.mordi.backend.service.AccountService;
+import com.mordi.backend.service.GuestService;
 import com.mordi.backend.service.PasswordService;
 import com.mordi.backend.service.PreferencesService;
 import com.mordi.backend.service.PreferencesService.Preferences;
@@ -19,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +35,7 @@ public class AccountController {
 
     private final PasswordService passwordService;
     private final AccountService accountService;
+    private final GuestService guestService;
     private final AccountExportService exportService;
     private final PreferencesService preferencesService;
     private final RefreshTokenService refreshTokenService;
@@ -47,9 +51,24 @@ public class AccountController {
             @AuthenticationPrincipal String email,
             @Valid @RequestBody ChangePasswordRequest request) {
         User user = passwordService.change(email, request.getCurrentPassword(), request.getNewPassword());
-        AuthResponse body = new AuthResponse(
-            jwtUtil.generateToken(user.getEmail(), user.getId()), user.getEmail(), user.getName());
+        AuthResponse body = AuthResponse.of(jwtUtil.generateToken(user.getEmail(), user.getId()), user);
         String refresh = refreshTokenService.issueFor(user.getEmail());
+        return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, cookies.refresh(refresh).toString())
+            .body(body);
+    }
+
+    /**
+     * Saves a guest ("Try it") account under the person's own address and
+     * password, keeping everything in it. Like a password change, it ends
+     * every other session and hands this device a fresh one.
+     */
+    @PostMapping("/claim")
+    public ResponseEntity<AuthResponse> claim(
+            @AuthenticationPrincipal String email,
+            @Valid @RequestBody AuthRequest request) {
+        AuthResponse body = guestService.claim(email, request);
+        String refresh = refreshTokenService.issueFor(body.getEmail());
         return ResponseEntity.ok()
             .header(HttpHeaders.SET_COOKIE, cookies.refresh(refresh).toString())
             .body(body);

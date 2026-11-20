@@ -50,7 +50,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
         "POST /api/auth/forgot",
         "POST /api/auth/reset",
         "PUT /api/account/password",
-        "DELETE /api/account");
+        "POST /api/account/claim",
+        "DELETE /api/account",
+        RateLimitFilter.GUEST_START);
+
+    /**
+     * Opening a "Try it" account asks for nothing, so it is held to far less:
+     * a few an hour from one address, and a handful a day. That is plenty for
+     * a household behind one router, and makes the demo a poor way to fill
+     * the database. GuestService also caps how many are open at once.
+     */
+    static final String GUEST_START = "POST /api/auth/guest";
+    private static final int GUESTS_PER_HOUR = 3;
+    private static final int GUESTS_PER_DAY = 10;
 
     /**
      * The two where what is being guessed at is one account rather than the
@@ -98,16 +110,19 @@ public class RateLimitFilter extends OncePerRequestFilter {
             downstream = buffered;
         }
 
-        boolean allowed = resolveBucket(path, "ip:" + clientIp).tryConsume(1)
-            && (targetEmail == null || resolveBucket(path, "email:" + targetEmail).tryConsume(1));
+        Supplier<BucketConfiguration> config =
+            GUEST_START.equals(route) ? RateLimitFilter::guestLimits : RateLimitFilter::attemptLimits;
+        boolean allowed = resolveBucket(path, "ip:" + clientIp, config).tryConsume(1)
+            && (targetEmail == null || resolveBucket(path, "email:" + targetEmail, config).tryConsume(1));
 
         if (allowed) {
             filterChain.doFilter(downstream, response);
         } else {
             response.setStatus(429);
             response.setContentType("application/json");
-            response.getWriter().write(
-                "{\"status\":429,\"error\":\"Too many attempts. Please wait a minute and try again.\"}"
+            response.getWriter().write(GUEST_START.equals(route)
+                ? "{\"status\":429,\"error\":\"That's a lot of demos from here. Make a free account to keep going.\"}"
+                : "{\"status\":429,\"error\":\"Too many attempts. Please wait a minute and try again.\"}"
             );
         }
     }
@@ -125,12 +140,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return path;
     }
 
-    private BucketProxy resolveBucket(String path, String who) {
+    private BucketProxy resolveBucket(String path, String who, Supplier<BucketConfiguration> config) {
         String key = "rate-limit:" + path + ":" + who;
-        Supplier<BucketConfiguration> configSupplier = () -> BucketConfiguration.builder()
+        return proxyManager.getProxy(key, config);
+    }
+
+    private static BucketConfiguration attemptLimits() {
+        return BucketConfiguration.builder()
             .addLimit(limit -> limit.capacity(CAPACITY).refillGreedy(CAPACITY, REFILL_PERIOD))
             .build();
-        return proxyManager.getProxy(key, configSupplier);
+    }
+
+    private static BucketConfiguration guestLimits() {
+        return BucketConfiguration.builder()
+            .addLimit(limit -> limit.capacity(GUESTS_PER_HOUR).refillIntervally(GUESTS_PER_HOUR, Duration.ofHours(1)))
+            .addLimit(limit -> limit.capacity(GUESTS_PER_DAY).refillIntervally(GUESTS_PER_DAY, Duration.ofDays(1)))
+            .build();
     }
 
     /**

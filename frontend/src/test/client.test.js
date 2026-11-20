@@ -87,7 +87,7 @@ describe('renewing an expired session', () => {
 
     await client.get('/api/goals');
     expect(localStorage.getItem('token')).toBe('good-token');
-    expect(JSON.parse(localStorage.getItem('user'))).toEqual({ email: 'me@mordi.com', name: 'Me' });
+    expect(JSON.parse(localStorage.getItem('user'))).toEqual({ email: 'me@mordi.com', name: 'Me', guestUntil: null });
 
     calls = [];
     await client.get('/api/notes');

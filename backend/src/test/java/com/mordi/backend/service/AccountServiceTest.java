@@ -164,4 +164,25 @@ class AccountServiceTest {
         assertThat(run.getIcon()).isEqualTo("run");
         assertThat(sleep.getCategory()).isEqualTo("sleep");
     }
+
+    @Test
+    void aGuestGoesWithoutAPasswordOrAGoodbye() {
+        me.setGuestUntil(java.time.LocalDateTime.now().plusDays(3));
+        when(users.findByEmail("me@mordi.com")).thenReturn(Optional.of(me));
+
+        service.delete("me@mordi.com", null);
+
+        verify(users).deleteUserById(1L);
+        verifyNoInteractions(encoder, events, members);
+    }
+
+    @Test
+    void aSavedAccountStillNeedsItsPassword() {
+        when(users.findByEmail("me@mordi.com")).thenReturn(Optional.of(me));
+
+        assertThatThrownBy(() -> service.delete("me@mordi.com", " "))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Password is required");
+        verify(users, never()).deleteUserById(anyLong());
+    }
 }

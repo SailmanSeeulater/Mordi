@@ -43,9 +43,18 @@ public class AccountService {
         User user = users
             .findByEmail(email)
             .orElseThrow(() -> new InvalidCredentialsException("Not signed in"));
+        // A guest ("Try it") has no password to ask for, nothing shared to
+        // hand over, and no address to say goodbye to: it just goes.
+        if (user.isGuest()) {
+            users.deleteUserById(user.getId());
+            return;
+        }
         // Asked again even though signed in: a borrowed, unlocked phone
         // should not be enough to erase someone.
-        if (password == null || !encoder.matches(password, user.getPassword())) {
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+        if (!encoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Password is incorrect");
         }
 

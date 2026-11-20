@@ -3,6 +3,9 @@ import axios from "axios";
 /** Fired when the session cannot be renewed; AuthProvider listens for it. */
 export const SESSION_EXPIRED = "mordi:session-expired";
 
+/** Fired to open the "Save your account" dialog; detail.reason says why. See lib/guest. */
+export const SAVE_ACCOUNT = "mordi:save-account";
+
 const client = axios.create({
   baseURL: "",
   // The refresh token travels in an httpOnly cookie. Same-origin requests send
@@ -44,10 +47,10 @@ function refreshSession() {
     refreshing = client
       .post("/api/auth/refresh")
       .then((res) => {
-        const { token, email, name } = res.data ?? {};
+        const { token, email, name, guestUntil } = res.data ?? {};
         if (!token) throw new Error("refresh returned no token");
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify({ email, name }));
+        localStorage.setItem("user", JSON.stringify({ email, name, guestUntil: guestUntil ?? null }));
         return token;
       })
       .catch((error) => {
@@ -87,6 +90,14 @@ client.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config, response } = error;
+
+    // A guest account met one of its limits: offer to save it, wherever in
+    // the app that happened. The caller still gets the error to show.
+    if (response?.status === 403 && response.data?.guest) {
+      window.dispatchEvent(
+        new CustomEvent(SAVE_ACCOUNT, { detail: { reason: response.data.error ?? "" } }),
+      );
+    }
 
     const retryable =
       response?.status === 401 &&
