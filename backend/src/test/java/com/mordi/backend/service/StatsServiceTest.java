@@ -60,7 +60,7 @@ class StatsServiceTest {
 
     @Test
     void everyFieldComesFromItsOwnCount() {
-        when(users.count()).thenReturn(120L);
+        when(users.countSaved()).thenReturn(120L);
         // New today, and the retention cohort, are both "accounts made
         // between"; they are told apart by the window they ask about.
         when(users.countCreatedBetween(start(TODAY), start(TODAY.plusDays(1)))).thenReturn(3L);
@@ -137,7 +137,7 @@ class StatsServiceTest {
 
     @Test
     void takingTheSnapshotSavesTodaysRowOnItsDay() {
-        when(users.count()).thenReturn(12L);
+        when(users.countSaved()).thenReturn(12L);
 
         DailyStats saved = stats.snapshotToday();
 

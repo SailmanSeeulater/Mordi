@@ -66,6 +66,18 @@ public class User {
     @Column(name = "week_start", nullable = false, length = 6)
     private String weekStart = "monday";
 
+    // When a "Try it" account is deleted on its own; null for every ordinary
+    // account. Saving a guest account clears it. See GuestService.
+    @JsonIgnore
+    @Column(name = "guest_until")
+    private LocalDateTime guestUntil;
+
+    /** A "Try it" account the person has not saved yet. */
+    @JsonIgnore
+    public boolean isGuest() {
+        return guestUntil != null;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

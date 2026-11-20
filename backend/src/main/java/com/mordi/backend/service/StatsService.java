@@ -101,7 +101,7 @@ public class StatsService {
 
         DailyStats stats = new DailyStats();
         stats.setDay(day);
-        stats.setTotalUsers(count(users.count()));
+        stats.setTotalUsers(count(users.countSaved()));
         stats.setNewUsers(count(users.countCreatedBetween(dayStart, dayEnd)));
         stats.setActiveUsers(count(users.countByLastActiveOn(day)));
         stats.setWeeklyActiveUsers(count(users.countByLastActiveOnGreaterThanEqual(weekStart)));

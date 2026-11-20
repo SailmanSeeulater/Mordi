@@ -91,6 +91,10 @@ public class Goal {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        // Set ahead only by a guest's sample goals (GuestSampleWeek), which
+        // have to predate the entries made up for them.
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 }

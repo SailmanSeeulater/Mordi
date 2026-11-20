@@ -36,7 +36,8 @@ public interface BehaviorRepository extends JpaRepository<Behavior, Long> {
     List<Object[]> summarizePlaces(@Param("user") User user);
 
     /** Entries saved in [from, to): the day's logging, for the usage totals. */
-    @Query("select count(b) from Behavior b where b.createdAt >= :from and b.createdAt < :to")
+    @Query("select count(b) from Behavior b where b.createdAt >= :from and b.createdAt < :to "
+         + "and b.user.guestUntil is null")
     long countCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     java.util.Optional<Behavior> findByIdAndUser(Long id, User user);

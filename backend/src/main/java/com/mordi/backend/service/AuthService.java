@@ -38,6 +38,7 @@ public class AuthService {
 
     public AuthResponse register(AuthRequest request) {
         String email = EmailAddresses.normalize(request.getEmail());
+        GuestService.refuseGuestAddress(email);
         if (userRepository.existsByEmail(email)) {
             throw new EmailAlreadyExistsException("Email already registered");
         }
@@ -53,7 +54,7 @@ public class AuthService {
         userRepository.save(user);
         activityService.markActive(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getId());
-        return new AuthResponse(token, user.getEmail(), user.getName());
+        return AuthResponse.of(token, user);
     }
 
     public AuthResponse login(AuthRequest request) {
@@ -72,6 +73,6 @@ public class AuthService {
 
         activityService.markActive(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getId());
-        return new AuthResponse(token, user.getEmail(), user.getName());
+        return AuthResponse.of(token, user);
     }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { useAuth } from '../context/useAuth';
@@ -11,6 +11,8 @@ import RemindersSettings from '../components/RemindersSettings';
 import LayoutSettings from '../components/LayoutSettings';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import DeleteAccount from '../components/DeleteAccount';
+import GuestLocked from '../components/GuestLocked';
+import { askToSave, guestEndsOn, isGuest } from '../lib/guest';
 import { toIsoDate } from './dashboardData';
 import { LEGAL } from '../lib/legal';
 import { WEEK_STARTS, setWeekStart, useWeekStart } from '../lib/weekStart';
@@ -67,6 +69,26 @@ export default function Settings() {
   const [status, setStatus] = useState({ tone: 'info', text: '' });
 
   const current = allThemes.find((t) => t.id === theme) ?? allThemes[0];
+  const guest = isGuest(user);
+  const [leaving, setLeaving] = useState(false);
+
+  // A guest has no password to sign back in with, so logging out of the demo
+  // is the end of it: it is deleted now rather than left to run out.
+  const leaveDemo = async () => {
+    if (!window.confirm('Leave the demo? Everything in it is deleted now, and it can’t be undone.')) return;
+    setLeaving(true);
+    try {
+      await client.delete('/api/account', { data: {} });
+    } catch {
+      // Logged out regardless; the server deletes it within the week anyway.
+    }
+    // Together, as DeleteAccount does, so the signed-out redirect to /login
+    // does not win over going home.
+    startTransition(() => {
+      logout();
+      navigate('/', { replace: true });
+    });
+  };
 
   const exportData = async () => {
     setExporting(true);
@@ -124,7 +146,18 @@ export default function Settings() {
 
         <CustomThemeEditor />
 
-        <RemindersSettings />
+        {guest ? (
+          <section className="app-panel" aria-labelledby="set-reminders">
+            <div className="app-panel__head">
+              <h2 className="app-panel__title" id="set-reminders">
+                Reminders
+              </h2>
+            </div>
+            <GuestLocked what="A daily reminder" />
+          </section>
+        ) : (
+          <RemindersSettings />
+        )}
 
         <section className="app-panel" aria-labelledby="set-account">
           <div className="app-panel__head">
@@ -136,15 +169,31 @@ export default function Settings() {
             <span className="settings__label">Name</span>
             <span className="settings__value">{user?.name || '—'}</span>
           </div>
-          <div className="settings__row">
-            <span className="settings__label">Email</span>
-            <span className="settings__value">{user?.email || '—'}</span>
-          </div>
-          <p className="settings__note">
-            Changing your name or email isn&rsquo;t available here yet. To change either, write to{' '}
-            <a href={`mailto:${LEGAL.contact}`}>{LEGAL.contact}</a>.
-          </p>
-          <ChangePasswordForm />
+          {guest ? (
+            <>
+              <p className="settings__note">
+                This is a demo account, with no email or password yet. It&rsquo;s deleted on{' '}
+                {guestEndsOn(user) || 'its seventh day'}. Save it to keep everything you&rsquo;ve made.
+              </p>
+              <div className="settings__actions">
+                <button type="button" className="app-btn" onClick={() => askToSave()}>
+                  Save my account
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="settings__row">
+                <span className="settings__label">Email</span>
+                <span className="settings__value">{user?.email || '—'}</span>
+              </div>
+              <p className="settings__note">
+                Changing your name or email isn&rsquo;t available here yet. To change either, write to{' '}
+                <a href={`mailto:${LEGAL.contact}`}>{LEGAL.contact}</a>.
+              </p>
+              <ChangePasswordForm />
+            </>
+          )}
         </section>
 
         <section className="app-panel" aria-labelledby="set-data">
@@ -182,23 +231,31 @@ export default function Settings() {
             </h2>
           </div>
           <p className="settings__note">
-            Signs you out in this browser only. Everything in your account stays as it is.
+            {guest
+              ? 'A demo has no password to sign back in with, so leaving it deletes it, now.'
+              : 'Signs you out in this browser only. Everything in your account stays as it is.'}
           </p>
           <div className="settings__actions">
-            <button
-              type="button"
-              className="app-btn app-btn--danger"
-              onClick={() => {
-                logout();
-                navigate('/login');
-              }}
-            >
-              Log out
-            </button>
+            {guest ? (
+              <button type="button" className="app-btn app-btn--danger" onClick={leaveDemo} disabled={leaving}>
+                {leaving ? 'Leaving…' : 'Leave the demo'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="app-btn app-btn--danger"
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
+              >
+                Log out
+              </button>
+            )}
           </div>
         </section>
 
-        <DeleteAccount />
+        {!guest && <DeleteAccount />}
 
         <section className="app-panel" aria-labelledby="set-about">
           <div className="app-panel__head">

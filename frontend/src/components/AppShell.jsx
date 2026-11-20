@@ -5,6 +5,7 @@ import { useTheme } from '../context/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
 import ClockChip from './ClockChip';
 import Modal from './Modal';
+import GuestBanner from './GuestBanner';
 import { isOn, useModules } from '../lib/modules';
 import './app.css';
 
@@ -149,6 +150,7 @@ export default function AppShell({ title, action, children }) {
       </nav>
 
       <div className="app-body">
+        <GuestBanner />
         <header className="app-topbar">
           {title && <h1 className="app-topbar__title">{title}</h1>}
           <div className="app-topbar__spacer" />

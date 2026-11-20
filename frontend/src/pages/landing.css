@@ -286,6 +286,19 @@ body.mordi-landing {
   text-wrap: pretty;
   animation: lp-rise 900ms var(--ease-out) 260ms both;
 }
+/* The line under the hero's buttons that says what "Try it" is. */
+.lp-hero__try {
+  max-width: 46ch;
+  margin: 14px auto 0;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-text-muted);
+  animation: lp-rise 900ms var(--ease-out) 420ms both;
+}
+.lp-hero__try a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.lp-hero__try--error { color: var(--color-signal); animation: none; }
+
 .lp-hero__actions {
   display: flex;
   justify-content: center;
@@ -320,6 +333,7 @@ body.mordi-landing {
   }
   .lp-hero__sub { margin-left: 0; font-size: 17px; }
   .lp-hero__actions { justify-content: flex-start; }
+  .lp-hero__try { text-align: left; margin-left: 0; }
   .lp-hero__stage { max-width: none; margin: 0; }
   /* In its column the card takes the full width and Lately sits under it. */
   .lp-hero .lp-hero-demo { grid-template-columns: minmax(0, 1fr); }
@@ -1515,7 +1529,13 @@ body.mordi-landing {
   font-size: 17px;
   line-height: 1.5;
 }
-.mordi-close__actions { margin-top: 28px; }
+.mordi-close__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
 
 /* ── Footer ────────────────────────────────────────────── */
 

@@ -62,6 +62,10 @@ public class PasswordService {
     @Transactional
     public void requestReset(String email) {
         users.findByEmail(EmailAddresses.normalize(email)).ifPresent(user -> {
+            // A guest's address is made up; mail to it would only bounce.
+            if (user.isGuest()) {
+                return;
+            }
             if (tokens.issuedWithin(user, UserToken.Purpose.PASSWORD_RESET, RESET_COOLDOWN)) {
                 return;
             }

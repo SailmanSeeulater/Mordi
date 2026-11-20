@@ -24,7 +24,8 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findByUserAndActiveTrueAndArchivedAtIsNotNullOrderByArchivedAtDesc(User user);
 
     /** Goals made in [from, to), for the usage totals. */
-    @Query("select count(g) from Goal g where g.createdAt >= :from and g.createdAt < :to")
+    @Query("select count(g) from Goal g where g.createdAt >= :from and g.createdAt < :to "
+         + "and g.user.guestUntil is null")
     long countCreatedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     /**

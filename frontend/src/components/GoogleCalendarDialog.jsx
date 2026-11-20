@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useAuth } from '../context/useAuth';
+import { isGuest } from '../lib/guest';
+import GuestLocked from './GuestLocked';
 import { COLORS } from '../lib/planner';
 import { syncedLabel } from '../lib/calendarFeeds';
 
@@ -16,7 +19,16 @@ const errorOf = (err, fallback) => err?.response?.data?.error ?? fallback;
  *
  * `feeds` and the four actions come from useCalendarFeeds.
  */
-export default function GoogleCalendarDialog({ feeds, connect, update, sync, disconnect, onClose }) {
+/** A guest ("Try it") account cannot connect a calendar; it is told so instead. */
+export default function GoogleCalendarDialog(props) {
+  // Outside an AuthProvider (a test of the dialog alone) there is no one,
+  // so no guest either.
+  const user = useAuth()?.user;
+  if (isGuest(user)) return <GuestLocked what="Connecting a Google Calendar" onClose={props.onClose} />;
+  return <CalendarFeeds {...props} />;
+}
+
+function CalendarFeeds({ feeds, connect, update, sync, disconnect, onClose }) {
   const [addingMore, setAdding] = useState(false);
   // With nothing connected (at first, or after disconnecting the last one)
   // the form is the whole dialog.

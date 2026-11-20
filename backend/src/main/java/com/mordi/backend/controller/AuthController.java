@@ -4,10 +4,12 @@ import com.mordi.backend.config.JwtUtil;
 import com.mordi.backend.dto.AuthRequest;
 import com.mordi.backend.dto.AuthResponse;
 import com.mordi.backend.dto.ForgotPasswordRequest;
+import com.mordi.backend.dto.GuestRequest;
 import com.mordi.backend.dto.ResetPasswordRequest;
 import com.mordi.backend.exception.InvalidRefreshTokenException;
 import com.mordi.backend.service.ActivityService;
 import com.mordi.backend.service.AuthService;
+import com.mordi.backend.service.GuestService;
 import com.mordi.backend.service.PasswordService;
 import com.mordi.backend.service.RefreshTokenService;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final SessionCookies cookies;
     private final ActivityService activityService;
+    private final GuestService guestService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody AuthRequest request) {
@@ -42,6 +45,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         AuthResponse body = authService.login(request);
+        return withSession(body, refreshTokenService.issueFor(body.getEmail()));
+    }
+
+    /**
+     * "Try it": opens a guest account and signs this browser in to it, with no
+     * email or password asked. How many one address may open is capped by
+     * RateLimitFilter, how many may be open at once by GuestService.
+     */
+    @PostMapping("/guest")
+    public ResponseEntity<AuthResponse> guest(@RequestBody(required = false) GuestRequest request) {
+        AuthResponse body = guestService.start(request);
         return withSession(body, refreshTokenService.issueFor(body.getEmail()));
     }
 
@@ -60,10 +74,9 @@ public class AuthController {
             // A returning visit starts here, before any request carries the
             // new token, so it counts as the day's use.
             activityService.markActive(rotation.user());
-            AuthResponse body = new AuthResponse(
+            AuthResponse body = AuthResponse.of(
                 jwtUtil.generateToken(rotation.user().getEmail(), rotation.user().getId()),
-                rotation.user().getEmail(),
-                rotation.user().getName());
+                rotation.user());
             return withSession(body, rotation.token());
         } catch (InvalidRefreshTokenException ex) {
             // Clear the cookie on the way out, so a dead token is not sent
